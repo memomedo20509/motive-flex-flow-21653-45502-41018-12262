@@ -136,7 +136,7 @@ const Contact = () => {
                         <div>
                           <h3 className="font-bold mb-1">البريد الإلكتروني</h3>
                           <p className="text-muted-foreground">
-                            info@motiveflex.com
+                            info@mutflex.com
                           </p>
                           <p className="text-sm text-muted-foreground mt-1">
                             نرد خلال 24 ساعة

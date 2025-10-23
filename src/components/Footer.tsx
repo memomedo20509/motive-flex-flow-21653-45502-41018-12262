@@ -15,7 +15,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Company Info */}
           <div className="space-y-4">
-            <img src={logo} alt="MotiveFlex" className="h-14 w-auto mb-6 filter drop-shadow-lg hover:scale-105 transition-transform duration-300" />
+            <img src={logo} alt="موتفلكس" className="h-14 w-auto mb-6 filter drop-shadow-lg hover:scale-105 transition-transform duration-300" />
             <p className="text-sm opacity-90 leading-relaxed">
               نظام إدارة متكامل يحوّل عمليات التصنيع والتركيب إلى تجربة رقمية كاملة
             </p>
@@ -137,7 +137,7 @@ const Footer = () => {
                 <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-primary group-hover:scale-110 transition-all duration-300 border border-white/20">
                   <Mail size={18} />
                 </div>
-                <span>info@motiveflex.com</span>
+                <span>info@mutflex.com</span>
               </li>
               <li className="flex items-start gap-3 text-sm group">
                 <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:bg-primary group-hover:scale-110 transition-all duration-300 border border-white/20">
@@ -151,7 +151,7 @@ const Footer = () => {
 
         <div className="border-t border-white/20 mt-12 pt-8 text-center">
           <p className="text-sm opacity-90">
-            © 2025 MotiveFlex. جميع الحقوق محفوظة
+            © 2025 موتفلكس. جميع الحقوق محفوظة
           </p>
         </div>
       </div>

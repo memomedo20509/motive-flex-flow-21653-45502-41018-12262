@@ -146,7 +146,7 @@ const PrivacyPolicy = () => {
                     عبر:
                   </p>
                   <ul className="list-disc pr-6 space-y-2 mt-4">
-                    <li>البريد الإلكتروني: privacy@motiveflex.com</li>
+                    <li>البريد الإلكتروني: privacy@mutflex.com</li>
                     <li dir="ltr">الهاتف: +966 XX XXX XXXX</li>
                   </ul>
                 </div>
