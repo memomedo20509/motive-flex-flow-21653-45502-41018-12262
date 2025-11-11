@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Home } from "lucide-react";
 
@@ -14,7 +14,7 @@ const NotFound = () => {
           الصفحة التي تبحث عنها قد تكون محذوفة أو غير متاحة
         </p>
         <Button size="lg" variant="default" asChild>
-          <Link to="/" className="gap-2">
+          <Link href="/" className="gap-2">
             <Home size={20} />
             العودة للرئيسية
           </Link>

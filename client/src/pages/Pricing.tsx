@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
@@ -146,7 +146,7 @@ const Pricing = () => {
                     className="w-full text-lg"
                     asChild
                   >
-                    <Link to="/free-trial">
+                    <Link href="/free-trial">
                       {plan.price === "حسب الطلب"
                         ? "تواصل معنا"
                         : "ابدأ تجربتك المجانية"}
@@ -209,7 +209,7 @@ const Pricing = () => {
             ابدأ تجربتك المجانية اليوم - بدون بطاقة ائتمان
           </p>
           <Button size="lg" variant="default" className="text-lg px-8" asChild>
-            <Link to="/free-trial">ابدأ تجربتك المجانية - 14 يوم</Link>
+            <Link href="/free-trial">ابدأ تجربتك المجانية - 14 يوم</Link>
           </Button>
         </div>
       </section>

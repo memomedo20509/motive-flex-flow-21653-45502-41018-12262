@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
@@ -134,7 +134,7 @@ const Index = () => {
                 className="px-8 bg-white text-secondary hover:bg-white/90 shadow-xl"
                 asChild
               >
-                <Link to="/free-trial">
+                <Link href="/free-trial">
                   <Zap className="ml-2 w-4 h-4" />
                   ابدأ تجربتك المجانية الآن
                 </Link>
@@ -145,7 +145,7 @@ const Index = () => {
                 className="px-8 border-2 border-white text-white hover:bg-white/10 glass-effect"
                 asChild
               >
-                <Link to="/features">اكتشف المميزات</Link>
+                <Link href="/features">اكتشف المميزات</Link>
               </Button>
             </div>
           </div>
@@ -303,7 +303,7 @@ const Index = () => {
           
           <div className="text-center mt-10">
             <Button size="default" variant="premium" asChild className="shadow-xl">
-              <Link to="/features">
+              <Link href="/features">
                 <Package className="ml-2 w-4 h-4" />
                 عرض جميع المميزات
               </Link>
@@ -371,7 +371,7 @@ const Index = () => {
           
           <div className="text-center mt-12">
             <Button size="lg" className="shadow-lg px-8 bg-gradient-to-r from-secondary to-primary hover:opacity-90 text-white" asChild>
-              <Link to="/industries">
+              <Link href="/industries">
                 <Factory className="ml-2 w-5 h-5" />
                 اكتشف المزيد عن القطاعات
               </Link>
@@ -436,7 +436,7 @@ const Index = () => {
             className="px-10 bg-white text-secondary hover:bg-white/90 shadow-xl hover:scale-110"
             asChild
           >
-            <Link to="/free-trial">
+            <Link href="/free-trial">
               <Zap className="ml-2 w-4 h-4" />
               ابدأ الآن مجانًا
             </Link>

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "wouter";
 import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -59,7 +59,7 @@ const Footer = () => {
             <ul className="space-y-3">
               <li>
                 <Link 
-                  to="/features" 
+                  href="/features" 
                   className="text-sm hover:text-primary transition-all duration-300 hover:translate-x-2 inline-block"
                 >
                   المميزات
@@ -67,7 +67,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link 
-                  to="/industries" 
+                  href="/industries" 
                   className="text-sm hover:text-primary transition-all duration-300 hover:translate-x-2 inline-block"
                 >
                   القطاعات
@@ -75,7 +75,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link 
-                  to="/pricing" 
+                  href="/pricing" 
                   className="text-sm hover:text-primary transition-all duration-300 hover:translate-x-2 inline-block"
                 >
                   الأسعار
@@ -83,7 +83,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link 
-                  to="/about" 
+                  href="/about" 
                   className="text-sm hover:text-primary transition-all duration-300 hover:translate-x-2 inline-block"
                 >
                   من نحن
@@ -98,7 +98,7 @@ const Footer = () => {
             <ul className="space-y-3">
               <li>
                 <Link 
-                  to="/contact" 
+                  href="/contact" 
                   className="text-sm hover:text-primary transition-all duration-300 hover:translate-x-2 inline-block"
                 >
                   تواصل معنا
@@ -106,7 +106,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link 
-                  to="/free-trial" 
+                  href="/free-trial" 
                   className="text-sm hover:text-primary transition-all duration-300 hover:translate-x-2 inline-block"
                 >
                   التجربة المجانية
@@ -114,7 +114,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link 
-                  to="/privacy-policy" 
+                  href="/privacy-policy" 
                   className="text-sm hover:text-primary transition-all duration-300 hover:translate-x-2 inline-block"
                 >
                   سياسة الخصوصية

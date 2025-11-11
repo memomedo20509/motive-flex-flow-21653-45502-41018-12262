@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
@@ -200,7 +200,7 @@ const Industries = () => {
                             className="w-full text-lg font-bold shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-r from-primary to-secondary hover:scale-105"
                             asChild
                           >
-                            <Link to="/free-trial">
+                            <Link href="/free-trial">
                               <i className="fas fa-play-circle ml-2" />
                               ابدأ تجربتك المجانية
                             </Link>
@@ -211,7 +211,7 @@ const Industries = () => {
                             className="w-full text-lg font-semibold border-2 hover:bg-primary/10 hover:border-primary transition-all duration-300"
                             asChild
                           >
-                            <Link to="/contact">
+                            <Link href="/contact">
                               <i className="fas fa-comments ml-2" />
                               تواصل معنا
                             </Link>
@@ -261,7 +261,7 @@ const Industries = () => {
                 className="text-lg px-10 py-6 font-bold shadow-xl hover:shadow-2xl bg-gradient-to-r from-primary to-secondary hover:scale-105 transition-all duration-300" 
                 asChild
               >
-                <Link to="/contact">
+                <Link href="/contact">
                   <i className="fas fa-comments ml-2" />
                   تواصل معنا
                 </Link>
@@ -272,7 +272,7 @@ const Industries = () => {
                 className="text-lg px-10 py-6 font-semibold border-2 hover:bg-primary/10 hover:border-primary transition-all duration-300"
                 asChild
               >
-                <Link to="/free-trial">
+                <Link href="/free-trial">
                   <i className="fas fa-play-circle ml-2" />
                   ابدأ تجربتك المجانية
                 </Link>

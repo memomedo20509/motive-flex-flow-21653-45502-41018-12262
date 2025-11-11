@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "wouter";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
@@ -34,7 +34,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 hover:scale-105 transition-transform duration-300">
+          <Link href="/" className="flex items-center gap-3 hover:scale-105 transition-transform duration-300">
             <img src={logo} alt="موتفلكس" className="h-10 w-auto drop-shadow-lg" />
           </Link>
 
@@ -43,7 +43,7 @@ const Navbar = () => {
             {navLinks.map((link) => (
               <Link
                 key={link.href}
-                to={link.href}
+                href={link.href}
                 className={`transition-all duration-300 font-medium relative group ${
                   isScrolled 
                     ? 'text-foreground hover:text-secondary' 
@@ -69,7 +69,7 @@ const Navbar = () => {
                   : 'bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 text-white'
               }`}
             >
-              <Link to="/free-trial">جرّب مجانًا</Link>
+              <Link href="/free-trial">جرّب مجانًا</Link>
             </Button>
           </div>
 
@@ -89,7 +89,7 @@ const Navbar = () => {
             {navLinks.map((link) => (
               <Link
                 key={link.href}
-                to={link.href}
+                href={link.href}
                 className="block py-2 text-foreground hover:text-primary transition-colors"
                 onClick={() => setIsOpen(false)}
               >
@@ -97,7 +97,7 @@ const Navbar = () => {
               </Link>
             ))}
             <Button variant="default" size="lg" className="w-full mt-4" asChild>
-              <Link to="/free-trial" onClick={() => setIsOpen(false)}>
+              <Link href="/free-trial" onClick={() => setIsOpen(false)}>
                 جرّب مجانًا
               </Link>
             </Button>

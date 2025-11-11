@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
@@ -226,7 +226,7 @@ const Features = () => {
             ابدأ تجربتك المجانية الآن واكتشف كيف يمكن لـ موتفلكس تحويل عملك
           </p>
           <Button size="lg" variant="default" className="text-lg px-8" asChild>
-            <Link to="/free-trial">ابدأ تجربتك المجانية</Link>
+            <Link href="/free-trial">ابدأ تجربتك المجانية</Link>
           </Button>
         </div>
       </section>
