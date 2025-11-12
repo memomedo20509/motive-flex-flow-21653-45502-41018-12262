@@ -1,8 +1,8 @@
-import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { PageScaffold } from "@/components/PageScaffold";
+import { SectionHeader } from "@/components/SectionHeader";
+import { CTASection } from "@/components/CTASection";
+import { AnimateOnScroll } from "@/components/AnimateOnScroll";
 import {
   Users,
   Calendar,
@@ -16,6 +16,7 @@ import {
   CheckCircle,
   Building2,
   Shield,
+  Zap,
 } from "lucide-react";
 
 const Features = () => {
@@ -170,9 +171,7 @@ const Features = () => {
   ];
 
   return (
-    <div className="min-h-screen" dir="rtl">
-      <Navbar />
-
+    <PageScaffold>
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 gradient-hero text-white relative overflow-hidden">
         <div className="absolute inset-0">
@@ -180,65 +179,77 @@ const Features = () => {
           <div className="absolute bottom-20 left-10 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
         </div>
         
-        <div className="container mx-auto text-center relative z-10">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-            المميزات التقنية الشاملة
-          </h1>
-          <p className="text-lg md:text-xl max-w-3xl mx-auto opacity-95 leading-relaxed">
-            نظام متكامل يغطي كل جانب من جوانب عملك - من استلام العميل حتى التسليم النهائي
-          </p>
+        <div className="container mx-auto text-center relative z-10 stagger-children">
+          <AnimateOnScroll>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6" data-testid="heading-features-hero">
+              المميزات التقنية الشاملة
+            </h1>
+          </AnimateOnScroll>
+          <AnimateOnScroll>
+            <p className="text-lg md:text-xl max-w-3xl mx-auto opacity-95 leading-relaxed" data-testid="text-features-description">
+              نظام متكامل يغطي كل جانب من جوانب عملك - من استلام العميل حتى التسليم النهائي
+            </p>
+          </AnimateOnScroll>
         </div>
       </section>
 
       {/* Features Detailed Section */}
       <section className="py-20 px-4 bg-gradient-to-b from-background via-muted/10 to-background">
         <div className="container mx-auto max-w-7xl">
-          <div className="space-y-16">
+          <SectionHeader
+            title="جميع المميزات التقنية"
+            description="تعرف على التفاصيل الكاملة لكل ميزة وكيف ستساعدك في تحسين عملك"
+            badge="12 ميزة قوية"
+          />
+          
+          <div className="space-y-12 stagger-children">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <Card
-                  key={index}
-                  className={`border-2 overflow-hidden ${
-                    index % 2 === 0 ? "lg:mr-auto" : "lg:ml-auto"
-                  } max-w-5xl`}
-                >
-                  <CardContent className="p-8">
-                    <div className="grid lg:grid-cols-2 gap-8 items-start">
-                      <div>
-                        <div className="flex items-center gap-4 mb-4">
-                          <div className="w-16 h-16 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
-                            <Icon size={32} />
+                <AnimateOnScroll key={index}>
+                  <Card
+                    className={`border-2 overflow-hidden ${
+                      index % 2 === 0 ? "lg:mr-auto" : "lg:ml-auto"
+                    } max-w-5xl`}
+                    data-testid={`card-feature-${index}`}
+                  >
+                    <CardContent className="p-6 md:p-8">
+                      <div className="grid lg:grid-cols-2 gap-6 md:gap-8 items-start">
+                        <div>
+                          <div className="flex items-center gap-4 mb-4">
+                            <div className="w-14 h-14 md:w-16 md:h-16 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                              <Icon size={32} className="w-7 h-7 md:w-8 md:h-8" />
+                            </div>
+                            <h2 className="text-xl md:text-2xl lg:text-3xl font-bold">
+                              {feature.title}
+                            </h2>
                           </div>
-                          <h2 className="text-2xl md:text-3xl font-bold">
-                            {feature.title}
-                          </h2>
+                          <p className="text-muted-foreground text-base md:text-lg mb-6 leading-relaxed">
+                            {feature.description}
+                          </p>
                         </div>
-                        <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
-                          {feature.description}
-                        </p>
+                        <div>
+                          <h3 className="font-bold text-base md:text-lg mb-4 text-primary">
+                            الفوائد الأساسية:
+                          </h3>
+                          <ul className="space-y-3">
+                            {feature.benefits.map((benefit, idx) => (
+                              <li key={idx} className="flex items-start gap-3">
+                                <CheckCircle
+                                  size={20}
+                                  className="text-primary flex-shrink-0 mt-1 w-5 h-5"
+                                />
+                                <span className="text-muted-foreground text-sm md:text-base">
+                                  {benefit}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-bold text-lg mb-4 text-primary">
-                          الفوائد الأساسية:
-                        </h3>
-                        <ul className="space-y-3">
-                          {feature.benefits.map((benefit, idx) => (
-                            <li key={idx} className="flex items-start gap-3">
-                              <CheckCircle
-                                size={20}
-                                className="text-primary flex-shrink-0 mt-1"
-                              />
-                              <span className="text-muted-foreground">
-                                {benefit}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </AnimateOnScroll>
               );
             })}
           </div>
@@ -246,22 +257,16 @@ const Features = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 bg-muted/20">
-        <div className="container mx-auto text-center max-w-4xl">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            جرّب جميع المميزات مجانًا
-          </h2>
-          <p className="text-muted-foreground mb-8 max-w-2xl mx-auto text-lg">
-            ابدأ تجربتك المجانية الآن واكتشف كيف يمكن لـ موتفلكس تحويل عملك
-          </p>
-          <Button size="lg" variant="default" className="text-lg px-8" asChild>
-            <Link href="/free-trial">ابدأ تجربتك المجانية</Link>
-          </Button>
-        </div>
-      </section>
-
-      <Footer />
-    </div>
+      <CTASection
+        title="جرّب جميع المميزات مجانًا"
+        description="ابدأ تجربتك المجانية الآن واكتشف كيف يمكن لـ موتفلكس تحويل عملك"
+        primaryButtonText="ابدأ تجربتك المجانية"
+        primaryButtonLink="/free-trial"
+        primaryButtonIcon={Zap}
+        secondaryButtonText="تواصل معنا"
+        secondaryButtonLink="/contact"
+      />
+    </PageScaffold>
   );
 };
 
