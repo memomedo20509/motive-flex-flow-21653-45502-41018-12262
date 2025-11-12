@@ -10,6 +10,46 @@ The application is a full-stack web platform that manages the entire workflow fr
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+### November 12, 2025 - Motion System & UI Enhancements
+
+**Phase 1: Motion System Infrastructure**
+- Added comprehensive CSS motion utilities in `client/src/index.css`:
+  - Intersection-based animations (.animate-on-scroll, .in-view)
+  - Staggered delays for children (.stagger-children)
+  - Glass morphism effects (glass-effect, glass-card)
+  - Enhanced hover effects (hover-lift, hover-glow, icon-accent)
+  - Shimmer loading animations
+  - Counter animations
+  - Reduced motion support (@media prefers-reduced-motion)
+
+- Created reusable hooks and components:
+  - `useIntersection` hook: IntersectionObserver wrapper with cleanup
+  - `AnimatedCounter` component: Animated number counting with easing
+  - `AnimateOnScroll` wrapper: Reusable scroll-triggered animation wrapper
+
+**Landing Page (Index.tsx) Enhancements:**
+- Hero Section:
+  - Added animated KPI strip with 3 metrics (300+ factories, 10K+ hours, 5K+ orders)
+  - Implemented glass morphism CTA container
+  - Enhanced typography hierarchy (H1: 7xl, H2: 5xl, Body: xl responsive)
+  - Added hover glow effects on KPI cards
+  - All elements include proper data-testid attributes
+
+- Workflow Cards:
+  - Applied AnimateOnScroll to all workflow cards (desktop + mobile)
+  - Implemented staggered entrance animations
+  - Added icon-accent lighting on hover
+  - Enhanced card hover effects (border, scale, glow)
+
+**Technical Quality:**
+- Proper cleanup for all side effects (requestAnimationFrame, IntersectionObserver)
+- Accessibility: Reduced motion support throughout
+- Performance: Optimized with proper thresholds and cleanup
+- Testing: Comprehensive data-testid coverage for automated testing
+- RTL support maintained throughout
+
 ## System Architecture
 
 ### Frontend Architecture
