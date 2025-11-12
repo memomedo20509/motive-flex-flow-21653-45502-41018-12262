@@ -144,25 +144,28 @@ All colors MUST be HSL.
     @apply bg-white/90 dark:bg-card/90 backdrop-blur-xl border border-white/20 dark:border-border/20 shadow-2xl;
   }
   
-  /* Intersection-based Animations */
+  /* Intersection-based Animations - Unified Professional System */
   .animate-on-scroll {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(16px);
   }
   
   .animate-on-scroll.in-view {
     opacity: 1;
     transform: translateY(0);
-    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 520ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   
-  /* Staggered delays for children */
-  .stagger-children > *:nth-child(1) { transition-delay: 0.1s; }
-  .stagger-children > *:nth-child(2) { transition-delay: 0.2s; }
-  .stagger-children > *:nth-child(3) { transition-delay: 0.3s; }
-  .stagger-children > *:nth-child(4) { transition-delay: 0.4s; }
-  .stagger-children > *:nth-child(5) { transition-delay: 0.5s; }
-  .stagger-children > *:nth-child(6) { transition-delay: 0.6s; }
+  /* Staggered delays for children - 120ms consistent rhythm */
+  .stagger-children > *:nth-child(1) { transition-delay: 0ms; }
+  .stagger-children > *:nth-child(2) { transition-delay: 120ms; }
+  .stagger-children > *:nth-child(3) { transition-delay: 240ms; }
+  .stagger-children > *:nth-child(4) { transition-delay: 360ms; }
+  .stagger-children > *:nth-child(5) { transition-delay: 480ms; }
+  .stagger-children > *:nth-child(6) { transition-delay: 600ms; }
+  .stagger-children > *:nth-child(7) { transition-delay: 720ms; }
+  .stagger-children > *:nth-child(8) { transition-delay: 840ms; }
+  .stagger-children > *:nth-child(9) { transition-delay: 960ms; }
   
   /* Float Animation */
   .animate-float {
@@ -234,27 +237,10 @@ All colors MUST be HSL.
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-primary;
   }
   
-  /* Enhanced Hover Effects */
-  .hover-lift {
-    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl;
-  }
-  
-  .hover-glow {
-    @apply transition-all duration-300;
-  }
-  
-  .hover-glow:hover {
-    box-shadow: 0 0 30px rgba(234, 179, 8, 0.4);
-  }
-  
   /* Icon Accent Lighting */
   .icon-accent {
     @apply transition-all duration-300;
-  }
-  
-  .hover-lift:hover .icon-accent {
     @apply text-primary;
-    filter: drop-shadow(0 0 8px rgba(234, 179, 8, 0.6));
   }
   
   /* Parallax */
@@ -276,10 +262,6 @@ All colors MUST be HSL.
     
     .animate-on-scroll {
       opacity: 1;
-      transform: none;
-    }
-    
-    .hover-lift:hover {
       transform: none;
     }
   }

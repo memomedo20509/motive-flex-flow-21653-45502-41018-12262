@@ -14,41 +14,44 @@ Preferred communication style: Simple, everyday language.
 
 ### November 12, 2025 - Motion System & UI Enhancements
 
-**Phase 1: Motion System Infrastructure**
-- Added comprehensive CSS motion utilities in `client/src/index.css`:
-  - Intersection-based animations (.animate-on-scroll, .in-view)
-  - Staggered delays for children (.stagger-children)
-  - Glass morphism effects (glass-effect, glass-card)
-  - Enhanced hover effects (hover-lift, hover-glow, icon-accent)
-  - Shimmer loading animations
-  - Counter animations
-  - Reduced motion support (@media prefers-reduced-motion)
+**Unified Professional Animation System:**
+- Created comprehensive motion utilities in `client/src/index.css`:
+  - Intersection-based animations with 520ms duration and cubic-bezier(0.22, 1, 0.36, 1) easing
+  - Consistent 120ms stagger delays for sequential reveals (up to 9 children)
+  - 16px vertical translate for subtle entrance
+  - Bidirectional scroll support (triggerOnce=false) for reanimation
+  - Full reduced motion support (@media prefers-reduced-motion)
 
-- Created reusable hooks and components:
-  - `useIntersection` hook: IntersectionObserver wrapper with cleanup
-  - `AnimatedCounter` component: Animated number counting with easing
-  - `AnimateOnScroll` wrapper: Reusable scroll-triggered animation wrapper
+**Reusable Components & Hooks:**
+- `useIntersection` hook: IntersectionObserver with proper cleanup and 35% visibility threshold
+- `AnimateOnScroll` wrapper: Reusable scroll-triggered animation container
+- ~~`AnimatedCounter`~~: Removed animated counters per user feedback
 
 **Landing Page (Index.tsx) Enhancements:**
 - Hero Section:
-  - Added animated KPI strip with 3 metrics (300+ factories, 10K+ hours, 5K+ orders)
-  - Implemented glass morphism CTA container
-  - Enhanced typography hierarchy (H1: 7xl, H2: 5xl, Body: xl responsive)
-  - Added hover glow effects on KPI cards
-  - All elements include proper data-testid attributes
-
+  - ❌ Removed KPI strip (300+, 10K+, 5K+ counters) - user feedback
+  - ✅ Simplified CTA design: Clean white/outline buttons without glass card
+  - Enhanced typography hierarchy (H1: 7xl responsive, Body: xl responsive)
+  - Trust badge with Shield icon above heading
+  
 - Workflow Cards:
   - Applied AnimateOnScroll to all workflow cards (desktop + mobile)
-  - Implemented staggered entrance animations
-  - Added icon-accent lighting on hover
-  - Enhanced card hover effects (border, scale, glow)
+  - Staggered entrance animations with 120ms delay between cards
+  - Icon-accent lighting effect on hover
+  - Enhanced card hover effects (border-primary, scale, glow)
+
+- Features Section:
+  - Animated section heading
+  - Staggered grid reveal (3 columns) with consistent timing
+  - Smooth entrance animations for all feature cards
 
 **Technical Quality:**
-- Proper cleanup for all side effects (requestAnimationFrame, IntersectionObserver)
-- Accessibility: Reduced motion support throughout
-- Performance: Optimized with proper thresholds and cleanup
-- Testing: Comprehensive data-testid coverage for automated testing
+- Proper cleanup for all side effects (IntersectionObserver disconnect on unmount)
+- Accessibility: Full reduced motion support
+- Performance: Optimized with 35% visibility threshold for earlier triggers
+- Testing: All interactive elements have data-testid attributes
 - RTL support maintained throughout
+- Bidirectional scroll: Animations trigger when scrolling up AND down
 
 ## System Architecture
 

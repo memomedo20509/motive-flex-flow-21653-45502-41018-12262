@@ -113,66 +113,39 @@ const Index = () => {
         <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-background via-background/80 to-transparent"></div>
 
         <div className="container mx-auto relative z-10 px-4 py-32">
-          <div className="text-center max-w-4xl mx-auto animate-fade-in-up">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full mb-6 border border-white/20" data-testid="badge-trust">
-              <Shield className="w-4 h-4" />
-              <span className="text-sm font-medium">نظام موثوق من +300 مصنع وشركة</span>
-            </div>
-            
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight" data-testid="heading-hero">
-              حوّل منشأتك من
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white via-primary-foreground to-white animate-pulse-slow">
-                الفوضى إلى النظام الذكي
-              </span>
-            </h1>
-            
-            <p className="text-base md:text-lg lg:text-xl mb-10 max-w-3xl mx-auto opacity-95 leading-relaxed" data-testid="text-hero-description">
-              نظام SaaS متكامل لإدارة عمليات التصنيع، التوريد، والتركيب
-              <br />
-              بطريقة رقمية كاملة ومنظمة
-              <br />
-              <span className="font-semibold">تابع وأدر عملك بكل سهولة من خلال جوالك</span>
-            </p>
-            
-            {/* KPI Strip */}
-            <div className="grid grid-cols-3 gap-4 md:gap-8 max-w-3xl mx-auto mb-10" data-testid="kpi-strip">
-              <div className="glass-effect p-4 md:p-6 rounded-2xl hover-glow" data-testid="card-kpi-factories">
-                <div className="flex flex-col items-center gap-2">
-                  <Factory className="w-6 h-6 md:w-8 md:h-8 text-primary" data-testid="icon-factories" />
-                  <div className="text-2xl md:text-4xl font-bold" data-testid="text-kpi-factories">
-                    <AnimatedCounter end={300} suffix="+" />
-                  </div>
-                  <div className="text-xs md:text-sm opacity-90" data-testid="label-factories">مصنع وشركة</div>
-                </div>
+          <div className="text-center max-w-4xl mx-auto stagger-children">
+            <AnimateOnScroll>
+              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full mb-6 border border-white/20" data-testid="badge-trust">
+                <Shield className="w-4 h-4" />
+                <span className="text-sm font-medium">نظام موثوق من +300 مصنع وشركة</span>
               </div>
-              
-              <div className="glass-effect p-4 md:p-6 rounded-2xl hover-glow" data-testid="card-kpi-hours">
-                <div className="flex flex-col items-center gap-2">
-                  <Clock className="w-6 h-6 md:w-8 md:h-8 text-primary" data-testid="icon-hours" />
-                  <div className="text-2xl md:text-4xl font-bold" data-testid="text-kpi-hours">
-                    <AnimatedCounter end={10000} suffix="+" />
-                  </div>
-                  <div className="text-xs md:text-sm opacity-90" data-testid="label-hours">ساعة موفرة</div>
-                </div>
-              </div>
-              
-              <div className="glass-effect p-4 md:p-6 rounded-2xl hover-glow" data-testid="card-kpi-orders">
-                <div className="flex flex-col items-center gap-2">
-                  <CheckCircle className="w-6 h-6 md:w-8 md:h-8 text-primary" data-testid="icon-orders" />
-                  <div className="text-2xl md:text-4xl font-bold" data-testid="text-kpi-orders">
-                    <AnimatedCounter end={5000} suffix="+" />
-                  </div>
-                  <div className="text-xs md:text-sm opacity-90" data-testid="label-orders">طلب منجز</div>
-                </div>
-              </div>
-            </div>
+            </AnimateOnScroll>
             
-            {/* CTA Buttons in Glass Card */}
-            <div className="glass-card p-6 rounded-3xl max-w-2xl mx-auto">
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <AnimateOnScroll>
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight" data-testid="heading-hero">
+                حوّل منشأتك من
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white via-primary-foreground to-white animate-pulse-slow">
+                  الفوضى إلى النظام الذكي
+                </span>
+              </h1>
+            </AnimateOnScroll>
+            
+            <AnimateOnScroll>
+              <p className="text-base md:text-lg lg:text-xl mb-12 max-w-3xl mx-auto opacity-95 leading-relaxed" data-testid="text-hero-description">
+                نظام SaaS متكامل لإدارة عمليات التصنيع، التوريد، والتركيب
+                <br />
+                بطريقة رقمية كاملة ومنظمة
+                <br />
+                <span className="font-semibold">تابع وأدر عملك بكل سهولة من خلال جوالك</span>
+              </p>
+            </AnimateOnScroll>
+            
+            <AnimateOnScroll>
+              {/* CTA Buttons - Clean & Simple */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-2xl mx-auto">
                 <Button
                   size="lg"
-                  className="px-8 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xl text-base"
+                  className="px-10 py-6 bg-white text-secondary hover:bg-white/90 shadow-2xl text-base font-bold"
                   asChild
                   data-testid="button-free-trial-hero"
                 >
@@ -184,17 +157,20 @@ const Index = () => {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="px-8 border-2 text-base"
+                  className="px-10 py-6 border-2 border-white/80 text-white hover:bg-white/10 backdrop-blur-sm text-base font-semibold"
                   asChild
                   data-testid="button-discover-features"
                 >
                   <Link href="/features">اكتشف المميزات</Link>
                 </Button>
               </div>
-              <p className="text-xs md:text-sm text-muted-foreground mt-4 opacity-80">
+            </AnimateOnScroll>
+            
+            <AnimateOnScroll>
+              <p className="text-xs md:text-sm mt-6 opacity-80" data-testid="text-trial-info">
                 تجربة مجانية لمدة شهرين - لا يتطلب بطاقة ائتمانية
               </p>
-            </div>
+            </AnimateOnScroll>
           </div>
         </div>
       </section>
@@ -205,13 +181,17 @@ const Index = () => {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-gradient-to-r from-primary/5 via-secondary/5 to-primary/5 rounded-full blur-3xl" />
         
         <div className="container mx-auto relative z-10">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-gradient">
-              كيفية عمل موتفلكس
-            </h2>
-            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              سير عمل مبسط يأخذ مشروعك من الاتصال الأولى إلى التسليم الناجح
-            </p>
+          <div className="text-center mb-16 stagger-children">
+            <AnimateOnScroll>
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-gradient">
+                كيفية عمل موتفلكس
+              </h2>
+            </AnimateOnScroll>
+            <AnimateOnScroll>
+              <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                سير عمل مبسط يأخذ مشروعك من الاتصال الأولى إلى التسليم الناجح
+              </p>
+            </AnimateOnScroll>
           </div>
           
           {/* Desktop Timeline - 2 rows x 3 columns */}
@@ -258,7 +238,7 @@ const Index = () => {
               return (
                 <AnimateOnScroll key={index}>
                   <Card 
-                    className="group relative border-2 hover:border-primary transition-all duration-500 overflow-hidden hover-lift bg-card/50 backdrop-blur-sm"
+                    className="group relative border-2 hover:border-primary transition-all duration-500 overflow-hidden bg-card/50 backdrop-blur-sm"
                     data-testid={`card-workflow-step-${step.number}`}
                   >
                     <CardContent className="p-6 text-center">
@@ -331,7 +311,7 @@ const Index = () => {
               return (
                 <AnimateOnScroll key={index}>
                   <Card 
-                    className="group relative border-2 hover:border-primary transition-all duration-500 overflow-hidden hover-lift bg-card/50 backdrop-blur-sm"
+                    className="group relative border-2 hover:border-primary transition-all duration-500 overflow-hidden bg-card/50 backdrop-blur-sm"
                     data-testid={`card-workflow-step-${step.number}`}
                   >
                     <CardContent className="p-6 text-center">
@@ -368,44 +348,50 @@ const Index = () => {
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-secondary/5 rounded-full blur-3xl"></div>
         
         <div className="container mx-auto relative z-10">
-          <div className="text-center mb-12 animate-fade-in-up">
-            <h2 className="text-3xl md:text-4xl font-bold mb-3">
-              المميزات التقنية
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              كل ما تحتاجه لإدارة مصنعك بكفاءة وسهولة
-            </p>
+          <div className="text-center mb-12 stagger-children">
+            <AnimateOnScroll>
+              <h2 className="text-3xl md:text-4xl font-bold mb-3">
+                المميزات التقنية
+              </h2>
+            </AnimateOnScroll>
+            <AnimateOnScroll>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                كل ما تحتاجه لإدارة مصنعك بكفاءة وسهولة
+              </p>
+            </AnimateOnScroll>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 stagger-children">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <Card 
-                  key={index} 
-                  className="border hover:border-primary transition-all duration-300 hover-lift group animate-scale-in bg-card"
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                >
-                  <CardContent className="pt-6 pb-6">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 text-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                      <Icon size={24} />
-                    </div>
-                    <h3 className="font-bold text-lg mb-2">{feature.title}</h3>
-                    <p className="text-muted-foreground leading-relaxed text-sm">{feature.description}</p>
-                  </CardContent>
-                </Card>
+                <AnimateOnScroll key={index}>
+                  <Card 
+                    className="border hover:border-primary transition-all duration-300 group bg-card"
+                  >
+                    <CardContent className="pt-6 pb-6">
+                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 text-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                        <Icon size={24} />
+                      </div>
+                      <h3 className="font-bold text-lg mb-2">{feature.title}</h3>
+                      <p className="text-muted-foreground leading-relaxed text-sm">{feature.description}</p>
+                    </CardContent>
+                  </Card>
+                </AnimateOnScroll>
               );
             })}
           </div>
           
-          <div className="text-center mt-10">
-            <Button size="default" variant="premium" asChild className="shadow-xl">
-              <Link href="/features">
-                <Package className="ml-2 w-4 h-4" />
-                عرض جميع المميزات
-              </Link>
-            </Button>
-          </div>
+          <AnimateOnScroll>
+            <div className="text-center mt-10">
+              <Button size="default" variant="premium" asChild className="shadow-xl">
+                <Link href="/features">
+                  <Package className="ml-2 w-4 h-4" />
+                  عرض جميع المميزات
+                </Link>
+              </Button>
+            </div>
+          </AnimateOnScroll>
         </div>
       </section>
 
@@ -427,22 +413,25 @@ const Index = () => {
         </div>
         
         <div className="container mx-auto relative z-10">
-          <div className="text-center mb-12 animate-fade-in-up">
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">
-              الصناعات التي نخدمها
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              موتفلكس مصمم للشركات الصناعية والتركيب في جميع القطاعات
-            </p>
+          <div className="text-center mb-12 stagger-children">
+            <AnimateOnScroll>
+              <h2 className="text-3xl md:text-5xl font-bold mb-4">
+                الصناعات التي نخدمها
+              </h2>
+            </AnimateOnScroll>
+            <AnimateOnScroll>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                موتفلكس مصمم للشركات الصناعية والتركيب في جميع القطاعات
+              </p>
+            </AnimateOnScroll>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto stagger-children">
             {industries.map((industry, index) => (
-              <Card
-                key={index}
-                className="group relative border-0 shadow-md hover:shadow-xl transition-all duration-300 bg-card overflow-hidden animate-scale-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
+              <AnimateOnScroll key={index}>
+                <Card
+                  className="group relative border-0 shadow-md hover:shadow-xl transition-all duration-300 bg-card overflow-hidden"
+                >
                 <CardContent className="pt-8 pb-8 px-6 text-center">
                   {/* Icon with brand colors background */}
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-5 group-hover:scale-110 transition-transform duration-300">
@@ -463,17 +452,20 @@ const Index = () => {
                   </p>
                 </CardContent>
               </Card>
+              </AnimateOnScroll>
             ))}
           </div>
           
-          <div className="text-center mt-12">
-            <Button size="lg" className="shadow-lg px-8 bg-gradient-to-r from-secondary to-primary hover:opacity-90 text-white" asChild>
-              <Link href="/industries">
-                <Factory className="ml-2 w-5 h-5" />
-                اكتشف المزيد عن القطاعات
-              </Link>
-            </Button>
-          </div>
+          <AnimateOnScroll>
+            <div className="text-center mt-12">
+              <Button size="lg" className="shadow-lg px-8 bg-gradient-to-r from-secondary to-primary hover:opacity-90 text-white" asChild>
+                <Link href="/industries">
+                  <Factory className="ml-2 w-5 h-5" />
+                  اكتشف المزيد عن القطاعات
+                </Link>
+              </Button>
+            </div>
+          </AnimateOnScroll>
         </div>
       </section>
 
@@ -481,19 +473,24 @@ const Index = () => {
       <section className="py-16 px-4 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5"></div>
         
-        <div className="container mx-auto text-center relative z-10">
-          <div className="flex items-center justify-center gap-3 mb-4 animate-fade-in-up">
-            <Shield size={32} className="text-primary animate-pulse-slow" />
-            <h2 className="text-3xl md:text-4xl font-bold">
-              موثوق به من قبل المصانع الرائدة
-            </h2>
-          </div>
+        <div className="container mx-auto text-center relative z-10 stagger-children">
+          <AnimateOnScroll>
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Shield size={32} className="text-primary animate-pulse-slow" />
+              <h2 className="text-3xl md:text-4xl font-bold">
+                موثوق به من قبل المصانع الرائدة
+              </h2>
+            </div>
+          </AnimateOnScroll>
           
-          <p className="text-muted-foreground mb-8 max-w-2xl mx-auto text-lg leading-relaxed">
-            نفخر بثقة عملائنا من مختلف القطاعات الصناعية في المملكة
-          </p>
+          <AnimateOnScroll>
+            <p className="text-muted-foreground mb-8 max-w-2xl mx-auto text-lg leading-relaxed">
+              نفخر بثقة عملائنا من مختلف القطاعات الصناعية في المملكة
+            </p>
+          </AnimateOnScroll>
           
-          <Card className="max-w-3xl mx-auto border-0 bg-gradient-to-br from-card to-card/50 shadow-xl hover-lift animate-scale-in">
+          <AnimateOnScroll>
+            <Card className="max-w-3xl mx-auto border-0 bg-gradient-to-br from-card to-card/50 shadow-xl">
             <CardContent className="p-8">
               <div className="text-5xl mb-4 opacity-20">"</div>
               <p className="text-xl mb-6 leading-relaxed italic">
@@ -509,6 +506,7 @@ const Index = () => {
               </div>
             </CardContent>
           </Card>
+          </AnimateOnScroll>
         </div>
       </section>
 
@@ -519,25 +517,33 @@ const Index = () => {
           <div className="absolute bottom-10 left-20 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1.5s' }}></div>
         </div>
         
-        <div className="container mx-auto text-center relative z-10 animate-fade-in-up">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            جاهز لتحويل مصنعك؟
-          </h2>
-          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-95 leading-relaxed">
-            ابدأ تجربتك المجانية اليوم واكتشف الفرق بنفسك
-            <br />
-            <span className="font-semibold">بدون الحاجة لبطاقة ائتمانية</span>
-          </p>
-          <Button
-            size="default"
-            className="px-10 bg-white text-secondary hover:bg-white/90 shadow-xl hover:scale-110"
-            asChild
-          >
-            <Link href="/free-trial">
-              <Zap className="ml-2 w-4 h-4" />
-              ابدأ الآن مجانًا
-            </Link>
-          </Button>
+        <div className="container mx-auto text-center relative z-10 stagger-children">
+          <AnimateOnScroll>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              جاهز لتحويل مصنعك؟
+            </h2>
+          </AnimateOnScroll>
+          
+          <AnimateOnScroll>
+            <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto opacity-95 leading-relaxed">
+              ابدأ تجربتك المجانية اليوم واكتشف الفرق بنفسك
+              <br />
+              <span className="font-semibold">بدون الحاجة لبطاقة ائتمانية</span>
+            </p>
+          </AnimateOnScroll>
+          
+          <AnimateOnScroll>
+            <Button
+              size="default"
+              className="px-10 bg-white text-secondary hover:bg-white/90 shadow-xl"
+              asChild
+            >
+              <Link href="/free-trial">
+                <Zap className="ml-2 w-4 h-4" />
+                ابدأ الآن مجانًا
+              </Link>
+            </Button>
+          </AnimateOnScroll>
         </div>
       </section>
 

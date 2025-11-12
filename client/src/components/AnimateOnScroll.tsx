@@ -11,9 +11,9 @@ interface AnimateOnScrollProps {
 export function AnimateOnScroll({
   children,
   className = '',
-  threshold = 0.1,
+  threshold = 0.35,
   rootMargin = '0px',
-  triggerOnce = true,
+  triggerOnce = false,
 }: AnimateOnScrollProps) {
   const { elementRef, isInView } = useIntersection({
     threshold,
