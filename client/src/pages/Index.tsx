@@ -110,22 +110,24 @@ const Index = () => {
 
         <div className="container mx-auto relative z-10 px-4 py-32">
           <div className="text-center max-w-4xl mx-auto animate-fade-in-up">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full mb-6 border border-white/20">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full mb-6 border border-white/20" data-testid="badge-trust">
               <Shield className="w-4 h-4" />
-              <span className="text-sm font-medium">نظام موثوق من ٣٠٠+ مصنع</span>
+              <span className="text-sm font-medium">نظام موثوق من +300 مصنع وشركة</span>
             </div>
             
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight">
-              حوّل مصنعك من
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight" data-testid="heading-hero">
+              حوّل منشأتك من
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white via-primary-foreground to-white animate-pulse-slow">
                 الفوضى إلى النظام الذكي
               </span>
             </h1>
             
-            <p className="text-lg md:text-xl mb-8 max-w-3xl mx-auto opacity-95 leading-relaxed">
+            <p className="text-lg md:text-xl mb-8 max-w-3xl mx-auto opacity-95 leading-relaxed" data-testid="text-hero-description">
               نظام SaaS متكامل لإدارة عمليات التصنيع، التوريد، والتركيب
               <br />
-              <span className="font-semibold">بطريقة رقمية كاملة ومنظمة</span>
+              بطريقة رقمية كاملة ومنظمة
+              <br />
+              <span className="font-semibold">تابع وأدر عملك بكل سهولة من خلال جوالك</span>
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -133,6 +135,7 @@ const Index = () => {
                 size="default"
                 className="px-8 bg-white text-secondary hover:bg-white/90 shadow-xl"
                 asChild
+                data-testid="button-free-trial-hero"
               >
                 <Link href="/free-trial">
                   <Zap className="ml-2 w-4 h-4" />
@@ -144,6 +147,7 @@ const Index = () => {
                 variant="outline"
                 className="px-8 border-2 border-white text-white hover:bg-white/10 glass-effect"
                 asChild
+                data-testid="button-discover-features"
               >
                 <Link href="/features">اكتشف المميزات</Link>
               </Button>
@@ -167,100 +171,150 @@ const Index = () => {
             </p>
           </div>
           
-          {/* Desktop Timeline */}
-          <div className="hidden lg:flex items-center justify-between max-w-6xl mx-auto px-8 mb-20">
+          {/* Desktop Timeline - 2 rows x 3 columns */}
+          <div className="hidden lg:grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto mb-20" data-testid="workflow-steps-desktop">
             {[
               { 
                 number: "01", 
-                title: "استقبال العميل", 
-                desc: "أرشفة تفاصيل العميل والمواقع والصور في مكان واحد"
+                title: "جدولة وأرشفة القياسات", 
+                desc: "جدولة وتوثيق القياسات مع الصور والتقارير المفصلة",
+                icon: Calendar
               },
               { 
                 number: "02", 
-                title: "جدولة القياسات", 
-                desc: "جدولة وتوثيق القياسات مع الصور والتقارير المفصلة"
+                title: "إدارة العمالء والطلبات", 
+                desc: "أرشفة تفاصيل العملاء والمواقع والصور في مكان واحد",
+                icon: Users
               },
               { 
                 number: "03", 
-                title: "التصنيع", 
-                desc: "تتبع كل مرحلة من مراحل الإنتاج مع توثيق الصور والتحديثات"
+                title: "متابعة مراحل التصنيع", 
+                desc: "تتبع كل مرحلة من مراحل الإنتاج مع توثيق الصور",
+                icon: Factory
               },
               { 
                 number: "04", 
-                title: "التركيب والتسليم", 
-                desc: "إخطار العملاء في كل خطوة مع إثبات الصور وحالة الإنجاز"
+                title: "متابعة مراحل التركيب", 
+                desc: "إخطار العملاء في كل خطوة مع إثبات الصور",
+                icon: Wrench
               },
-            ].map((step, index) => (
-              <div key={index} className="flex items-center animate-fade-in-up" style={{ animationDelay: `${index * 0.15}s` }}>
-                <div className="flex flex-col items-center">
-                  {/* Circle with gradient */}
-                  <div className="relative group">
-                    <div className="w-32 h-32 rounded-full bg-gradient-to-br from-secondary via-primary/80 to-primary flex items-center justify-center shadow-2xl transform transition-all duration-500 hover:scale-110 hover:shadow-primary/50">
-                      <span className="text-4xl font-bold text-white">{step.number}</span>
+              { 
+                number: "05", 
+                title: "متابعة الإنتاجية", 
+                desc: "مراقبة أداء الفنيين والإنتاجية اليومية بدقة",
+                icon: TrendingUp
+              },
+              { 
+                number: "06", 
+                title: "أرشفة المستندات", 
+                desc: "حفظ جميع الفواتير والمستندات بصيغة PDF آمنة",
+                icon: FileText
+              },
+            ].map((step, index) => {
+              const StepIcon = step.icon;
+              return (
+                <Card 
+                  key={index}
+                  className="group relative border-2 hover:border-primary transition-all duration-500 overflow-hidden hover-lift bg-card/50 backdrop-blur-sm animate-scale-in"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                  data-testid={`card-workflow-step-${step.number}`}
+                >
+                  <CardContent className="p-6 text-center">
+                    {/* Circle with gradient */}
+                    <div className="relative inline-block mb-4">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-secondary via-primary/80 to-primary flex items-center justify-center shadow-xl transform transition-all duration-500 group-hover:scale-110">
+                        <span className="text-2xl font-bold text-white">{step.number}</span>
+                      </div>
+                      {/* Glow effect */}
+                      <div className="absolute inset-0 w-20 h-20 rounded-full bg-gradient-to-br from-secondary to-primary opacity-0 group-hover:opacity-50 blur-xl transition-opacity duration-500" />
                     </div>
-                    {/* Glow effect */}
-                    <div className="absolute inset-0 w-32 h-32 rounded-full bg-gradient-to-br from-secondary to-primary opacity-0 group-hover:opacity-50 blur-xl transition-opacity duration-500" />
-                  </div>
-                  
-                  {/* Text below circle */}
-                  <div className="text-center mt-6 max-w-[200px]">
-                    <h3 className="font-bold text-xl mb-2 text-foreground">{step.title}</h3>
+                    
+                    {/* Icon */}
+                    <div className="flex justify-center mb-3">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 text-primary flex items-center justify-center">
+                        <StepIcon size={20} />
+                      </div>
+                    </div>
+                    
+                    <h3 className="font-bold text-lg mb-3 text-foreground">{step.title}</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
-                  </div>
-                </div>
-                
-                {/* Connecting line with gradient */}
-                {index < 3 && (
-                  <div className="w-24 h-1 mx-4 bg-gradient-to-l from-primary via-secondary/60 to-secondary rounded-full mb-32" />
-                )}
-              </div>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
 
           {/* Mobile/Tablet Timeline */}
-          <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+          <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto" data-testid="workflow-steps-mobile">
             {[
               { 
                 number: "01", 
-                title: "استقبال العميل", 
-                desc: "أرشفة تفاصيل العميل والمواقع والصور في مكان واحد"
+                title: "جدولة وأرشفة القياسات", 
+                desc: "جدولة وتوثيق القياسات مع الصور والتقارير المفصلة",
+                icon: Calendar
               },
               { 
                 number: "02", 
-                title: "جدولة القياسات", 
-                desc: "جدولة وتوثيق القياسات مع الصور والتقارير المفصلة"
+                title: "إدارة العمالء والطلبات", 
+                desc: "أرشفة تفاصيل العملاء والمواقع والصور في مكان واحد",
+                icon: Users
               },
               { 
                 number: "03", 
-                title: "التصنيع", 
-                desc: "تتبع كل مرحلة من مراحل الإنتاج مع توثيق الصور والتحديثات"
+                title: "متابعة مراحل التصنيع", 
+                desc: "تتبع كل مرحلة من مراحل الإنتاج مع توثيق الصور",
+                icon: Factory
               },
               { 
                 number: "04", 
-                title: "التركيب والتسليم", 
-                desc: "إخطار العملاء في كل خطوة مع إثبات الصور وحالة الإنجاز"
+                title: "متابعة مراحل التركيب", 
+                desc: "إخطار العملاء في كل خطوة مع إثبات الصور",
+                icon: Wrench
               },
-            ].map((step, index) => (
-              <Card 
-                key={index}
-                className="group relative border-2 hover:border-primary transition-all duration-500 overflow-hidden hover-lift bg-card/50 backdrop-blur-sm animate-scale-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <CardContent className="p-6 text-center">
-                  {/* Circle with gradient */}
-                  <div className="relative inline-block mb-4">
-                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-secondary via-primary/80 to-primary flex items-center justify-center shadow-xl transform transition-all duration-500 group-hover:scale-110">
-                      <span className="text-3xl font-bold text-white">{step.number}</span>
+              { 
+                number: "05", 
+                title: "متابعة الإنتاجية", 
+                desc: "مراقبة أداء الفنيين والإنتاجية اليومية بدقة",
+                icon: TrendingUp
+              },
+              { 
+                number: "06", 
+                title: "أرشفة المستندات", 
+                desc: "حفظ جميع الفواتير والمستندات بصيغة PDF آمنة",
+                icon: FileText
+              },
+            ].map((step, index) => {
+              const StepIcon = step.icon;
+              return (
+                <Card 
+                  key={index}
+                  className="group relative border-2 hover:border-primary transition-all duration-500 overflow-hidden hover-lift bg-card/50 backdrop-blur-sm animate-scale-in"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                  data-testid={`card-workflow-step-${step.number}`}
+                >
+                  <CardContent className="p-6 text-center">
+                    {/* Circle with gradient */}
+                    <div className="relative inline-block mb-4">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-secondary via-primary/80 to-primary flex items-center justify-center shadow-xl transform transition-all duration-500 group-hover:scale-110">
+                        <span className="text-2xl font-bold text-white">{step.number}</span>
+                      </div>
+                      {/* Glow effect */}
+                      <div className="absolute inset-0 w-20 h-20 rounded-full bg-gradient-to-br from-secondary to-primary opacity-0 group-hover:opacity-50 blur-xl transition-opacity duration-500" />
                     </div>
-                    {/* Glow effect */}
-                    <div className="absolute inset-0 w-24 h-24 rounded-full bg-gradient-to-br from-secondary to-primary opacity-0 group-hover:opacity-50 blur-xl transition-opacity duration-500" />
-                  </div>
-                  
-                  <h3 className="font-bold text-lg mb-3 text-foreground">{step.title}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
-                </CardContent>
-              </Card>
-            ))}
+                    
+                    {/* Icon */}
+                    <div className="flex justify-center mb-3">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 text-primary flex items-center justify-center">
+                        <StepIcon size={20} />
+                      </div>
+                    </div>
+                    
+                    <h3 className="font-bold text-lg mb-3 text-foreground">{step.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </section>

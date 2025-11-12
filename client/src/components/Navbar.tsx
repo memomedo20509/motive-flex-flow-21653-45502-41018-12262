@@ -35,7 +35,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 hover:scale-105 transition-transform duration-300">
-            <img src={logo} alt="موتفلكس" className="h-10 w-auto drop-shadow-lg" />
+            <img src={logo} alt="موتفلكس" className="h-14 w-auto drop-shadow-lg" data-testid="logo-main" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -49,6 +49,7 @@ const Navbar = () => {
                     ? 'text-foreground hover:text-secondary' 
                     : 'text-white hover:text-primary'
                 }`}
+                data-testid={`link-nav-${link.name_en.toLowerCase()}`}
               >
                 {link.name}
                 <span className={`absolute bottom-0 left-0 w-0 h-0.5 transition-all duration-300 group-hover:w-full ${
@@ -68,6 +69,7 @@ const Navbar = () => {
                   ? 'bg-secondary hover:bg-secondary/90 text-white' 
                   : 'bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 text-white'
               }`}
+              data-testid="button-free-trial-nav"
             >
               <Link href="/free-trial">جرّب مجانًا</Link>
             </Button>
@@ -78,6 +80,7 @@ const Navbar = () => {
             className={`lg:hidden p-2 transition-colors ${isScrolled ? 'text-foreground' : 'text-white'}`}
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Toggle menu"
+            data-testid="button-mobile-menu-toggle"
           >
             {isOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -92,11 +95,12 @@ const Navbar = () => {
                 href={link.href}
                 className="block py-2 text-foreground hover:text-primary transition-colors"
                 onClick={() => setIsOpen(false)}
+                data-testid={`link-mobile-${link.name_en.toLowerCase()}`}
               >
                 {link.name}
               </Link>
             ))}
-            <Button variant="default" size="lg" className="w-full mt-4" asChild>
+            <Button variant="default" size="lg" className="w-full mt-4" asChild data-testid="button-free-trial-mobile">
               <Link href="/free-trial" onClick={() => setIsOpen(false)}>
                 جرّب مجانًا
               </Link>

@@ -6,40 +6,49 @@ import Footer from "@/components/Footer";
 import { Check } from "lucide-react";
 
 const Pricing = () => {
+  const setupFee = {
+    price: "690",
+    description: "رسوم تأسيس لمرة واحدة شاملة الضريبة",
+  };
+
   const plans = [
     {
-      name: "الباقة الأساسية",
-      name_en: "Starter",
-      price: "499",
-      period: "شهرياً",
-      description: "مناسبة للمصانع والشركات الصغيرة",
+      name: "باقة 6 شهور",
+      name_en: "6 Months",
+      price: "6,000",
+      period: "6 أشهر",
+      description: "الباقة المثالية للمشاريع قصيرة ومتوسطة المدى",
       features: [
-        "حتى 5 مستخدمين",
+        "عدد مستخدمين غير محدود",
         "إدارة العملاء والطلبات",
-        "متابعة مراحل التصنيع",
+        "متابعة مراحل التصنيع والتركيب",
         "أرشفة الصور والمستندات",
         "لوحة تحكم أساسية",
-        "دعم فني عبر البريد",
-        "تخزين 10 جيجا",
+        "الرسائل النصية المدعومة بالصور",
+        "تقارير متقدمة",
+        "إنشاء الكاتالوج",
+        "لوحة العميل (Client Portal)",
+        "تخزين غير محدود",
       ],
       popular: false,
     },
     {
-      name: "الباقة الاحترافية",
-      name_en: "Professional",
-      price: "999",
-      period: "شهرياً",
-      description: "الأكثر شعبية للشركات المتوسطة",
+      name: "باقة سنة",
+      name_en: "1 Year",
+      price: "10,350",
+      period: "12 شهر",
+      description: "الأكثر شعبية - وفّر 14% على المدى الطويل",
       features: [
-        "حتى 20 مستخدم",
-        "جميع مميزات الباقة الأساسية",
-        "إدارة الفنيين والمواقع",
+        "عدد مستخدمين غير محدود",
+        "إدارة العملاء والطلبات",
+        "متابعة مراحل التصنيع والتركيب",
+        "أرشفة الصور والمستندات",
+        "لوحة تحكم أساسية",
         "الرسائل النصية المدعومة بالصور",
         "تقارير متقدمة",
+        "إنشاء الكاتالوج",
         "لوحة العميل (Client Portal)",
-        "دعم فني ذو أولوية",
-        "تخزين 50 جيجا",
-        "تكامل مع الأنظمة الأخرى",
+        "تخزين غير محدود",
       ],
       popular: true,
     },
@@ -51,7 +60,7 @@ const Pricing = () => {
       description: "حلول مخصصة للمؤسسات الكبيرة",
       features: [
         "عدد مستخدمين غير محدود",
-        "جميع مميزات الباقة الاحترافية",
+        "جميع مميزات الباقات السابقة",
         "تخصيص كامل حسب الحاجة",
         "تدريب متخصص للفريق",
         "دعم فني مخصص 24/7",
@@ -80,8 +89,31 @@ const Pricing = () => {
             خطط أسعار واضحة ومرنة
           </h1>
           <p className="text-lg md:text-xl max-w-3xl mx-auto opacity-95 leading-relaxed">
-            اختر الباقة المناسبة لحجم عملك - جميع الباقات تشمل تجربة مجانية لمدة 14 يوم
+            اختر الباقة المناسبة لحجم عملك - جميع الباقات تشمل تجربة مجانية لمدة شهرين
           </p>
+          <div className="mt-8 inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-6 py-3 rounded-full border border-white/20">
+            <Check size={20} className="text-primary" />
+            <span className="text-sm font-medium">رسائل نصية مجانية باسم mutaba خلال فترة التجربة</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Setup Fee Banner */}
+      <section className="py-8 px-4 bg-primary/5 border-y border-primary/20">
+        <div className="container mx-auto text-center">
+          <div className="inline-flex items-center gap-4 bg-white dark:bg-card p-6 rounded-2xl shadow-lg">
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground mb-1">رسوم التأسيس (مرة واحدة)</p>
+              <div className="flex items-end gap-2">
+                <span className="text-4xl font-bold text-primary">{setupFee.price}</span>
+                <span className="text-lg text-muted-foreground mb-1">ريال</span>
+              </div>
+            </div>
+            <div className="h-12 w-px bg-border"></div>
+            <p className="text-sm text-muted-foreground max-w-xs text-right">
+              {setupFee.description}
+            </p>
+          </div>
         </div>
       </section>
 

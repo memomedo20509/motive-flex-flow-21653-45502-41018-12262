@@ -29,11 +29,11 @@ const FreeTrial = () => {
           <div className="flex items-center justify-center gap-3 mb-4">
             <Zap size={40} />
             <h1 className="text-4xl md:text-5xl font-bold">
-              ابدأ تجربتك المجانية
+              ابدأ تجربتك المجانية لمدة شهرين
             </h1>
           </div>
           <p className="text-lg md:text-xl max-w-2xl mx-auto opacity-95">
-            14 يوم مجاناً - بدون بطاقة ائتمان - ابدأ في دقائق
+            شهرين مجاناً - بدون بطاقة ائتمان - ابدأ في دقائق
           </p>
         </div>
       </section>
@@ -43,9 +43,11 @@ const FreeTrial = () => {
         <div className="container mx-auto">
           <div className="flex flex-wrap justify-center gap-8 text-center">
             {[
-              "تجربة مجانية 14 يوم",
+              "تجربة مجانية شهرين",
               "لا حاجة لبطاقة ائتمان",
-              "دعم فني كامل",
+              "رسائل نصية مجانية باسم mutaba",
+              "دعم فني متكامل",
+              "تدريب مجاني",
               "إلغاء في أي وقت",
             ].map((benefit, index) => (
               <div key={index} className="flex items-center gap-2">
@@ -67,7 +69,7 @@ const FreeTrial = () => {
                 <h2 className="text-2xl font-bold mb-6">
                   املأ البيانات للبدء
                 </h2>
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6" data-testid="form-free-trial">
                   <div>
                     <Label htmlFor="fullName">الاسم الكامل *</Label>
                     <Input
@@ -76,6 +78,7 @@ const FreeTrial = () => {
                       placeholder="أدخل اسمك الكامل"
                       required
                       className="mt-2"
+                      data-testid="input-fullname"
                     />
                   </div>
 
@@ -87,6 +90,7 @@ const FreeTrial = () => {
                       placeholder="example@company.com"
                       required
                       className="mt-2"
+                      data-testid="input-email"
                     />
                   </div>
 
@@ -99,6 +103,7 @@ const FreeTrial = () => {
                       required
                       className="mt-2"
                       dir="ltr"
+                      data-testid="input-phone"
                     />
                   </div>
 
@@ -110,13 +115,14 @@ const FreeTrial = () => {
                       placeholder="اسم شركتك"
                       required
                       className="mt-2"
+                      data-testid="input-company"
                     />
                   </div>
 
                   <div>
                     <Label htmlFor="industry">القطاع الصناعي *</Label>
                     <Select required>
-                      <SelectTrigger className="mt-2">
+                      <SelectTrigger className="mt-2" data-testid="select-industry">
                         <SelectValue placeholder="اختر قطاعك" />
                       </SelectTrigger>
                       <SelectContent>
@@ -144,7 +150,7 @@ const FreeTrial = () => {
                   <div>
                     <Label htmlFor="employees">عدد الموظفين</Label>
                     <Select>
-                      <SelectTrigger className="mt-2">
+                      <SelectTrigger className="mt-2" data-testid="select-employees">
                         <SelectValue placeholder="اختر عدد الموظفين" />
                       </SelectTrigger>
                       <SelectContent>
@@ -161,6 +167,7 @@ const FreeTrial = () => {
                     size="lg"
                     className="w-full text-lg"
                     variant="default"
+                    data-testid="button-submit-trial"
                   >
                     ابدأ تجربتك المجانية الآن
                   </Button>
