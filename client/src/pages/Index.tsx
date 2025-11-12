@@ -145,7 +145,7 @@ const Index = () => {
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center max-w-2xl mx-auto">
                 <Button
                   size="lg"
-                  className="px-10 py-6 bg-white text-secondary hover:bg-white/90 shadow-2xl text-base font-bold"
+                  className="px-10 py-6 bg-white text-primary hover:bg-white/90 shadow-2xl text-base font-bold"
                   asChild
                   data-testid="button-free-trial-hero"
                 >
