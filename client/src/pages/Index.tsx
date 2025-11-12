@@ -157,7 +157,7 @@ const Index = () => {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="px-10 py-6 border-2 border-white/80 text-white hover:bg-white/10 backdrop-blur-sm text-base font-semibold"
+                  className="px-10 py-6 border-2 border-white bg-white/20 text-white hover:bg-white/30 backdrop-blur-md text-base font-semibold shadow-xl"
                   asChild
                   data-testid="button-discover-features"
                 >
