@@ -1,11 +1,9 @@
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { PageScaffold } from "@/components/PageScaffold";
 import { Card, CardContent } from "@/components/ui/card";
 
 const PrivacyPolicy = () => {
   return (
-    <div className="min-h-screen" dir="rtl">
-      <Navbar />
+    <PageScaffold>
 
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 bg-muted/50">
@@ -155,9 +153,7 @@ const PrivacyPolicy = () => {
           </Card>
         </div>
       </section>
-
-      <Footer />
-    </div>
+    </PageScaffold>
   );
 };
 

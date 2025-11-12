@@ -9,8 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { PageScaffold } from "@/components/PageScaffold";
 import { CheckCircle, Zap } from "lucide-react";
 
 const FreeTrial = () => {
@@ -20,8 +19,7 @@ const FreeTrial = () => {
   };
 
   return (
-    <div className="min-h-screen" dir="rtl">
-      <Navbar />
+    <PageScaffold>
 
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 gradient-hero text-white">
@@ -254,9 +252,7 @@ const FreeTrial = () => {
           </div>
         </div>
       </section>
-
-      <Footer />
-    </div>
+    </PageScaffold>
   );
 };
 

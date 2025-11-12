@@ -1,12 +1,13 @@
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { PageScaffold } from "@/components/PageScaffold";
+import { SectionHeader } from "@/components/SectionHeader";
+import { CTASection } from "@/components/CTASection";
+import { AnimateOnScroll } from "@/components/AnimateOnScroll";
 import { Card, CardContent } from "@/components/ui/card";
-import { Target, Eye, Award, Users } from "lucide-react";
+import { Target, Eye, Award, Users, Zap } from "lucide-react";
 
 const About = () => {
   return (
-    <div className="min-h-screen" dir="rtl">
-      <Navbar />
+    <PageScaffold>
 
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 gradient-hero text-white relative overflow-hidden">
@@ -15,20 +16,26 @@ const About = () => {
           <div className="absolute bottom-20 left-10 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
         </div>
         
-        <div className="container mx-auto text-center relative z-10">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">من نحن</h1>
-          <p className="text-lg md:text-xl max-w-3xl mx-auto opacity-95 leading-relaxed">
-            نحن فريق متخصص في تطوير حلول تقنية لتحويل القطاع الصناعي
-          </p>
+        <div className="container mx-auto text-center relative z-10 stagger-children">
+          <AnimateOnScroll>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6" data-testid="heading-about-hero">من نحن</h1>
+          </AnimateOnScroll>
+          <AnimateOnScroll>
+            <p className="text-lg md:text-xl max-w-3xl mx-auto opacity-95 leading-relaxed" data-testid="text-about-description">
+              نحن فريق متخصص في تطوير حلول تقنية لتحويل القطاع الصناعي
+            </p>
+          </AnimateOnScroll>
         </div>
       </section>
 
       {/* Story Section */}
       <section className="py-20 px-4 bg-gradient-to-b from-background via-muted/10 to-background">
         <div className="container mx-auto max-w-4xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-8">
-            قصتنا
-          </h2>
+          <SectionHeader
+            title="قصتنا"
+            description="رحلتنا في تحويل القطاع الصناعي رقمياً"
+          />
+          <AnimateOnScroll>
           <div className="prose prose-lg mx-auto text-muted-foreground leading-relaxed">
             <p className="text-lg mb-6">
               بدأت فكرة موتفلكس من تحدي حقيقي واجهه العديد من أصحاب المصانع
@@ -46,14 +53,17 @@ const About = () => {
               مساعداً الشركات على التحول الرقمي وتحسين كفاءة عملياتها.
             </p>
           </div>
+          </AnimateOnScroll>
         </div>
       </section>
 
       {/* Vision & Mission */}
       <section className="py-20 px-4 bg-muted/20">
         <div className="container mx-auto max-w-7xl">
-          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <Card className="border-2">
+          <SectionHeader title="رؤيتنا ومهمتنا" description="ما نؤمن به ونعمل من أجله" />
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto stagger-children">
+            <AnimateOnScroll>
+            <Card className="border-2" data-testid="card-vision">
               <CardContent className="pt-8 text-center">
                 <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
                   <Eye size={32} />
@@ -66,8 +76,10 @@ const About = () => {
                 </p>
               </CardContent>
             </Card>
+            </AnimateOnScroll>
 
-            <Card className="border-2">
+            <AnimateOnScroll>
+            <Card className="border-2" data-testid="card-mission">
               <CardContent className="pt-8 text-center">
                 <div className="w-16 h-16 rounded-full bg-secondary/10 text-secondary flex items-center justify-center mx-auto mb-4">
                   <Target size={32} />
@@ -80,6 +92,7 @@ const About = () => {
                 </p>
               </CardContent>
             </Card>
+            </AnimateOnScroll>
           </div>
         </div>
       </section>
@@ -87,10 +100,8 @@ const About = () => {
       {/* Values */}
       <section className="py-20 px-4 bg-gradient-to-b from-background to-muted/10">
         <div className="container mx-auto max-w-7xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-            قيمنا
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+          <SectionHeader title="قيمنا" description="المبادئ التي توجّه عملنا يومياً" />
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto stagger-children">
             {[
               {
                 icon: Users,
@@ -115,7 +126,8 @@ const About = () => {
             ].map((value, index) => {
               const Icon = value.icon;
               return (
-                <Card key={index}>
+                <AnimateOnScroll key={index}>
+                <Card data-testid={`card-value-${index}`}>
                   <CardContent className="pt-6 text-center">
                     <div className="w-14 h-14 rounded-lg bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
                       <Icon size={28} />
@@ -126,14 +138,23 @@ const About = () => {
                     </p>
                   </CardContent>
                 </Card>
+                </AnimateOnScroll>
               );
             })}
           </div>
         </div>
       </section>
 
-      <Footer />
-    </div>
+      <CTASection
+        title="جاهز للانضمام إلينا؟"
+        description="ابدأ رحلتك نحو التحول الرقمي مع موتفلكس"
+        primaryButtonText="ابدأ تجربتك المجانية"
+        primaryButtonLink="/free-trial"
+        primaryButtonIcon={Zap}
+        secondaryButtonText="تواصل معنا"
+        secondaryButtonLink="/contact"
+      />
+    </PageScaffold>
   );
 };
 
