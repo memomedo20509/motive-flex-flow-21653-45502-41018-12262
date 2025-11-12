@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { AnimatedCounter } from "@/components/AnimatedCounter";
+import { AnimateOnScroll } from "@/components/AnimateOnScroll";
 import {
   Users,
   Calendar,
@@ -16,6 +18,8 @@ import {
   Zap,
   TrendingUp,
   Award,
+  Clock,
+  CheckCircle,
 } from "lucide-react";
 
 const Index = () => {
@@ -115,14 +119,14 @@ const Index = () => {
               <span className="text-sm font-medium">نظام موثوق من +300 مصنع وشركة</span>
             </div>
             
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight" data-testid="heading-hero">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight" data-testid="heading-hero">
               حوّل منشأتك من
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white via-primary-foreground to-white animate-pulse-slow">
                 الفوضى إلى النظام الذكي
               </span>
             </h1>
             
-            <p className="text-lg md:text-xl mb-8 max-w-3xl mx-auto opacity-95 leading-relaxed" data-testid="text-hero-description">
+            <p className="text-base md:text-lg lg:text-xl mb-10 max-w-3xl mx-auto opacity-95 leading-relaxed" data-testid="text-hero-description">
               نظام SaaS متكامل لإدارة عمليات التصنيع، التوريد، والتركيب
               <br />
               بطريقة رقمية كاملة ومنظمة
@@ -130,27 +134,66 @@ const Index = () => {
               <span className="font-semibold">تابع وأدر عملك بكل سهولة من خلال جوالك</span>
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                size="default"
-                className="px-8 bg-white text-secondary hover:bg-white/90 shadow-xl"
-                asChild
-                data-testid="button-free-trial-hero"
-              >
-                <Link href="/free-trial">
-                  <Zap className="ml-2 w-4 h-4" />
-                  ابدأ تجربتك المجانية الآن
-                </Link>
-              </Button>
-              <Button
-                size="default"
-                variant="outline"
-                className="px-8 border-2 border-white text-white hover:bg-white/10 glass-effect"
-                asChild
-                data-testid="button-discover-features"
-              >
-                <Link href="/features">اكتشف المميزات</Link>
-              </Button>
+            {/* KPI Strip */}
+            <div className="grid grid-cols-3 gap-4 md:gap-8 max-w-3xl mx-auto mb-10" data-testid="kpi-strip">
+              <div className="glass-effect p-4 md:p-6 rounded-2xl hover-glow" data-testid="card-kpi-factories">
+                <div className="flex flex-col items-center gap-2">
+                  <Factory className="w-6 h-6 md:w-8 md:h-8 text-primary" data-testid="icon-factories" />
+                  <div className="text-2xl md:text-4xl font-bold" data-testid="text-kpi-factories">
+                    <AnimatedCounter end={300} suffix="+" />
+                  </div>
+                  <div className="text-xs md:text-sm opacity-90" data-testid="label-factories">مصنع وشركة</div>
+                </div>
+              </div>
+              
+              <div className="glass-effect p-4 md:p-6 rounded-2xl hover-glow" data-testid="card-kpi-hours">
+                <div className="flex flex-col items-center gap-2">
+                  <Clock className="w-6 h-6 md:w-8 md:h-8 text-primary" data-testid="icon-hours" />
+                  <div className="text-2xl md:text-4xl font-bold" data-testid="text-kpi-hours">
+                    <AnimatedCounter end={10000} suffix="+" />
+                  </div>
+                  <div className="text-xs md:text-sm opacity-90" data-testid="label-hours">ساعة موفرة</div>
+                </div>
+              </div>
+              
+              <div className="glass-effect p-4 md:p-6 rounded-2xl hover-glow" data-testid="card-kpi-orders">
+                <div className="flex flex-col items-center gap-2">
+                  <CheckCircle className="w-6 h-6 md:w-8 md:h-8 text-primary" data-testid="icon-orders" />
+                  <div className="text-2xl md:text-4xl font-bold" data-testid="text-kpi-orders">
+                    <AnimatedCounter end={5000} suffix="+" />
+                  </div>
+                  <div className="text-xs md:text-sm opacity-90" data-testid="label-orders">طلب منجز</div>
+                </div>
+              </div>
+            </div>
+            
+            {/* CTA Buttons in Glass Card */}
+            <div className="glass-card p-6 rounded-3xl max-w-2xl mx-auto">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button
+                  size="lg"
+                  className="px-8 bg-primary text-primary-foreground hover:bg-primary/90 shadow-xl text-base"
+                  asChild
+                  data-testid="button-free-trial-hero"
+                >
+                  <Link href="/free-trial">
+                    <Zap className="ml-2 w-5 h-5" />
+                    ابدأ تجربتك المجانية الآن
+                  </Link>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="px-8 border-2 text-base"
+                  asChild
+                  data-testid="button-discover-features"
+                >
+                  <Link href="/features">اكتشف المميزات</Link>
+                </Button>
+              </div>
+              <p className="text-xs md:text-sm text-muted-foreground mt-4 opacity-80">
+                تجربة مجانية لمدة شهرين - لا يتطلب بطاقة ائتمانية
+              </p>
             </div>
           </div>
         </div>
@@ -162,17 +205,17 @@ const Index = () => {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-gradient-to-r from-primary/5 via-secondary/5 to-primary/5 rounded-full blur-3xl" />
         
         <div className="container mx-auto relative z-10">
-          <div className="text-center mb-16 animate-fade-in-up">
-            <h2 className="text-3xl md:text-5xl font-bold mb-4 text-gradient">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-gradient">
               كيفية عمل موتفلكس
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               سير عمل مبسط يأخذ مشروعك من الاتصال الأولى إلى التسليم الناجح
             </p>
           </div>
           
           {/* Desktop Timeline - 2 rows x 3 columns */}
-          <div className="hidden lg:grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto mb-20" data-testid="workflow-steps-desktop">
+          <div className="hidden lg:grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto mb-20 stagger-children" data-testid="workflow-steps-desktop">
             {[
               { 
                 number: "01", 
@@ -213,39 +256,39 @@ const Index = () => {
             ].map((step, index) => {
               const StepIcon = step.icon;
               return (
-                <Card 
-                  key={index}
-                  className="group relative border-2 hover:border-primary transition-all duration-500 overflow-hidden hover-lift bg-card/50 backdrop-blur-sm animate-scale-in"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                  data-testid={`card-workflow-step-${step.number}`}
-                >
-                  <CardContent className="p-6 text-center">
-                    {/* Circle with gradient */}
-                    <div className="relative inline-block mb-4">
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-secondary via-primary/80 to-primary flex items-center justify-center shadow-xl transform transition-all duration-500 group-hover:scale-110">
-                        <span className="text-2xl font-bold text-white">{step.number}</span>
+                <AnimateOnScroll key={index}>
+                  <Card 
+                    className="group relative border-2 hover:border-primary transition-all duration-500 overflow-hidden hover-lift bg-card/50 backdrop-blur-sm"
+                    data-testid={`card-workflow-step-${step.number}`}
+                  >
+                    <CardContent className="p-6 text-center">
+                      {/* Circle with gradient */}
+                      <div className="relative inline-block mb-4">
+                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-secondary via-primary/80 to-primary flex items-center justify-center shadow-xl transform transition-all duration-500 group-hover:scale-110">
+                          <span className="text-2xl font-bold text-white">{step.number}</span>
+                        </div>
+                        {/* Glow effect */}
+                        <div className="absolute inset-0 w-20 h-20 rounded-full bg-gradient-to-br from-secondary to-primary opacity-0 group-hover:opacity-50 blur-xl transition-opacity duration-500" />
                       </div>
-                      {/* Glow effect */}
-                      <div className="absolute inset-0 w-20 h-20 rounded-full bg-gradient-to-br from-secondary to-primary opacity-0 group-hover:opacity-50 blur-xl transition-opacity duration-500" />
-                    </div>
-                    
-                    {/* Icon */}
-                    <div className="flex justify-center mb-3">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 text-primary flex items-center justify-center">
-                        <StepIcon size={20} />
+                      
+                      {/* Icon */}
+                      <div className="flex justify-center mb-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center icon-accent">
+                          <StepIcon size={20} className="text-primary" />
+                        </div>
                       </div>
-                    </div>
-                    
-                    <h3 className="font-bold text-lg mb-3 text-foreground">{step.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
-                  </CardContent>
-                </Card>
+                      
+                      <h3 className="font-bold text-lg mb-3 text-foreground">{step.title}</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
+                    </CardContent>
+                  </Card>
+                </AnimateOnScroll>
               );
             })}
           </div>
 
           {/* Mobile/Tablet Timeline */}
-          <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto" data-testid="workflow-steps-mobile">
+          <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto stagger-children" data-testid="workflow-steps-mobile">
             {[
               { 
                 number: "01", 
@@ -286,33 +329,33 @@ const Index = () => {
             ].map((step, index) => {
               const StepIcon = step.icon;
               return (
-                <Card 
-                  key={index}
-                  className="group relative border-2 hover:border-primary transition-all duration-500 overflow-hidden hover-lift bg-card/50 backdrop-blur-sm animate-scale-in"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                  data-testid={`card-workflow-step-${step.number}`}
-                >
-                  <CardContent className="p-6 text-center">
-                    {/* Circle with gradient */}
-                    <div className="relative inline-block mb-4">
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-secondary via-primary/80 to-primary flex items-center justify-center shadow-xl transform transition-all duration-500 group-hover:scale-110">
-                        <span className="text-2xl font-bold text-white">{step.number}</span>
+                <AnimateOnScroll key={index}>
+                  <Card 
+                    className="group relative border-2 hover:border-primary transition-all duration-500 overflow-hidden hover-lift bg-card/50 backdrop-blur-sm"
+                    data-testid={`card-workflow-step-${step.number}`}
+                  >
+                    <CardContent className="p-6 text-center">
+                      {/* Circle with gradient */}
+                      <div className="relative inline-block mb-4">
+                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-secondary via-primary/80 to-primary flex items-center justify-center shadow-xl transform transition-all duration-500 group-hover:scale-110">
+                          <span className="text-2xl font-bold text-white">{step.number}</span>
+                        </div>
+                        {/* Glow effect */}
+                        <div className="absolute inset-0 w-20 h-20 rounded-full bg-gradient-to-br from-secondary to-primary opacity-0 group-hover:opacity-50 blur-xl transition-opacity duration-500" />
                       </div>
-                      {/* Glow effect */}
-                      <div className="absolute inset-0 w-20 h-20 rounded-full bg-gradient-to-br from-secondary to-primary opacity-0 group-hover:opacity-50 blur-xl transition-opacity duration-500" />
-                    </div>
-                    
-                    {/* Icon */}
-                    <div className="flex justify-center mb-3">
-                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 text-primary flex items-center justify-center">
-                        <StepIcon size={20} />
+                      
+                      {/* Icon */}
+                      <div className="flex justify-center mb-3">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center icon-accent">
+                          <StepIcon size={20} className="text-primary" />
+                        </div>
                       </div>
-                    </div>
-                    
-                    <h3 className="font-bold text-lg mb-3 text-foreground">{step.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
-                  </CardContent>
-                </Card>
+                      
+                      <h3 className="font-bold text-lg mb-3 text-foreground">{step.title}</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
+                    </CardContent>
+                  </Card>
+                </AnimateOnScroll>
               );
             })}
           </div>
