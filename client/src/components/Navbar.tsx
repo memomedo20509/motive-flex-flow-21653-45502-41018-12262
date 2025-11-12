@@ -67,7 +67,7 @@ const Navbar = () => {
               className={`transition-all duration-300 ${
                 isScrolled 
                   ? 'bg-secondary hover:bg-secondary/90 text-white' 
-                  : 'bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 text-white'
+                  : 'bg-white/20 backdrop-blur-md border-2 border-white hover:bg-white/30 text-white shadow-xl font-semibold'
               }`}
               data-testid="button-free-trial-nav"
             >
