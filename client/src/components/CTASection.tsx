@@ -48,7 +48,7 @@ export function CTASection({
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button
               size="default"
-              className="px-10 bg-white text-secondary hover:bg-white/90 shadow-xl"
+              className="px-10 bg-white text-primary hover:bg-white/90 shadow-xl font-bold"
               asChild
               data-testid="button-cta-primary"
             >
@@ -62,7 +62,7 @@ export function CTASection({
               <Button
                 size="default"
                 variant="outline"
-                className="px-10 border-2 border-white/80 text-white hover:bg-white/10 backdrop-blur-sm"
+                className="px-10 border-2 border-white bg-white/20 text-white hover:bg-white/30 backdrop-blur-md shadow-xl font-semibold"
                 asChild
                 data-testid="button-cta-secondary"
               >

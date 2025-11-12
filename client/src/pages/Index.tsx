@@ -535,7 +535,7 @@ const Index = () => {
           <AnimateOnScroll>
             <Button
               size="default"
-              className="px-10 bg-white text-secondary hover:bg-white/90 shadow-xl"
+              className="px-10 bg-white text-primary hover:bg-white/90 shadow-xl font-bold"
               asChild
             >
               <Link href="/free-trial">
