@@ -1,9 +1,11 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import { Check } from "lucide-react";
+import { PageScaffold } from "@/components/PageScaffold";
+import { SectionHeader } from "@/components/SectionHeader";
+import { CTASection } from "@/components/CTASection";
+import { AnimateOnScroll } from "@/components/AnimateOnScroll";
+import { Check, Zap } from "lucide-react";
 
 const Pricing = () => {
   const setupFee = {
@@ -74,9 +76,7 @@ const Pricing = () => {
   ];
 
   return (
-    <div className="min-h-screen" dir="rtl">
-      <Navbar />
-
+    <PageScaffold>
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 gradient-hero text-white relative overflow-hidden">
         <div className="absolute inset-0">
@@ -84,17 +84,23 @@ const Pricing = () => {
           <div className="absolute bottom-20 left-10 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
         </div>
         
-        <div className="container mx-auto text-center relative z-10">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-            خطط أسعار واضحة ومرنة
-          </h1>
-          <p className="text-lg md:text-xl max-w-3xl mx-auto opacity-95 leading-relaxed">
-            اختر الباقة المناسبة لحجم عملك - جميع الباقات تشمل تجربة مجانية لمدة شهرين
-          </p>
-          <div className="mt-8 inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-6 py-3 rounded-full border border-white/20">
-            <Check size={20} className="text-primary" />
-            <span className="text-sm font-medium">رسائل نصية مجانية باسم mutaba خلال فترة التجربة</span>
-          </div>
+        <div className="container mx-auto text-center relative z-10 stagger-children">
+          <AnimateOnScroll>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6" data-testid="heading-pricing-hero">
+              خطط أسعار واضحة ومرنة
+            </h1>
+          </AnimateOnScroll>
+          <AnimateOnScroll>
+            <p className="text-lg md:text-xl max-w-3xl mx-auto opacity-95 leading-relaxed" data-testid="text-pricing-description">
+              اختر الباقة المناسبة لحجم عملك - جميع الباقات تشمل تجربة مجانية لمدة شهرين
+            </p>
+          </AnimateOnScroll>
+          <AnimateOnScroll>
+            <div className="mt-8 inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-6 py-3 rounded-full border border-white/20">
+              <Check size={20} className="text-primary" />
+              <span className="text-sm font-medium">رسائل نصية مجانية باسم mutaba خلال فترة التجربة</span>
+            </div>
+          </AnimateOnScroll>
         </div>
       </section>
 
@@ -120,16 +126,23 @@ const Pricing = () => {
       {/* Pricing Cards */}
       <section className="py-20 px-4 bg-gradient-to-b from-background via-muted/10 to-background">
         <div className="container mx-auto max-w-7xl">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+          <SectionHeader
+            title="اختر الباقة المناسبة"
+            description="جميع الباقات تشمل نفس المميزات القوية"
+            badge="تجربة مجانية لمدة شهرين"
+          />
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto stagger-children">
             {plans.map((plan, index) => (
-              <Card
-                key={index}
-                className={`relative ${
-                  plan.popular
-                    ? "border-primary border-2 shadow-xl scale-105"
-                    : "border-2"
-                }`}
-              >
+              <AnimateOnScroll key={index}>
+                <Card
+                  className={`relative ${
+                    plan.popular
+                      ? "border-primary border-2 shadow-xl scale-105"
+                      : "border-2"
+                  }`}
+                  data-testid={`card-plan-${index}`}
+                >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-bold">
                     الأكثر شعبية
@@ -177,6 +190,7 @@ const Pricing = () => {
                     size="lg"
                     className="w-full text-lg"
                     asChild
+                    data-testid={`button-plan-${index}`}
                   >
                     <Link href="/free-trial">
                       {plan.price === "حسب الطلب"
@@ -186,6 +200,7 @@ const Pricing = () => {
                   </Button>
                 </CardContent>
               </Card>
+            </AnimateOnScroll>
             ))}
           </div>
         </div>
@@ -194,10 +209,11 @@ const Pricing = () => {
       {/* FAQ Section */}
       <section className="py-20 px-4 bg-muted/20">
         <div className="container mx-auto max-w-4xl">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-            الأسئلة الشائعة
-          </h2>
-          <div className="space-y-6">
+          <SectionHeader
+            title="الأسئلة الشائعة"
+            description="إجابات على أهم الأسئلة حول الأسعار والباقات"
+          />
+          <div className="space-y-6 stagger-children">
             {[
               {
                 q: "هل هناك رسوم خفية؟",
@@ -220,34 +236,28 @@ const Pricing = () => {
                 a: "نعم، نستخدم أعلى معايير الأمان والتشفير لحماية بياناتك.",
               },
             ].map((item, index) => (
-              <Card key={index}>
-                <CardContent className="pt-6">
-                  <h3 className="font-bold text-lg mb-2">{item.q}</h3>
-                  <p className="text-muted-foreground">{item.a}</p>
-                </CardContent>
-              </Card>
+              <AnimateOnScroll key={index}>
+                <Card data-testid={`card-faq-${index}`}>
+                  <CardContent className="pt-6">
+                    <h3 className="font-bold text-lg mb-2">{item.q}</h3>
+                    <p className="text-muted-foreground">{item.a}</p>
+                  </CardContent>
+                </Card>
+              </AnimateOnScroll>
             ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-4 bg-gradient-to-b from-background to-muted/10">
-        <div className="container mx-auto text-center max-w-4xl">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            جاهز للبدء؟
-          </h2>
-          <p className="text-muted-foreground mb-8 max-w-2xl mx-auto text-lg">
-            ابدأ تجربتك المجانية اليوم - بدون بطاقة ائتمان
-          </p>
-          <Button size="lg" variant="default" className="text-lg px-8" asChild>
-            <Link href="/free-trial">ابدأ تجربتك المجانية - 14 يوم</Link>
-          </Button>
-        </div>
-      </section>
-
-      <Footer />
-    </div>
+      <CTASection
+        title="جاهز للبدء؟"
+        description="ابدأ تجربتك المجانية اليوم - بدون بطاقة ائتمان"
+        primaryButtonText="ابدأ تجربتك المجانية - 14 يوم"
+        primaryButtonLink="/free-trial"
+        primaryButtonIcon={Zap}
+      />
+    </PageScaffold>
   );
 };
 

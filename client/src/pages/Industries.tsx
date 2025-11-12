@@ -1,9 +1,10 @@
-import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { PageScaffold } from "@/components/PageScaffold";
+import { SectionHeader } from "@/components/SectionHeader";
+import { AnimateOnScroll } from "@/components/AnimateOnScroll";
 import { CheckCircle } from "lucide-react";
+import { Link } from "wouter";
 
 const Industries = () => {
   const industries = [
@@ -166,30 +167,39 @@ const Industries = () => {
   ];
 
   return (
-    <div className="min-h-screen" dir="rtl">
-      <Navbar />
-
+    <PageScaffold>
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 gradient-hero text-white">
-        <div className="container mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6">
-            القطاعات الصناعية المستفيدة
-          </h1>
-          <p className="text-lg md:text-xl max-w-3xl mx-auto opacity-95">
-            حلول مخصصة لكل قطاع صناعي - نفهم تحدياتك ونوفر الحلول المناسبة
-          </p>
+        <div className="container mx-auto text-center stagger-children">
+          <AnimateOnScroll>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6" data-testid="heading-industries-hero">
+              القطاعات الصناعية المستفيدة
+            </h1>
+          </AnimateOnScroll>
+          <AnimateOnScroll>
+            <p className="text-lg md:text-xl max-w-3xl mx-auto opacity-95" data-testid="text-industries-description">
+              حلول مخصصة لكل قطاع صناعي - نفهم تحدياتك ونوفر الحلول المناسبة
+            </p>
+          </AnimateOnScroll>
         </div>
       </section>
 
       {/* Industries Detailed Section */}
       <section className="py-20 px-4 bg-gradient-to-b from-background to-muted/20">
         <div className="container mx-auto">
-          <div className="grid gap-8">
+          <SectionHeader
+            title="القطاعات التي نخدمها"
+            description="حلول متخصصة لأكثر من 12 قطاع صناعي مختلف"
+            badge="12+ قطاع"
+          />
+          
+          <div className="grid gap-8 stagger-children">
             {industries.map((industry, index) => (
-              <Card
-                key={index}
-                className="group border-2 hover:border-primary transition-all duration-500 overflow-hidden hover-lift bg-card/50 backdrop-blur-sm"
-              >
+              <AnimateOnScroll key={index}>
+                <Card
+                  className="group border-2 hover:border-primary transition-all duration-500 overflow-hidden hover-lift bg-card/50 backdrop-blur-sm"
+                  data-testid={`card-industry-${index}`}
+                >
                 <CardContent className="p-0">
                   <div className="grid lg:grid-cols-[1fr_400px]">
                     {/* Content Side */}
@@ -307,76 +317,86 @@ const Industries = () => {
                   </div>
                 </CardContent>
               </Card>
+            </AnimateOnScroll>
             ))}
           </div>
         </div>
       </section>
 
       {/* Final CTA */}
-      <section className="py-24 px-4 relative overflow-hidden">
+      <section className="py-24 px-4 relative overflow-hidden" data-testid="section-industries-cta">
         {/* Background Effects */}
         <div className="absolute inset-0 gradient-hero opacity-5" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-3xl" />
         
-        <div className="container mx-auto text-center relative z-10">
+        <div className="container mx-auto text-center relative z-10 stagger-children">
           <div className="max-w-3xl mx-auto space-y-8">
-            <div className="inline-block p-4 rounded-3xl bg-gradient-to-br from-primary/20 to-secondary/20 shadow-xl mb-4">
-              <i className="fas fa-question-circle text-5xl text-gradient" />
-            </div>
+            <AnimateOnScroll>
+              <div className="inline-block p-4 rounded-3xl bg-gradient-to-br from-primary/20 to-secondary/20 shadow-xl mb-4">
+                <i className="fas fa-question-circle text-5xl text-gradient" />
+              </div>
+            </AnimateOnScroll>
             
-            <h2 className="text-3xl md:text-5xl font-bold mb-6 text-foreground">
-              قطاعك غير موجود في القائمة؟
-            </h2>
+            <AnimateOnScroll>
+              <h2 className="text-3xl md:text-5xl font-bold mb-6 text-foreground" data-testid="heading-industries-custom">
+                قطاعك غير موجود في القائمة؟
+              </h2>
+            </AnimateOnScroll>
             
-            <p className="text-muted-foreground mb-8 text-lg md:text-xl leading-relaxed">
-              موتفلكس قابل للتخصيص ليناسب احتياجاتك الخاصة - تواصل معنا لمناقشة
-              متطلباتك
-            </p>
+            <AnimateOnScroll>
+              <p className="text-muted-foreground mb-8 text-lg md:text-xl leading-relaxed" data-testid="text-industries-custom-description">
+                موتفلكس قابل للتخصيص ليناسب احتياجاتك الخاصة - تواصل معنا لمناقشة متطلباتك
+              </p>
+            </AnimateOnScroll>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                size="lg" 
-                className="text-lg px-10 py-6 font-bold shadow-xl hover:shadow-2xl bg-gradient-to-r from-primary to-secondary hover:scale-105 transition-all duration-300" 
-                asChild
-              >
-                <Link href="/contact">
-                  <i className="fas fa-comments ml-2" />
-                  تواصل معنا
-                </Link>
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="text-lg px-10 py-6 font-semibold border-2 hover:bg-primary/10 hover:border-primary transition-all duration-300"
-                asChild
-              >
-                <Link href="/free-trial">
-                  <i className="fas fa-play-circle ml-2" />
-                  ابدأ تجربتك المجانية
-                </Link>
-              </Button>
-            </div>
+            <AnimateOnScroll>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button 
+                  size="lg" 
+                  className="text-lg px-10 py-6 font-bold shadow-xl hover:shadow-2xl bg-gradient-to-r from-primary to-secondary hover:scale-105 transition-all duration-300" 
+                  asChild
+                  data-testid="button-contact-custom"
+                >
+                  <Link href="/contact">
+                    <i className="fas fa-comments ml-2" />
+                    تواصل معنا
+                  </Link>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="text-lg px-10 py-6 font-semibold border-2 hover:bg-primary/10 hover:border-primary transition-all duration-300"
+                  asChild
+                  data-testid="button-trial-custom"
+                >
+                  <Link href="/free-trial">
+                    <i className="fas fa-play-circle ml-2" />
+                    ابدأ تجربتك المجانية
+                  </Link>
+                </Button>
+              </div>
+            </AnimateOnScroll>
 
-            <div className="pt-8 flex items-center justify-center gap-8 flex-wrap text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <i className="fas fa-check-circle text-primary text-xl" />
-                <span>بدون بطاقة ائتمان</span>
+            <AnimateOnScroll>
+              <div className="pt-8 flex items-center justify-center gap-8 flex-wrap text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <i className="fas fa-check-circle text-primary text-xl" />
+                  <span>بدون بطاقة ائتمان</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <i className="fas fa-rocket text-secondary text-xl" />
+                  <span>جاهز للاستخدام فوراً</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <i className="fas fa-cog text-primary text-xl" />
+                  <span>قابل للتخصيص الكامل</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <i className="fas fa-rocket text-secondary text-xl" />
-                <span>جاهز للاستخدام فوراً</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <i className="fas fa-cog text-primary text-xl" />
-                <span>قابل للتخصيص الكامل</span>
-              </div>
-            </div>
+            </AnimateOnScroll>
           </div>
         </div>
       </section>
-
-      <Footer />
-    </div>
+    </PageScaffold>
   );
 };
 

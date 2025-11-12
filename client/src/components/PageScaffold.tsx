@@ -8,7 +8,7 @@ interface PageScaffoldProps {
 
 export function PageScaffold({ children, className = "" }: PageScaffoldProps) {
   return (
-    <div className={`min-h-screen flex flex-col ${className}`}>
+    <div className={`min-h-screen flex flex-col ${className}`} dir="rtl">
       <Navbar />
       <main className="flex-1">
         {children}
