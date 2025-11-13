@@ -40,7 +40,12 @@ app.use((req, res, next) => {
 (async () => {
   const server = createServer(app);
   registerRoutes(app);
-  await setupVite(app, server);
+  
+  if (process.env.NODE_ENV === "production") {
+    serveStatic(app);
+  } else {
+    await setupVite(app, server);
+  }
 
   const PORT = 5000;
   server.listen(PORT, "0.0.0.0", () => {

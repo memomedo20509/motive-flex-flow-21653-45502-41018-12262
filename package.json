@@ -7,7 +7,7 @@
     "dev": "tsx watch --ignore client --ignore dist --ignore 'vite.config.ts.timestamp-*' --ignore '**/*.timestamp-*' server/index.ts",
     "build": "npm run build:client && npm run build:server",
     "build:client": "vite build --outDir dist/public",
-    "build:server": "esbuild server/index.ts --bundle --platform=node --packages=external --outfile=dist/index.js",
+    "build:server": "esbuild server/index.ts --bundle --platform=node --packages=external --format=esm --outfile=dist/index.js",
     "start": "NODE_ENV=production node dist/index.js",
     "lint": "eslint ."
   },
