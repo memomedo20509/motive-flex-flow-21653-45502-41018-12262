@@ -145,21 +145,6 @@ const FreeTrial = () => {
                     </Select>
                   </div>
 
-                  <div>
-                    <Label htmlFor="employees">عدد الموظفين</Label>
-                    <Select>
-                      <SelectTrigger className="mt-2" data-testid="select-employees">
-                        <SelectValue placeholder="اختر عدد الموظفين" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1-10">1-10</SelectItem>
-                        <SelectItem value="11-50">11-50</SelectItem>
-                        <SelectItem value="51-200">51-200</SelectItem>
-                        <SelectItem value="200+">أكثر من 200</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
                   <Button
                     type="submit"
                     size="lg"
