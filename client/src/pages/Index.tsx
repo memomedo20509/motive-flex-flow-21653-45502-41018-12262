@@ -494,14 +494,14 @@ const Index = () => {
             <CardContent className="p-8">
               <div className="text-5xl mb-4 opacity-20">"</div>
               <p className="text-xl mb-6 leading-relaxed italic">
-                موتفلكس غيّر طريقة إدارتنا للمشاريع بالكامل. أصبح كل شيء منظم وسهل
-                المتابعة. نظام فعلاً احترافي وذكي.
+                موتفلكس نقل مصنعنا إلى مستوى احترافي جديد. التواصل مع العملاء أصبح أسرع والتتبع أدق. 
+                النظام سهّل علينا كل شيء من القياسات للتركيب النهائي.
               </p>
               <div className="flex items-center justify-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary"></div>
                 <div className="text-right">
-                  <p className="font-bold">أحمد المالكي</p>
-                  <p className="text-muted-foreground text-sm">مدير عمليات، شركة صناعية رائدة</p>
+                  <p className="font-bold">محمد الحر</p>
+                  <p className="text-muted-foreground text-sm">مدير عام، مصنع الحر للرخام</p>
                 </div>
               </div>
             </CardContent>

@@ -229,14 +229,14 @@ const FreeTrial = () => {
         <div className="container mx-auto max-w-4xl text-center">
           <div className="bg-white rounded-lg p-8 shadow-lg">
             <p className="text-lg italic mb-4 text-muted-foreground">
-              "بدأت التجربة المجانية وفي أول أسبوع لاحظت فرق كبير في تنظيم
-              العمل. الآن كل شيء واضح ومرتب."
+              "التجربة المجانية أعطتنا الوقت الكافي لتقييم النظام بشكل دقيق. الفريق احترافي والنظام 
+              ساعدنا في تنظيم جميع عمليات التكييف من البداية للنهاية."
             </p>
             <div className="font-bold">
-              أحمد المالكي
+              أحمد الحافظ
               <br />
               <span className="text-sm text-muted-foreground font-normal">
-                مدير عمليات - مصنع رخام
+                مدير عام، شركة هاواي للتكييف
               </span>
             </div>
           </div>
