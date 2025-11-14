@@ -117,7 +117,7 @@ const Index = () => {
             <AnimateOnScroll>
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full mb-6 border border-white/20" data-testid="badge-trust">
                 <Shield className="w-4 h-4" />
-                <span className="text-sm font-medium">نظام موثوق من +300 مصنع وشركة</span>
+                <span className="text-sm font-medium">نظام موثوق من شركات ومصانع كبرى</span>
               </div>
             </AnimateOnScroll>
             
@@ -205,7 +205,7 @@ const Index = () => {
               },
               { 
                 number: "02", 
-                title: "إدارة العمالء والطلبات", 
+                title: "إدارة العملاء والطلبات", 
                 desc: "أرشفة تفاصيل العملاء والمواقع والصور في مكان واحد",
                 icon: Users
               },
@@ -278,7 +278,7 @@ const Index = () => {
               },
               { 
                 number: "02", 
-                title: "إدارة العمالء والطلبات", 
+                title: "إدارة العملاء والطلبات", 
                 desc: "أرشفة تفاصيل العملاء والمواقع والصور في مكان واحد",
                 icon: Users
               },
