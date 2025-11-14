@@ -54,25 +54,6 @@ const Pricing = () => {
       ],
       popular: true,
     },
-    {
-      name: "الباقة المؤسسية",
-      name_en: "Enterprise",
-      price: "حسب الطلب",
-      period: "",
-      description: "حلول مخصصة للمؤسسات الكبيرة",
-      features: [
-        "عدد مستخدمين غير محدود",
-        "جميع مميزات الباقات السابقة",
-        "تخصيص كامل حسب الحاجة",
-        "تدريب متخصص للفريق",
-        "دعم فني مخصص 24/7",
-        "استضافة خاصة (اختياري)",
-        "تخزين غير محدود",
-        "SLA مخصص",
-        "مدير حساب خاص",
-      ],
-      popular: false,
-    },
   ];
 
   return (
@@ -132,7 +113,7 @@ const Pricing = () => {
             badge="تجربة مجانية لمدة شهرين"
           />
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto stagger-children">
+          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto stagger-children">
             {plans.map((plan, index) => (
               <AnimateOnScroll key={index}>
                 <Card
@@ -229,7 +210,7 @@ const Pricing = () => {
               },
               {
                 q: "هل توفرون تدريب على النظام؟",
-                a: "نعم، نوفر تدريب شامل لجميع العملاء، وتدريب متخصص للباقة المؤسسية.",
+                a: "نعم، نوفر تدريب شامل ومجاني لجميع العملاء على جميع مميزات النظام.",
               },
               {
                 q: "هل البيانات آمنة؟",
@@ -253,7 +234,7 @@ const Pricing = () => {
       <CTASection
         title="جاهز للبدء؟"
         description="ابدأ تجربتك المجانية اليوم - بدون بطاقة ائتمان"
-        primaryButtonText="ابدأ تجربتك المجانية - 14 يوم"
+        primaryButtonText="ابدأ تجربتك المجانية - شهرين"
         primaryButtonLink="/free-trial"
         primaryButtonIcon={Zap}
       />
