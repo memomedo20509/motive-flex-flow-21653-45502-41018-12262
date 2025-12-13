@@ -14,6 +14,8 @@ import Contact from "./pages/Contact";
 import About from "./pages/About";
 import FreeTrial from "./pages/FreeTrial";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import NotFound from "./pages/NotFound";
 
 const pageVariants = {
@@ -65,6 +67,8 @@ function Router() {
       <Route path="/about" component={About} />
       <Route path="/free-trial" component={FreeTrial} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
+      <Route path="/blog" component={Blog} />
+      <Route path="/blog/:slug" component={BlogPost} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -21,6 +21,7 @@ const Navbar = () => {
     { name: "المميزات", name_en: "Features", href: "/features" },
     { name: "القطاعات", name_en: "Industries", href: "/industries" },
     { name: "الأسعار", name_en: "Pricing", href: "/pricing" },
+    { name: "مقالات", name_en: "Blog", href: "/blog" },
     { name: "من نحن", name_en: "About", href: "/about" },
     { name: "تواصل معنا", name_en: "Contact", href: "/contact" },
   ];
