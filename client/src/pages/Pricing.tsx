@@ -85,24 +85,6 @@ const Pricing = () => {
         </div>
       </section>
 
-      {/* Setup Fee Banner */}
-      <section className="py-8 px-4 bg-primary/5 border-y border-primary/20">
-        <div className="container mx-auto text-center">
-          <div className="inline-flex items-center gap-4 bg-white dark:bg-card p-6 rounded-2xl shadow-lg">
-            <div className="text-right">
-              <p className="text-sm text-muted-foreground mb-1">رسوم التأسيس (مرة واحدة)</p>
-              <div className="flex items-end gap-2">
-                <span className="text-4xl font-bold text-primary">{setupFee.price}</span>
-                <span className="text-lg text-muted-foreground mb-1">ريال</span>
-              </div>
-            </div>
-            <div className="h-12 w-px bg-border"></div>
-            <p className="text-sm text-muted-foreground max-w-xs text-right">
-              {setupFee.description}
-            </p>
-          </div>
-        </div>
-      </section>
 
       {/* Pricing Cards */}
       <section className="py-20 px-4 bg-gradient-to-b from-background via-muted/10 to-background">
@@ -155,6 +137,20 @@ const Pricing = () => {
                   )}
                 </CardHeader>
                 <CardContent className="space-y-4 pb-8">
+                  {/* Setup Fee - First Item */}
+                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-4" data-testid={`text-setup-fee-${index}`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <Zap size={18} className="text-primary" />
+                        <span className="font-medium text-sm">رسوم التأسيس</span>
+                      </div>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-lg font-bold text-primary">{setupFee.price}</span>
+                        <span className="text-xs text-muted-foreground">ريال</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">(مرة واحدة فقط - شاملة الضريبة)</p>
+                  </div>
                   <ul className="space-y-3 mb-6">
                     {plan.features.map((feature, idx) => (
                       <li key={idx} className="flex items-start gap-3">
