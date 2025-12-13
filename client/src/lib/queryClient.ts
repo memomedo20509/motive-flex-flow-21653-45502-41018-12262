@@ -32,7 +32,20 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: async ({ queryKey }) => {
-        const response = await fetch(queryKey[0] as string);
+        let url = queryKey[0] as string;
+        if (queryKey.length > 1 && typeof queryKey[1] === "object" && queryKey[1] !== null) {
+          const params = new URLSearchParams();
+          for (const [key, value] of Object.entries(queryKey[1] as Record<string, unknown>)) {
+            if (value !== undefined && value !== null && value !== "") {
+              params.append(key, String(value));
+            }
+          }
+          const paramString = params.toString();
+          if (paramString) {
+            url += `?${paramString}`;
+          }
+        }
+        const response = await fetch(url);
         return handleResponse(response);
       },
       staleTime: 1000 * 60 * 5,

@@ -77,11 +77,105 @@ const BlogPost = () => {
   };
 
   useEffect(() => {
-    if (article?.metaTitle) {
-      document.title = article.metaTitle;
-    } else if (article?.title) {
-      document.title = `${article.title} | موتفلكس`;
+    if (!article) return;
+
+    const pageTitle = article.metaTitle || `${article.title} | موتفلكس`;
+    const pageDescription = article.metaDescription || article.excerpt || "";
+    const pageUrl = window.location.href;
+    const pageImage = article.coverImage ? `${window.location.origin}${article.coverImage}` : "";
+    const publishedDate = new Date(article.createdAt).toISOString();
+
+    document.title = pageTitle;
+
+    const setMeta = (property: string, content: string) => {
+      let meta = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement;
+      if (!meta) {
+        meta = document.querySelector(`meta[name="${property}"]`) as HTMLMetaElement;
+      }
+      if (!meta) {
+        meta = document.createElement("meta");
+        if (property.startsWith("og:") || property.startsWith("article:")) {
+          meta.setAttribute("property", property);
+        } else {
+          meta.setAttribute("name", property);
+        }
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute("content", content);
+    };
+
+    setMeta("description", pageDescription);
+
+    setMeta("og:type", "article");
+    setMeta("og:title", article.title);
+    setMeta("og:description", pageDescription);
+    setMeta("og:url", pageUrl);
+    if (pageImage) setMeta("og:image", pageImage);
+    setMeta("og:site_name", "موتفلكس");
+    setMeta("og:locale", "ar_SA");
+
+    setMeta("article:published_time", publishedDate);
+    setMeta("article:author", article.author);
+    
+    document.querySelectorAll('meta[property="article:tag"]').forEach((el) => el.remove());
+    if (article.tags?.length) {
+      article.tags.forEach((tag) => {
+        const meta = document.createElement("meta");
+        meta.setAttribute("property", "article:tag");
+        meta.setAttribute("content", tag);
+        document.head.appendChild(meta);
+      });
     }
+
+    setMeta("twitter:card", "summary_large_image");
+    setMeta("twitter:title", article.title);
+    setMeta("twitter:description", pageDescription);
+    if (pageImage) setMeta("twitter:image", pageImage);
+
+    let canonicalLink = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
+    if (!canonicalLink) {
+      canonicalLink = document.createElement("link");
+      canonicalLink.rel = "canonical";
+      document.head.appendChild(canonicalLink);
+    }
+    canonicalLink.href = pageUrl;
+
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: article.title,
+      description: pageDescription,
+      image: pageImage || undefined,
+      datePublished: publishedDate,
+      author: {
+        "@type": "Person",
+        name: article.author,
+      },
+      publisher: {
+        "@type": "Organization",
+        name: "موتفلكس",
+        logo: {
+          "@type": "ImageObject",
+          url: `${window.location.origin}/logo.png`,
+        },
+      },
+      mainEntityOfPage: {
+        "@type": "WebPage",
+        "@id": pageUrl,
+      },
+    };
+
+    let scriptTag = document.querySelector('script[type="application/ld+json"]') as HTMLScriptElement;
+    if (!scriptTag) {
+      scriptTag = document.createElement("script");
+      scriptTag.type = "application/ld+json";
+      document.head.appendChild(scriptTag);
+    }
+    scriptTag.textContent = JSON.stringify(jsonLd);
+
+    return () => {
+      document.title = "موتفلكس";
+    };
   }, [article]);
 
   if (isLoading) {

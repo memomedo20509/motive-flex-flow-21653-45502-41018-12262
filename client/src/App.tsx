@@ -16,6 +16,9 @@ import FreeTrial from "./pages/FreeTrial";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import AdminDashboard from "./pages/admin/Dashboard";
+import AdminArticleList from "./pages/admin/ArticleList";
+import AdminArticleForm from "./pages/admin/ArticleForm";
 import NotFound from "./pages/NotFound";
 
 const pageVariants = {
@@ -69,6 +72,10 @@ function Router() {
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />
+      <Route path="/admin" component={AdminDashboard} />
+      <Route path="/admin/articles" component={AdminArticleList} />
+      <Route path="/admin/articles/new" component={AdminArticleForm} />
+      <Route path="/admin/articles/:id/edit" component={AdminArticleForm} />
       <Route component={NotFound} />
     </Switch>
   );
