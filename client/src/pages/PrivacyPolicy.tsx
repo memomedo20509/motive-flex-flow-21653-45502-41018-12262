@@ -145,7 +145,7 @@ const PrivacyPolicy = () => {
                   </p>
                   <ul className="list-disc pr-6 space-y-2 mt-4">
                     <li>البريد الإلكتروني: privacy@mutflex.com</li>
-                    <li dir="ltr">الهاتف: +966 XX XXX XXXX</li>
+                    <li dir="ltr">الهاتف: +966 50 705 1401</li>
                   </ul>
                 </div>
               </div>

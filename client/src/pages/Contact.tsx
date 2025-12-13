@@ -133,7 +133,7 @@ const Contact = () => {
                         <div>
                           <h3 className="font-bold mb-1">الهاتف</h3>
                           <p className="text-muted-foreground" dir="ltr">
-                            +966 XX XXX XXXX
+                            +966 50 705 1401
                           </p>
                           <p className="text-sm text-muted-foreground mt-1">
                             من السبت إلى الخميس، 9 ص - 6 م
