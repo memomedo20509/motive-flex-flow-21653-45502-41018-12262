@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimateOnScroll } from "@/components/AnimateOnScroll";
-import { Search, Calendar, Eye, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, Calendar, Eye, ArrowLeft, ChevronLeft, ChevronRight, BookOpen, Sparkles, FileText } from "lucide-react";
 import type { Article } from "@shared/schema";
 
 interface ArticlesResponse {
@@ -45,27 +45,58 @@ const Blog = () => {
     <div className="min-h-screen bg-background" dir="rtl">
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(177,81%,30%)] via-[hsl(177,81%,35%)] to-[hsl(45,76%,51%)]"></div>
+      {/* Hero Section - Enhanced matching Index.tsx */}
+      <section className="relative pt-32 pb-24 overflow-hidden">
+        {/* Gradient Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(177,81%,30%)] from-0% via-[hsl(177,81%,35%)] via-35% to-[hsl(45,76%,51%)] to-100%"></div>
         <div className="absolute inset-0 bg-black/20"></div>
+        
+        {/* Animated particles overlay */}
+        <div className="absolute inset-0">
+          <div className="absolute top-20 right-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse-slow"></div>
+          <div className="absolute bottom-20 left-10 w-96 h-96 bg-primary/15 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
+          <div className="absolute top-1/3 left-1/4 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-float"></div>
+        </div>
+        
+        {/* Gradient fade to background at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background via-background/80 to-transparent"></div>
+
         <div className="container mx-auto px-4 relative z-10">
-          <AnimateOnScroll>
-            <div className="text-center text-white">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4" data-testid="text-blog-title">
-                مقالات موتفلكس
+          <div className="text-center max-w-4xl mx-auto stagger-children">
+            <AnimateOnScroll>
+              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full mb-6 border border-white/20" data-testid="badge-blog-trust">
+                <BookOpen className="w-4 h-4 text-white" />
+                <span className="text-sm font-medium text-white">مقالات ونصائح من خبراء الصناعة</span>
+              </div>
+            </AnimateOnScroll>
+            
+            <AnimateOnScroll>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-white leading-tight" data-testid="text-blog-title">
+                مدونة موتفلكس
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white via-primary-foreground to-white animate-pulse-slow text-3xl md:text-4xl mt-2">
+                  أحدث المقالات والرؤى
+                </span>
               </h1>
-              <p className="text-lg md:text-xl opacity-90 max-w-2xl mx-auto" data-testid="text-blog-subtitle">
+            </AnimateOnScroll>
+            
+            <AnimateOnScroll>
+              <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto leading-relaxed" data-testid="text-blog-subtitle">
                 اكتشف أحدث المقالات والنصائح حول إدارة مصانع التشطيبات والمقاولات
+                <br />
+                <span className="font-semibold">من خبراء الصناعة وأفضل الممارسات</span>
               </p>
-            </div>
-          </AnimateOnScroll>
+            </AnimateOnScroll>
+          </div>
         </div>
       </section>
 
       {/* Search and Filter Section */}
-      <section className="py-8 bg-muted/30 border-b">
-        <div className="container mx-auto px-4">
+      <section className="py-8 bg-muted/30 border-b relative overflow-hidden">
+        {/* Decorative background */}
+        <div className="absolute top-0 left-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-x-1/2"></div>
+        <div className="absolute bottom-0 right-0 w-64 h-64 bg-secondary/5 rounded-full blur-3xl translate-x-1/2"></div>
+        
+        <div className="container mx-auto px-4 relative z-10">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             {/* Search */}
             <div className="relative w-full md:w-96">
@@ -77,7 +108,7 @@ const Blog = () => {
                   setSearch(e.target.value);
                   setPage(1);
                 }}
-                className="pr-10"
+                className="pr-10 bg-background/50 backdrop-blur-sm"
                 data-testid="input-search-articles"
               />
             </div>
@@ -115,14 +146,18 @@ const Blog = () => {
       </section>
 
       {/* Articles Grid */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
+      <section className="py-20 relative overflow-hidden">
+        {/* Background decorative elements */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-gradient-to-r from-primary/5 via-secondary/5 to-primary/5 rounded-full blur-3xl" />
+        
+        <div className="container mx-auto px-4 relative z-10">
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[...Array(6)].map((_, i) => (
-                <Card key={i} className="overflow-hidden">
-                  <Skeleton className="h-48 w-full" />
+                <Card key={i} className="overflow-hidden border-2">
+                  <Skeleton className="h-52 w-full" />
                   <CardContent className="p-6">
+                    <Skeleton className="h-5 w-24 mb-3" />
                     <Skeleton className="h-6 w-3/4 mb-3" />
                     <Skeleton className="h-4 w-full mb-2" />
                     <Skeleton className="h-4 w-2/3" />
@@ -131,21 +166,27 @@ const Blog = () => {
               ))}
             </div>
           ) : data?.articles.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-xl text-muted-foreground" data-testid="text-no-articles">
+            <div className="text-center py-20">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-muted mb-6">
+                <FileText className="w-10 h-10 text-muted-foreground" />
+              </div>
+              <p className="text-xl text-muted-foreground mb-4" data-testid="text-no-articles">
                 لا توجد مقالات حالياً
+              </p>
+              <p className="text-sm text-muted-foreground">
+                يتم إضافة مقالات جديدة قريباً
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {data?.articles.map((article, index) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 stagger-children">
+              {data?.articles.map((article) => (
                 <AnimateOnScroll key={article.id}>
-                  <Link href={`/blog/${article.slug}`}>
+                  <Link href={`/blog/${article.slug}`} data-testid={`link-article-${article.id}`}>
                     <Card 
-                      className="overflow-hidden group cursor-pointer h-full hover-elevate transition-all duration-300"
+                      className="overflow-hidden group cursor-pointer h-full border-2 hover:border-primary transition-all duration-500 bg-card/50 backdrop-blur-sm"
                       data-testid={`card-article-${article.id}`}
                     >
-                      <div className="relative h-48 overflow-hidden">
+                      <div className="relative h-52 overflow-hidden">
                         {article.coverImage ? (
                           <img
                             src={article.coverImage}
@@ -154,11 +195,26 @@ const Blog = () => {
                             data-testid={`img-article-cover-${article.id}`}
                           />
                         ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-secondary/20 to-primary/20 flex items-center justify-center">
-                            <span className="text-4xl text-muted-foreground">M</span>
+                          <div className="w-full h-full bg-gradient-to-br from-secondary via-primary/80 to-primary flex items-center justify-center relative">
+                            <div className="absolute inset-0 bg-black/10"></div>
+                            <div className="relative z-10 text-center">
+                              <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-3">
+                                <FileText className="w-8 h-8 text-white" />
+                              </div>
+                              <span className="text-white/80 text-sm font-medium">مقال موتفلكس</span>
+                            </div>
+                            {/* Decorative circles */}
+                            <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white/10 blur-xl"></div>
+                            <div className="absolute bottom-4 left-4 w-16 h-16 rounded-full bg-white/10 blur-xl"></div>
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        
+                        {/* Date badge on image */}
+                        <div className="absolute top-4 right-4 bg-white/90 dark:bg-black/80 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          <span>{formatDate(article.createdAt)}</span>
+                        </div>
                       </div>
                       <CardContent className="p-6">
                         {article.tags && article.tags.length > 0 && (
@@ -171,30 +227,26 @@ const Blog = () => {
                           </div>
                         )}
                         <h3 
-                          className="text-lg font-bold mb-2 line-clamp-2 group-hover:text-secondary transition-colors"
+                          className="text-lg font-bold mb-3 line-clamp-2 group-hover:text-secondary transition-colors leading-relaxed"
                           data-testid={`text-article-title-${article.id}`}
                         >
                           {article.title}
                         </h3>
                         <p 
-                          className="text-muted-foreground text-sm mb-4 line-clamp-2"
+                          className="text-muted-foreground text-sm mb-4 line-clamp-2 leading-relaxed"
                           data-testid={`text-article-excerpt-${article.id}`}
                         >
                           {article.excerpt}
                         </p>
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            <span>{formatDate(article.createdAt)}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
+                        <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Eye className="h-3 w-3" />
                             <span>{article.viewCount} مشاهدة</span>
                           </div>
-                        </div>
-                        <div className="mt-4 flex items-center text-secondary text-sm font-medium group-hover:gap-2 transition-all">
-                          <span>اقرأ المزيد</span>
-                          <ArrowLeft className="h-4 w-4 mr-1" />
+                          <div className="flex items-center text-secondary text-sm font-medium group-hover:gap-2 transition-all">
+                            <span>اقرأ المزيد</span>
+                            <ArrowLeft className="h-4 w-4 mr-1 group-hover:-translate-x-1 transition-transform" />
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -206,40 +258,70 @@ const Blog = () => {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-2 mt-12">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                data-testid="button-pagination-prev"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <div className="flex items-center gap-1">
-                {[...Array(totalPages)].map((_, i) => (
-                  <Button
-                    key={i + 1}
-                    variant={page === i + 1 ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setPage(i + 1)}
-                    data-testid={`button-pagination-${i + 1}`}
-                  >
-                    {i + 1}
-                  </Button>
-                ))}
+            <AnimateOnScroll>
+              <div className="flex justify-center items-center gap-2 mt-16">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  data-testid="button-pagination-prev"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <div className="flex items-center gap-1">
+                  {[...Array(totalPages)].map((_, i) => (
+                    <Button
+                      key={i + 1}
+                      variant={page === i + 1 ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setPage(i + 1)}
+                      data-testid={`button-pagination-${i + 1}`}
+                    >
+                      {i + 1}
+                    </Button>
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  data-testid="button-pagination-next"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
               </div>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                data-testid="button-pagination-next"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-            </div>
+            </AnimateOnScroll>
           )}
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5"></div>
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <AnimateOnScroll>
+            <Card className="max-w-3xl mx-auto text-center border-2 border-primary/20 bg-card/50 backdrop-blur-sm">
+              <CardContent className="py-12 px-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-secondary to-primary mb-6">
+                  <Sparkles className="w-8 h-8 text-white" />
+                </div>
+                <h2 className="text-2xl md:text-3xl font-bold mb-4">
+                  هل تريد تجربة موتفلكس؟
+                </h2>
+                <p className="text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">
+                  ابدأ تجربتك المجانية الآن واكتشف كيف يمكن لموتفلكس تحويل إدارة مصنعك
+                </p>
+                <Button size="lg" className="shadow-xl px-8 bg-gradient-to-r from-secondary to-primary text-white" asChild data-testid="button-blog-cta">
+                  <Link href="/free-trial">
+                    ابدأ تجربتك المجانية
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </AnimateOnScroll>
         </div>
       </section>
 

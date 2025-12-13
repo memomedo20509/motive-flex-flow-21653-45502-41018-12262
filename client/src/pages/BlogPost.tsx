@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { marked } from "marked";
@@ -9,8 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimateOnScroll } from "@/components/AnimateOnScroll";
-import { Calendar, Eye, User, ArrowRight, Share2, Twitter, Facebook, Linkedin, Copy, Check, ArrowLeft } from "lucide-react";
-import { useState } from "react";
+import { Calendar, Eye, User, ArrowRight, Share2, Twitter, Facebook, Linkedin, Copy, Check, ArrowLeft, BookOpen, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Article } from "@shared/schema";
 
@@ -20,7 +19,7 @@ interface ArticleResponse {
 }
 
 const BlogPost = () => {
-  const params = useParams();
+  const params = useParams() as { slug?: string };
   const slug = params.slug;
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
@@ -182,12 +181,26 @@ const BlogPost = () => {
     return (
       <div className="min-h-screen bg-background" dir="rtl">
         <Navbar />
-        <div className="container mx-auto px-4 pt-32 pb-16">
-          <Skeleton className="h-8 w-3/4 mb-4" />
-          <Skeleton className="h-64 w-full mb-8" />
-          <Skeleton className="h-4 w-full mb-2" />
-          <Skeleton className="h-4 w-full mb-2" />
-          <Skeleton className="h-4 w-2/3" />
+        <div className="pt-32 pb-16">
+          <section className="relative py-16 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-[hsl(177,81%,30%)] via-[hsl(177,81%,35%)] to-[hsl(45,76%,51%)]"></div>
+            <div className="absolute inset-0 bg-black/30"></div>
+            <div className="container mx-auto px-4 relative z-10">
+              <div className="max-w-4xl mx-auto">
+                <Skeleton className="h-6 w-32 mb-6 bg-white/20" />
+                <Skeleton className="h-12 w-3/4 mb-4 bg-white/20" />
+                <Skeleton className="h-6 w-1/2 bg-white/20" />
+              </div>
+            </div>
+          </section>
+          <div className="container mx-auto px-4 py-8">
+            <div className="max-w-4xl mx-auto">
+              <Skeleton className="h-64 w-full mb-8" />
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-2/3" />
+            </div>
+          </div>
         </div>
         <Footer />
       </div>
@@ -198,16 +211,23 @@ const BlogPost = () => {
     return (
       <div className="min-h-screen bg-background" dir="rtl">
         <Navbar />
-        <div className="container mx-auto px-4 pt-32 pb-16 text-center">
-          <h1 className="text-2xl font-bold mb-4">المقال غير موجود</h1>
-          <p className="text-muted-foreground mb-8">عذراً، لم نتمكن من العثور على المقال المطلوب.</p>
-          <Button asChild>
-            <Link href="/blog">
-              <ArrowRight className="h-4 w-4 ml-2" />
-              العودة للمدونة
-            </Link>
-          </Button>
-        </div>
+        <section className="relative pt-32 pb-20 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-[hsl(177,81%,30%)] via-[hsl(177,81%,35%)] to-[hsl(45,76%,51%)]"></div>
+          <div className="absolute inset-0 bg-black/30"></div>
+          <div className="container mx-auto px-4 relative z-10 text-center">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm mb-6">
+              <FileText className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold mb-4 text-white">المقال غير موجود</h1>
+            <p className="text-white/80 mb-8 max-w-md mx-auto">عذراً، لم نتمكن من العثور على المقال المطلوب.</p>
+            <Button className="bg-white text-primary" asChild>
+              <Link href="/blog">
+                <ArrowRight className="h-4 w-4 ml-2" />
+                العودة للمدونة
+              </Link>
+            </Button>
+          </div>
+        </section>
         <Footer />
       </div>
     );
@@ -217,42 +237,52 @@ const BlogPost = () => {
     <div className="min-h-screen bg-background" dir="rtl">
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-16 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(177,81%,30%)] via-[hsl(177,81%,35%)] to-[hsl(45,76%,51%)]"></div>
+      {/* Hero Section - Enhanced */}
+      <section className="relative pt-32 pb-20 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(177,81%,30%)] from-0% via-[hsl(177,81%,35%)] via-35% to-[hsl(45,76%,51%)] to-100%"></div>
         <div className="absolute inset-0 bg-black/30"></div>
+        
+        {/* Animated particles overlay */}
+        <div className="absolute inset-0">
+          <div className="absolute top-20 right-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse-slow"></div>
+          <div className="absolute bottom-20 left-10 w-96 h-96 bg-primary/15 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
+        </div>
+        
+        {/* Gradient fade to background at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-background via-background/80 to-transparent"></div>
+
         <div className="container mx-auto px-4 relative z-10">
           <AnimateOnScroll>
             <div className="max-w-4xl mx-auto text-white">
-              <Link href="/blog" className="inline-flex items-center text-white/80 hover:text-white mb-6 transition-colors">
-                <ArrowRight className="h-4 w-4 ml-2" />
-                العودة للمدونة
+              <Link href="/blog" className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-white/90 hover:text-white hover:bg-white/20 mb-6 transition-all border border-white/20" data-testid="link-back-to-blog">
+                <ArrowRight className="h-4 w-4" />
+                <span>العودة للمدونة</span>
               </Link>
               
               {article.tags && article.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   {article.tags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="bg-white/20 text-white border-white/30">
+                    <Badge key={tag} variant="secondary" className="bg-white/20 text-white border-white/30 backdrop-blur-sm">
                       {tag}
                     </Badge>
                   ))}
                 </div>
               )}
               
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6" data-testid="text-article-title">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight" data-testid="text-article-title">
                 {article.title}
               </h1>
               
-              <div className="flex flex-wrap items-center gap-6 text-white/80">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-6 text-white/90">
+                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
                   <User className="h-4 w-4" />
                   <span data-testid="text-article-author">{article.author}</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
                   <Calendar className="h-4 w-4" />
                   <span data-testid="text-article-date">{formatDate(article.createdAt)}</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full">
                   <Eye className="h-4 w-4" />
                   <span data-testid="text-article-views">{article.viewCount} مشاهدة</span>
                 </div>
@@ -263,23 +293,30 @@ const BlogPost = () => {
       </section>
 
       {/* Article Content */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
+      <section className="py-16 relative overflow-hidden">
+        {/* Background decorative elements */}
+        <div className="absolute top-0 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -translate-x-1/2"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-secondary/5 rounded-full blur-3xl translate-x-1/2"></div>
+        
+        <div className="container mx-auto px-4 relative z-10">
           <div className="flex flex-col lg:flex-row gap-12 max-w-6xl mx-auto">
             {/* Sidebar - Table of Contents */}
             {tableOfContents.length > 0 && (
-              <aside className="lg:w-64 shrink-0">
-                <div className="lg:sticky lg:top-24">
-                  <Card>
-                    <CardContent className="p-4">
-                      <h3 className="font-bold mb-4 text-sm">محتويات المقال</h3>
+              <aside className="lg:w-72 shrink-0 order-2 lg:order-1">
+                <div className="lg:sticky lg:top-24 space-y-4">
+                  <Card className="border-2 border-primary/20 bg-card/50 backdrop-blur-sm">
+                    <CardContent className="p-5">
+                      <h3 className="font-bold mb-4 text-sm flex items-center gap-2">
+                        <BookOpen className="h-4 w-4 text-primary" />
+                        محتويات المقال
+                      </h3>
                       <nav className="space-y-2">
                         {tableOfContents.map((heading, index) => (
                           <a
                             key={index}
                             href={`#${heading.id}`}
-                            className={`block text-sm text-muted-foreground hover:text-foreground transition-colors ${
-                              heading.level === 2 ? "pr-2" : heading.level === 3 ? "pr-4" : ""
+                            className={`block text-sm text-muted-foreground hover:text-secondary transition-colors py-1 border-r-2 border-transparent hover:border-secondary ${
+                              heading.level === 2 ? "pr-3" : heading.level === 3 ? "pr-5" : "pr-2"
                             }`}
                             data-testid={`link-toc-${index}`}
                           >
@@ -291,10 +328,10 @@ const BlogPost = () => {
                   </Card>
 
                   {/* Share Buttons */}
-                  <Card className="mt-4">
-                    <CardContent className="p-4">
+                  <Card className="border-2 bg-card/50 backdrop-blur-sm">
+                    <CardContent className="p-5">
                       <h3 className="font-bold mb-4 text-sm flex items-center gap-2">
-                        <Share2 className="h-4 w-4" />
+                        <Share2 className="h-4 w-4 text-primary" />
                         شارك المقال
                       </h3>
                       <div className="flex gap-2">
@@ -334,7 +371,7 @@ const BlogPost = () => {
                           onClick={handleCopyLink}
                           data-testid="button-share-copy"
                         >
-                          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                          {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                         </Button>
                       </div>
                     </CardContent>
@@ -344,23 +381,27 @@ const BlogPost = () => {
             )}
 
             {/* Main Content */}
-            <article className="flex-1 min-w-0">
+            <article className="flex-1 min-w-0 order-1 lg:order-2">
               {article.coverImage && (
-                <div className="mb-8 rounded-lg overflow-hidden">
+                <div className="mb-8 rounded-lg overflow-hidden shadow-xl">
                   <img
                     src={article.coverImage}
                     alt={article.title}
-                    className="w-full h-auto max-h-[400px] object-cover"
+                    className="w-full h-auto max-h-[450px] object-cover"
                     data-testid="img-article-cover"
                   />
                 </div>
               )}
 
-              <div 
-                className="prose prose-lg dark:prose-invert max-w-none"
-                dangerouslySetInnerHTML={{ __html: htmlContent }}
-                data-testid="article-content"
-              />
+              <Card className="border-0 shadow-none bg-transparent">
+                <CardContent className="p-0">
+                  <div 
+                    className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-secondary prose-strong:text-foreground prose-ul:text-muted-foreground prose-ol:text-muted-foreground prose-blockquote:border-secondary prose-blockquote:text-muted-foreground"
+                    dangerouslySetInnerHTML={{ __html: htmlContent }}
+                    data-testid="article-content"
+                  />
+                </CardContent>
+              </Card>
             </article>
           </div>
         </div>
@@ -368,20 +409,26 @@ const BlogPost = () => {
 
       {/* Related Articles */}
       {relatedArticles.length > 0 && (
-        <section className="py-16 bg-muted/30">
-          <div className="container mx-auto px-4">
+        <section className="py-20 bg-muted/30 relative overflow-hidden">
+          {/* Background decorative elements */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-gradient-to-r from-primary/5 via-secondary/5 to-primary/5 rounded-full blur-3xl" />
+          
+          <div className="container mx-auto px-4 relative z-10">
             <AnimateOnScroll>
-              <h2 className="text-2xl font-bold mb-8 text-center">مقالات ذات صلة</h2>
+              <div className="text-center mb-12">
+                <h2 className="text-2xl md:text-3xl font-bold mb-3">مقالات ذات صلة</h2>
+                <p className="text-muted-foreground">اكتشف المزيد من المقالات المفيدة</p>
+              </div>
             </AnimateOnScroll>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              {relatedArticles.map((related, index) => (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto stagger-children">
+              {relatedArticles.map((related) => (
                 <AnimateOnScroll key={related.id}>
-                  <Link href={`/blog/${related.slug}`}>
+                  <Link href={`/blog/${related.slug}`} data-testid={`link-related-article-${related.id}`}>
                     <Card 
-                      className="overflow-hidden group cursor-pointer h-full hover-elevate"
+                      className="overflow-hidden group cursor-pointer h-full border-2 hover:border-primary transition-all duration-500 bg-card/50 backdrop-blur-sm"
                       data-testid={`card-related-article-${related.id}`}
                     >
-                      <div className="relative h-40 overflow-hidden">
+                      <div className="relative h-44 overflow-hidden">
                         {related.coverImage ? (
                           <img
                             src={related.coverImage}
@@ -389,21 +436,25 @@ const BlogPost = () => {
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                         ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-secondary/20 to-primary/20 flex items-center justify-center">
-                            <span className="text-3xl text-muted-foreground">M</span>
+                          <div className="w-full h-full bg-gradient-to-br from-secondary via-primary/80 to-primary flex items-center justify-center relative">
+                            <div className="absolute inset-0 bg-black/10"></div>
+                            <div className="relative z-10">
+                              <FileText className="w-10 h-10 text-white" />
+                            </div>
                           </div>
                         )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       </div>
-                      <CardContent className="p-4">
-                        <h3 className="font-bold mb-2 line-clamp-2 group-hover:text-secondary transition-colors">
+                      <CardContent className="p-5">
+                        <h3 className="font-bold mb-2 line-clamp-2 group-hover:text-secondary transition-colors leading-relaxed">
                           {related.title}
                         </h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
+                        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
                           {related.excerpt}
                         </p>
-                        <div className="mt-3 flex items-center text-secondary text-sm font-medium">
+                        <div className="mt-4 flex items-center text-secondary text-sm font-medium group-hover:gap-2 transition-all">
                           <span>اقرأ المزيد</span>
-                          <ArrowLeft className="h-4 w-4 mr-1" />
+                          <ArrowLeft className="h-4 w-4 mr-1 group-hover:-translate-x-1 transition-transform" />
                         </div>
                       </CardContent>
                     </Card>
