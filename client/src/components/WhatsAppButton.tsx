@@ -1,5 +1,5 @@
-import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLocation } from "wouter";
 
 interface WhatsAppButtonProps {
   phoneNumber?: string;
@@ -10,8 +10,14 @@ export function WhatsAppButton({
   phoneNumber = "966500000000",
   message = "مرحباً، أريد الاستفسار عن خدمات موتفلكس"
 }: WhatsAppButtonProps) {
+  const [location] = useLocation();
   const encodedMessage = encodeURIComponent(message);
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+
+  // Hide WhatsApp button on admin pages
+  if (location.startsWith("/admin")) {
+    return null;
+  }
 
   return (
     <a

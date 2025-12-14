@@ -25,7 +25,7 @@ const BlogPost = () => {
   const [copied, setCopied] = useState(false);
 
   const { data, isLoading, error } = useQuery<ArticleResponse>({
-    queryKey: ["/api/articles", slug],
+    queryKey: [`/api/articles/${slug}`],
     enabled: !!slug,
   });
 

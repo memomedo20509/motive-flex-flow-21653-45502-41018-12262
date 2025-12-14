@@ -46,7 +46,7 @@ const ArticleForm = () => {
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
 
   const { data: article, isLoading } = useQuery<Article>({
-    queryKey: ["/api/admin/articles", articleId],
+    queryKey: [`/api/admin/articles/${articleId}`],
     enabled: isEditing,
   });
 
