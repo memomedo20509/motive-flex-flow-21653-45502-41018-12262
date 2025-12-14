@@ -2,7 +2,13 @@ import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import connectPg from "connect-pg-simple";
 import bcrypt from "bcryptjs";
+import { z } from "zod";
 import { storage } from "./storage";
+
+const loginSchema = z.object({
+  email: z.string().email().transform(e => e.toLowerCase().trim()),
+  password: z.string().min(1),
+});
 
 declare module "express-session" {
   interface SessionData {
@@ -17,7 +23,11 @@ function getDatabaseUrl(): string {
     databaseUrl = `postgresql://${process.env.PGUSER}:${process.env.PGPASSWORD}@${process.env.PGHOST}:${process.env.PGPORT}/${process.env.PGDATABASE}`;
   }
   
-  return databaseUrl || "";
+  if (!databaseUrl) {
+    throw new Error("DATABASE_URL is required for session storage");
+  }
+  
+  return databaseUrl;
 }
 
 export function getSession() {
@@ -56,12 +66,12 @@ export async function setupAuth(app: Express) {
 
   app.post("/api/auth/login", async (req, res) => {
     try {
-      const { email, password } = req.body;
-      
-      if (!email || !password) {
+      const parseResult = loginSchema.safeParse(req.body);
+      if (!parseResult.success) {
         return res.status(400).json({ message: "البريد الإلكتروني وكلمة المرور مطلوبان" });
       }
       
+      const { email, password } = parseResult.data;
       const user = await storage.getUserByEmail(email);
       
       if (!user || !user.passwordHash) {

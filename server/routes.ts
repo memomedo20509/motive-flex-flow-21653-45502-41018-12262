@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isAdmin, hashPassword } from "./auth";
 import { insertArticleSchema, insertContactSchema, insertUserSchema } from "../shared/schema";
+import { sendContactNotificationEmail } from "./email";
 import path from "path";
 import fs from "fs";
 import multer from "multer";
@@ -100,15 +101,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/admin/users/:id", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { id } = req.params;
-      const { password, ...updateData } = req.body;
+      const { password, email, firstName, lastName, isAdmin: isAdminFlag } = req.body;
       
       const existingUser = await storage.getUser(id);
       if (!existingUser) {
         return res.status(404).json({ message: "User not found" });
       }
       
-      let userData: any = { ...updateData };
-      if (password) {
+      const userData: any = {};
+      if (email !== undefined) userData.email = String(email).toLowerCase().trim();
+      if (firstName !== undefined) userData.firstName = firstName;
+      if (lastName !== undefined) userData.lastName = lastName;
+      if (isAdminFlag !== undefined) userData.isAdmin = isAdminFlag === true || isAdminFlag === "true" ? "true" : "false";
+      if (password && password.length >= 6) {
         userData.passwordHash = await hashPassword(password);
       }
       
@@ -301,6 +306,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertContactSchema.parse(req.body);
       const contact = await storage.createContactSubmission(validatedData);
+      
+      const adminEmail = process.env.ADMIN_EMAIL || "admin@mutflex.com";
+      sendContactNotificationEmail(adminEmail, {
+        name: validatedData.name,
+        email: validatedData.email,
+        phone: validatedData.phone,
+        company: validatedData.company,
+        message: validatedData.message,
+      }).catch(err => console.error("Failed to send email notification:", err));
+      
       res.status(201).json({ message: "تم إرسال رسالتك بنجاح", contact });
     } catch (error: any) {
       console.error("Error creating contact submission:", error);

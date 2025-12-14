@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
+import { queryClient } from "@/lib/queryClient";
 import { 
   LayoutDashboard, 
   FileText, 
@@ -37,8 +38,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     );
   }
 
+  const [, setLocation] = useLocation();
+  
   if (!user) {
-    window.location.href = "/login";
+    setLocation("/login");
     return null;
   }
 
@@ -130,7 +133,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               className="w-full justify-start gap-2"
               onClick={async () => {
                 await fetch("/api/auth/logout", { method: "POST" });
-                window.location.href = "/login";
+                queryClient.clear();
+                setLocation("/login");
               }}
               data-testid="button-logout"
             >
