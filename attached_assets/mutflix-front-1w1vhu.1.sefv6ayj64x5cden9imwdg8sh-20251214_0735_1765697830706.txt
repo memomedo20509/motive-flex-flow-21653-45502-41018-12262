@@ -1,0 +1,9 @@
+2025-12-14T07:33:54.376Z {"level":"info","ts":1765697634.376329,"msg":"using config from file","file":"/assets/Caddyfile"}
+2025-12-14T07:33:54.377Z {"level":"info","ts":1765697634.3776374,"msg":"adapted config to JSON","adapter":"caddyfile"}
+2025-12-14T07:33:54.378Z {"level":"warn","ts":1765697634.3779771,"logger":"admin","msg":"admin endpoint disabled"}
+2025-12-14T07:33:54.378Z {"level":"info","ts":1765697634.3782063,"logger":"http.auto_https","msg":"automatic HTTPS is completely disabled for server","server_name":"srv0"}
+2025-12-14T07:33:54.378Z {"level":"info","ts":1765697634.3783517,"logger":"tls.cache.maintenance","msg":"started background certificate maintenance","cache":"0xc000577100"}
+2025-12-14T07:33:54.379Z {"level":"info","ts":1765697634.379113,"logger":"http.log","msg":"server running","name":"srv0","protocols":["h1","h2","h3"]}
+2025-12-14T07:33:54.379Z {"level":"info","ts":1765697634.379253,"msg":"serving initial configuration"}
+2025-12-14T07:33:54.381Z {"level":"info","ts":1765697634.381014,"logger":"tls","msg":"cleaning storage unit","storage":"FileStorage:/root/.local/share/caddy"}
+2025-12-14T07:33:54.381Z {"level":"info","ts":1765697634.3811955,"logger":"tls","msg":"finished cleaning storage units"}
