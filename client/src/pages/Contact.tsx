@@ -6,17 +6,67 @@ import { Label } from "@/components/ui/label";
 import { PageScaffold } from "@/components/PageScaffold";
 import { SectionHeader } from "@/components/SectionHeader";
 import { AnimateOnScroll } from "@/components/AnimateOnScroll";
-import { Mail, Phone, MapPin, Send, Zap } from "lucide-react";
+import { Mail, Phone, MapPin, Send, Zap, Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { insertContactSchema } from "@shared/schema";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+
+const contactFormSchema = insertContactSchema.extend({
+  name: z.string().min(2, "الاسم مطلوب"),
+  email: z.string().email("البريد الإلكتروني غير صالح"),
+  message: z.string().min(10, "الرسالة يجب أن تكون 10 أحرف على الأقل"),
+});
+
+type ContactFormData = z.infer<typeof contactFormSchema>;
 
 const Contact = () => {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle form submission
+  const { toast } = useToast();
+  
+  const form = useForm<ContactFormData>({
+    resolver: zodResolver(contactFormSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      company: "",
+      message: "",
+    },
+  });
+
+  const mutation = useMutation({
+    mutationFn: async (data: ContactFormData) => {
+      return apiRequest("/api/contact", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "تم الإرسال بنجاح",
+        description: "شكراً لتواصلك معنا، سنرد عليك في أقرب وقت",
+      });
+      form.reset();
+    },
+    onError: () => {
+      toast({
+        title: "حدث خطأ",
+        description: "فشل في إرسال الرسالة، حاول مرة أخرى",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (data: ContactFormData) => {
+    mutation.mutate(data);
   };
 
   return (
     <PageScaffold>
-      {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 gradient-hero text-white relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-20 right-10 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse-slow"></div>
@@ -35,7 +85,6 @@ const Contact = () => {
         </div>
       </section>
 
-      {/* Contact Section */}
       <section className="py-20 px-4 bg-gradient-to-b from-background via-muted/10 to-background">
         <div className="container mx-auto max-w-6xl">
           <SectionHeader
@@ -44,81 +93,126 @@ const Contact = () => {
           />
           
           <div className="grid lg:grid-cols-2 gap-12 stagger-children">
-            {/* Contact Form */}
             <AnimateOnScroll>
             <Card data-testid="card-contact-form">
               <CardContent className="pt-6">
                 <h2 className="text-2xl font-bold mb-6">أرسل رسالة</h2>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div>
-                    <Label htmlFor="name">الاسم الكامل *</Label>
-                    <Input
-                      id="name"
-                      type="text"
-                      placeholder="أدخل اسمك الكامل"
-                      required
-                      className="mt-2"
-                      data-testid="input-name"
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>الاسم الكامل *</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="أدخل اسمك الكامل"
+                              data-testid="input-name"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div>
-                    <Label htmlFor="email">البريد الإلكتروني *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="example@company.com"
-                      required
-                      className="mt-2"
-                      data-testid="input-email"
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>البريد الإلكتروني *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              placeholder="example@company.com"
+                              data-testid="input-email"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div>
-                    <Label htmlFor="phone">رقم الجوال *</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="05XXXXXXXX"
-                      required
-                      className="mt-2"
-                      dir="ltr"
-                      data-testid="input-phone"
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>رقم الجوال</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="tel"
+                              placeholder="05XXXXXXXX"
+                              dir="ltr"
+                              data-testid="input-phone"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div>
-                    <Label htmlFor="company">اسم الشركة</Label>
-                    <Input
-                      id="company"
-                      type="text"
-                      placeholder="اسم شركتك"
-                      className="mt-2"
-                      data-testid="input-company"
+                    <FormField
+                      control={form.control}
+                      name="company"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>اسم الشركة</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="اسم شركتك"
+                              data-testid="input-company"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div>
-                    <Label htmlFor="message">الرسالة *</Label>
-                    <Textarea
-                      id="message"
-                      placeholder="اكتب رسالتك هنا..."
-                      required
-                      className="mt-2 min-h-[150px]"
-                      data-testid="textarea-message"
+                    <FormField
+                      control={form.control}
+                      name="message"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>الرسالة *</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="اكتب رسالتك هنا..."
+                              className="min-h-[150px]"
+                              data-testid="textarea-message"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <Button type="submit" size="lg" className="w-full text-lg" data-testid="button-submit">
-                    <Send size={20} className="ml-2" />
-                    إرسال الرسالة
-                  </Button>
-                </form>
+                    <Button 
+                      type="submit" 
+                      size="lg" 
+                      className="w-full text-lg" 
+                      disabled={mutation.isPending}
+                      data-testid="button-submit"
+                    >
+                      {mutation.isPending ? (
+                        <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+                      ) : (
+                        <Send size={20} className="ml-2" />
+                      )}
+                      {mutation.isPending ? "جاري الإرسال..." : "إرسال الرسالة"}
+                    </Button>
+                  </form>
+                </Form>
               </CardContent>
             </Card>
             </AnimateOnScroll>
 
-            {/* Contact Info */}
             <AnimateOnScroll>
             <div className="space-y-8">
               <div>
@@ -180,7 +274,6 @@ const Contact = () => {
                 </div>
               </div>
 
-              {/* Quick Links */}
               <Card className="bg-gradient-to-br from-primary/5 to-secondary/5" data-testid="card-quick-start">
                 <CardContent className="pt-6">
                   <h3 className="font-bold text-lg mb-4">

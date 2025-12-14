@@ -75,3 +75,24 @@ export const ArticleStatus = {
 } as const;
 
 export type ArticleStatusType = typeof ArticleStatus[keyof typeof ArticleStatus];
+
+// Contact submissions table
+export const contactSubmissions = pgTable("contact_submissions", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 50 }),
+  company: varchar("company", { length: 255 }),
+  message: text("message").notNull(),
+  isRead: varchar("is_read", { length: 10 }).default("false"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertContactSchema = createInsertSchema(contactSubmissions).omit({
+  id: true,
+  isRead: true,
+  createdAt: true,
+});
+
+export type InsertContact = z.infer<typeof insertContactSchema>;
+export type ContactSubmission = typeof contactSubmissions.$inferSelect;

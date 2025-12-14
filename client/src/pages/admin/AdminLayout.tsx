@@ -7,7 +7,8 @@ import {
   Plus, 
   LogOut,
   Menu,
-  X
+  X,
+  MessageSquare
 } from "lucide-react";
 import { useState } from "react";
 import type { User } from "@shared/schema";
@@ -56,6 +57,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const navItems = [
     { href: "/admin", label: "لوحة التحكم", icon: LayoutDashboard },
+    { href: "/admin/contacts", label: "رسائل التواصل", icon: MessageSquare },
     { href: "/admin/articles", label: "المقالات", icon: FileText },
     { href: "/admin/articles/new", label: "مقال جديد", icon: Plus },
   ];

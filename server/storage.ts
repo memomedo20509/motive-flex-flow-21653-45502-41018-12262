@@ -1,10 +1,13 @@
 import {
   users,
   articles,
+  contactSubmissions,
   type User,
   type UpsertUser,
   type Article,
   type InsertArticle,
+  type ContactSubmission,
+  type InsertContact,
 } from "../shared/schema";
 import { db } from "./db";
 import { eq, desc, ilike, or, sql, and } from "drizzle-orm";
@@ -28,6 +31,15 @@ export interface IStorage {
   incrementViewCount(id: number): Promise<void>;
   getRelatedArticles(articleId: number, tags: string[], limit?: number): Promise<Article[]>;
   getAllTags(): Promise<string[]>;
+  
+  createContactSubmission(contact: InsertContact): Promise<ContactSubmission>;
+  getContactSubmissions(options?: {
+    page?: number;
+    limit?: number;
+    isRead?: string;
+  }): Promise<{ contacts: ContactSubmission[]; total: number; unreadCount: number }>;
+  markContactAsRead(id: number): Promise<ContactSubmission | undefined>;
+  deleteContact(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -179,6 +191,67 @@ export class DatabaseStorage implements IStorage {
     });
 
     return Array.from(allTags).sort();
+  }
+
+  async createContactSubmission(contact: InsertContact): Promise<ContactSubmission> {
+    const [newContact] = await db.insert(contactSubmissions).values(contact).returning();
+    return newContact;
+  }
+
+  async getContactSubmissions(options?: {
+    page?: number;
+    limit?: number;
+    isRead?: string;
+  }): Promise<{ contacts: ContactSubmission[]; total: number; unreadCount: number }> {
+    const page = options?.page || 1;
+    const limit = options?.limit || 20;
+    const offset = (page - 1) * limit;
+
+    let conditions = [];
+
+    if (options?.isRead) {
+      conditions.push(eq(contactSubmissions.isRead, options.isRead));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [result, countResult, unreadResult] = await Promise.all([
+      db
+        .select()
+        .from(contactSubmissions)
+        .where(whereClause)
+        .orderBy(desc(contactSubmissions.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(contactSubmissions)
+        .where(whereClause),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(contactSubmissions)
+        .where(eq(contactSubmissions.isRead, "false")),
+    ]);
+
+    return {
+      contacts: result,
+      total: Number(countResult[0]?.count || 0),
+      unreadCount: Number(unreadResult[0]?.count || 0),
+    };
+  }
+
+  async markContactAsRead(id: number): Promise<ContactSubmission | undefined> {
+    const [updated] = await db
+      .update(contactSubmissions)
+      .set({ isRead: "true" })
+      .where(eq(contactSubmissions.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteContact(id: number): Promise<boolean> {
+    await db.delete(contactSubmissions).where(eq(contactSubmissions.id, id));
+    return true;
   }
 }
 

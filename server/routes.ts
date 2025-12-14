@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isAdmin } from "./replitAuth";
-import { insertArticleSchema } from "../shared/schema";
+import { insertArticleSchema, insertContactSchema } from "../shared/schema";
 import path from "path";
 import fs from "fs";
 import multer from "multer";
@@ -215,6 +215,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error uploading file:", error);
       res.status(500).json({ message: "Failed to upload file" });
+    }
+  });
+
+  app.post("/api/contact", async (req, res) => {
+    try {
+      const validatedData = insertContactSchema.parse(req.body);
+      const contact = await storage.createContactSubmission(validatedData);
+      res.status(201).json({ message: "تم إرسال رسالتك بنجاح", contact });
+    } catch (error: any) {
+      console.error("Error creating contact submission:", error);
+      res.status(400).json({ message: error.message || "فشل في إرسال الرسالة" });
+    }
+  });
+
+  app.get("/api/admin/contacts", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { page, limit, isRead } = req.query;
+      const result = await storage.getContactSubmissions({
+        page: page ? parseInt(page as string) : 1,
+        limit: limit ? parseInt(limit as string) : 20,
+        isRead: isRead as string,
+      });
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+      res.status(500).json({ message: "Failed to fetch contacts" });
+    }
+  });
+
+  app.patch("/api/admin/contacts/:id/read", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const contact = await storage.markContactAsRead(id);
+      if (!contact) {
+        return res.status(404).json({ message: "Contact not found" });
+      }
+      res.json(contact);
+    } catch (error) {
+      console.error("Error marking contact as read:", error);
+      res.status(500).json({ message: "Failed to mark contact as read" });
+    }
+  });
+
+  app.delete("/api/admin/contacts/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteContact(id);
+      res.json({ message: "Contact deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting contact:", error);
+      res.status(500).json({ message: "Failed to delete contact" });
     }
   });
 

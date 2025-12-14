@@ -19,7 +19,9 @@ import BlogPost from "./pages/BlogPost";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminArticleList from "./pages/admin/ArticleList";
 import AdminArticleForm from "./pages/admin/ArticleForm";
+import AdminContactsList from "./pages/admin/ContactsList";
 import NotFound from "./pages/NotFound";
+import { WhatsAppButton } from "./components/WhatsAppButton";
 
 const pageVariants = {
   initial: {
@@ -73,6 +75,7 @@ function Router() {
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />
       <Route path="/admin" component={AdminDashboard} />
+      <Route path="/admin/contacts" component={AdminContactsList} />
       <Route path="/admin/articles" component={AdminArticleList} />
       <Route path="/admin/articles/new" component={AdminArticleForm} />
       <Route path="/admin/articles/:id/edit" component={AdminArticleForm} />
@@ -97,6 +100,7 @@ function AppContent() {
       <Toaster />
       <Sonner />
       <Router />
+      <WhatsAppButton />
     </>
   );
 }
