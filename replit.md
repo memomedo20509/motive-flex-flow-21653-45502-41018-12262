@@ -12,6 +12,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### December 14, 2025 - Admin Settings Page
+- Created settings table in database for app configuration
+- Added Settings.tsx page at /admin/settings with email notification settings
+- Updated contact form to use notification_email from settings database
+- Added settings nav item in AdminLayout
+
 ### December 14, 2025 - Custom Authentication System
 - Replaced Replit Auth with custom authentication system using bcrypt + sessions
 - Created server/auth.ts with login/logout/me endpoints
