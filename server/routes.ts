@@ -307,8 +307,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertContactSchema.parse(req.body);
       const contact = await storage.createContactSubmission(validatedData);
       
-      const adminEmail = process.env.ADMIN_EMAIL || "admin@mutflex.com";
-      sendContactNotificationEmail(adminEmail, {
+      const notificationEmail = await storage.getSetting("notification_email") || "admin@mutflex.com";
+      sendContactNotificationEmail(notificationEmail, {
         name: validatedData.name,
         email: validatedData.email,
         phone: validatedData.phone,
@@ -360,6 +360,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting contact:", error);
       res.status(500).json({ message: "Failed to delete contact" });
+    }
+  });
+
+  app.get("/api/admin/settings", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const allSettings = await storage.getAllSettings();
+      const settingsObj: Record<string, string> = {};
+      allSettings.forEach((s) => {
+        if (s.value) settingsObj[s.key] = s.value;
+      });
+      res.json(settingsObj);
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+      res.status(500).json({ message: "Failed to fetch settings" });
+    }
+  });
+
+  app.put("/api/admin/settings", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { notification_email } = req.body;
+      if (notification_email) {
+        await storage.setSetting("notification_email", notification_email);
+      }
+      res.json({ message: "تم حفظ الإعدادات بنجاح" });
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      res.status(500).json({ message: "Failed to save settings" });
     }
   });
 

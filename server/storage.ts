@@ -2,12 +2,14 @@ import {
   users,
   articles,
   contactSubmissions,
+  settings,
   type User,
   type UpsertUser,
   type Article,
   type InsertArticle,
   type ContactSubmission,
   type InsertContact,
+  type Setting,
 } from "../shared/schema";
 import { db } from "./db";
 import { eq, desc, ilike, or, sql, and } from "drizzle-orm";
@@ -44,6 +46,10 @@ export interface IStorage {
   }): Promise<{ contacts: ContactSubmission[]; total: number; unreadCount: number }>;
   markContactAsRead(id: number): Promise<ContactSubmission | undefined>;
   deleteContact(id: number): Promise<boolean>;
+  
+  getSetting(key: string): Promise<string | null>;
+  setSetting(key: string, value: string): Promise<Setting>;
+  getAllSettings(): Promise<Setting[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -279,6 +285,27 @@ export class DatabaseStorage implements IStorage {
   async deleteContact(id: number): Promise<boolean> {
     await db.delete(contactSubmissions).where(eq(contactSubmissions.id, id));
     return true;
+  }
+
+  async getSetting(key: string): Promise<string | null> {
+    const [setting] = await db.select().from(settings).where(eq(settings.key, key));
+    return setting?.value || null;
+  }
+
+  async setSetting(key: string, value: string): Promise<Setting> {
+    const [setting] = await db
+      .insert(settings)
+      .values({ key, value })
+      .onConflictDoUpdate({
+        target: settings.key,
+        set: { value, updatedAt: new Date() },
+      })
+      .returning();
+    return setting;
+  }
+
+  async getAllSettings(): Promise<Setting[]> {
+    return db.select().from(settings);
   }
 }
 

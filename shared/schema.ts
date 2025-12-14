@@ -106,3 +106,13 @@ export const insertContactSchema = createInsertSchema(contactSubmissions).omit({
 
 export type InsertContact = z.infer<typeof insertContactSchema>;
 export type ContactSubmission = typeof contactSubmissions.$inferSelect;
+
+// Settings table for app configuration
+export const settings = pgTable("settings", {
+  id: serial("id").primaryKey(),
+  key: varchar("key", { length: 100 }).notNull().unique(),
+  value: text("value"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type Setting = typeof settings.$inferSelect;

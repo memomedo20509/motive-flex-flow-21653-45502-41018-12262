@@ -21,6 +21,7 @@ import AdminArticleList from "./pages/admin/ArticleList";
 import AdminArticleForm from "./pages/admin/ArticleForm";
 import AdminContactsList from "./pages/admin/ContactsList";
 import AdminUsersList from "./pages/admin/UsersList";
+import AdminSettings from "./pages/admin/Settings";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { WhatsAppButton } from "./components/WhatsAppButton";
@@ -83,6 +84,7 @@ function Router() {
       <Route path="/admin/articles" component={AdminArticleList} />
       <Route path="/admin/articles/new" component={AdminArticleForm} />
       <Route path="/admin/articles/:id/edit" component={AdminArticleForm} />
+      <Route path="/admin/settings" component={AdminSettings} />
       <Route component={NotFound} />
     </Switch>
   );

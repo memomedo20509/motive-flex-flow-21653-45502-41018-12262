@@ -10,7 +10,8 @@ import {
   Menu,
   X,
   MessageSquare,
-  Users
+  Users,
+  Settings
 } from "lucide-react";
 import { useState } from "react";
 import type { User } from "@shared/schema";
@@ -65,6 +66,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     { href: "/admin/users", label: "المستخدمين", icon: Users },
     { href: "/admin/articles", label: "المقالات", icon: FileText },
     { href: "/admin/articles/new", label: "مقال جديد", icon: Plus },
+    { href: "/admin/settings", label: "الإعدادات", icon: Settings },
   ];
 
   const isActive = (href: string) => {
