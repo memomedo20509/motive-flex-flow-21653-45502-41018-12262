@@ -3,6 +3,7 @@ import {
   articles,
   contactSubmissions,
   settings,
+  trialSubmissions,
   type User,
   type UpsertUser,
   type Article,
@@ -10,6 +11,8 @@ import {
   type ContactSubmission,
   type InsertContact,
   type Setting,
+  type TrialSubmission,
+  type InsertTrial,
 } from "../shared/schema";
 import { db } from "./db";
 import { eq, desc, ilike, or, sql, and } from "drizzle-orm";
@@ -50,6 +53,15 @@ export interface IStorage {
   getSetting(key: string): Promise<string | null>;
   setSetting(key: string, value: string): Promise<Setting>;
   getAllSettings(): Promise<Setting[]>;
+  
+  createTrialSubmission(trial: InsertTrial): Promise<TrialSubmission>;
+  getTrialSubmissions(options?: {
+    page?: number;
+    limit?: number;
+    isRead?: string;
+  }): Promise<{ trials: TrialSubmission[]; total: number; unreadCount: number }>;
+  markTrialAsRead(id: number): Promise<TrialSubmission | undefined>;
+  deleteTrial(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -306,6 +318,67 @@ export class DatabaseStorage implements IStorage {
 
   async getAllSettings(): Promise<Setting[]> {
     return db.select().from(settings);
+  }
+
+  async createTrialSubmission(trial: InsertTrial): Promise<TrialSubmission> {
+    const [newTrial] = await db.insert(trialSubmissions).values(trial).returning();
+    return newTrial;
+  }
+
+  async getTrialSubmissions(options?: {
+    page?: number;
+    limit?: number;
+    isRead?: string;
+  }): Promise<{ trials: TrialSubmission[]; total: number; unreadCount: number }> {
+    const page = options?.page || 1;
+    const limit = options?.limit || 20;
+    const offset = (page - 1) * limit;
+
+    let conditions = [];
+
+    if (options?.isRead) {
+      conditions.push(eq(trialSubmissions.isRead, options.isRead));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [result, countResult, unreadResult] = await Promise.all([
+      db
+        .select()
+        .from(trialSubmissions)
+        .where(whereClause)
+        .orderBy(desc(trialSubmissions.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(trialSubmissions)
+        .where(whereClause),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(trialSubmissions)
+        .where(eq(trialSubmissions.isRead, "false")),
+    ]);
+
+    return {
+      trials: result,
+      total: Number(countResult[0]?.count || 0),
+      unreadCount: Number(unreadResult[0]?.count || 0),
+    };
+  }
+
+  async markTrialAsRead(id: number): Promise<TrialSubmission | undefined> {
+    const [updated] = await db
+      .update(trialSubmissions)
+      .set({ isRead: "true" })
+      .where(eq(trialSubmissions.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteTrial(id: number): Promise<boolean> {
+    await db.delete(trialSubmissions).where(eq(trialSubmissions.id, id));
+    return true;
   }
 }
 

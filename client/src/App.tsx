@@ -20,6 +20,7 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import AdminArticleList from "./pages/admin/ArticleList";
 import AdminArticleForm from "./pages/admin/ArticleForm";
 import AdminContactsList from "./pages/admin/ContactsList";
+import AdminTrialsList from "./pages/admin/TrialsList";
 import AdminUsersList from "./pages/admin/UsersList";
 import AdminSettings from "./pages/admin/Settings";
 import Login from "./pages/Login";
@@ -80,6 +81,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/contacts" component={AdminContactsList} />
+      <Route path="/admin/trials" component={AdminTrialsList} />
       <Route path="/admin/users" component={AdminUsersList} />
       <Route path="/admin/articles" component={AdminArticleList} />
       <Route path="/admin/articles/new" component={AdminArticleForm} />

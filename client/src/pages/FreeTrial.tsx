@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -10,23 +9,75 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageScaffold } from "@/components/PageScaffold";
-import { CheckCircle, Zap } from "lucide-react";
+import { CheckCircle, Zap, Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { insertTrialSchema } from "@shared/schema";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+
+const trialFormSchema = insertTrialSchema.extend({
+  fullName: z.string().min(2, "الاسم مطلوب"),
+  email: z.string().email("البريد الإلكتروني غير صالح"),
+  phone: z.string().min(5, "رقم الجوال مطلوب"),
+  company: z.string().min(2, "اسم الشركة مطلوب"),
+  industry: z.string().min(1, "القطاع الصناعي مطلوب"),
+});
+
+type TrialFormData = z.infer<typeof trialFormSchema>;
 
 const FreeTrial = () => {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle form submission
+  const { toast } = useToast();
+  
+  const form = useForm<TrialFormData>({
+    resolver: zodResolver(trialFormSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      phone: "",
+      company: "",
+      industry: "",
+    },
+  });
+
+  const mutation = useMutation({
+    mutationFn: async (data: TrialFormData) => {
+      return apiRequest("/api/trial", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "تم التسجيل بنجاح",
+        description: "شكراً لاهتمامك، سنتواصل معك قريباً لبدء تجربتك المجانية",
+      });
+      form.reset();
+    },
+    onError: () => {
+      toast({
+        title: "حدث خطأ",
+        description: "فشل في تسجيل الطلب، حاول مرة أخرى",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (data: TrialFormData) => {
+    mutation.mutate(data);
   };
 
   return (
     <PageScaffold>
 
-      {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 gradient-hero text-white">
         <div className="container mx-auto text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Zap size={40} />
-            <h1 className="text-4xl md:text-5xl font-bold">
+            <h1 className="text-4xl md:text-5xl font-bold" data-testid="heading-free-trial">
               ابدأ تجربتك المجانية لمدة شهرين
             </h1>
           </div>
@@ -36,7 +87,6 @@ const FreeTrial = () => {
         </div>
       </section>
 
-      {/* Benefits Bar */}
       <section className="py-8 px-4 bg-muted/50">
         <div className="container mx-auto">
           <div className="flex flex-wrap justify-center gap-8 text-center">
@@ -57,115 +107,155 @@ const FreeTrial = () => {
         </div>
       </section>
 
-      {/* Form Section */}
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-6xl">
           <div className="grid lg:grid-cols-2 gap-12 items-start">
-            {/* Form */}
             <Card>
               <CardContent className="pt-6">
                 <h2 className="text-2xl font-bold mb-6">
                   املأ البيانات للبدء
                 </h2>
-                <form onSubmit={handleSubmit} className="space-y-6" data-testid="form-free-trial">
-                  <div>
-                    <Label htmlFor="fullName">الاسم الكامل *</Label>
-                    <Input
-                      id="fullName"
-                      type="text"
-                      placeholder="أدخل اسمك الكامل"
-                      required
-                      className="mt-2"
-                      data-testid="input-fullname"
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" data-testid="form-free-trial">
+                    <FormField
+                      control={form.control}
+                      name="fullName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>الاسم الكامل *</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="أدخل اسمك الكامل"
+                              data-testid="input-fullname"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div>
-                    <Label htmlFor="email">البريد الإلكتروني *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="example@company.com"
-                      required
-                      className="mt-2"
-                      data-testid="input-email"
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>البريد الإلكتروني *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="email"
+                              placeholder="example@company.com"
+                              data-testid="input-email"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div>
-                    <Label htmlFor="phone">رقم الجوال *</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      placeholder="05XXXXXXXX"
-                      required
-                      className="mt-2"
-                      dir="ltr"
-                      data-testid="input-phone"
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>رقم الجوال *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="tel"
+                              placeholder="05XXXXXXXX"
+                              dir="ltr"
+                              data-testid="input-phone"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div>
-                    <Label htmlFor="company">اسم الشركة / المصنع *</Label>
-                    <Input
-                      id="company"
-                      type="text"
-                      placeholder="اسم شركتك"
-                      required
-                      className="mt-2"
-                      data-testid="input-company"
+                    <FormField
+                      control={form.control}
+                      name="company"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>اسم الشركة / المصنع *</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="اسم شركتك"
+                              data-testid="input-company"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
-                  </div>
 
-                  <div>
-                    <Label htmlFor="industry">القطاع الصناعي *</Label>
-                    <Select required>
-                      <SelectTrigger className="mt-2" data-testid="select-industry">
-                        <SelectValue placeholder="اختر قطاعك" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="marble">
-                          مصانع الرخام والجرانيت
-                        </SelectItem>
-                        <SelectItem value="construction">
-                          شركات المقاولات الإنشائية
-                        </SelectItem>
-                        <SelectItem value="finishing">
-                          شركات التشطيب والترميم
-                        </SelectItem>
-                        <SelectItem value="design">
-                          شركات التصميم والديكور
-                        </SelectItem>
-                        <SelectItem value="kitchen">مصانع المطابخ</SelectItem>
-                        <SelectItem value="aluminum">
-                          شركات الألمنيوم
-                        </SelectItem>
-                        <SelectItem value="other">أخرى</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    <FormField
+                      control={form.control}
+                      name="industry"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>القطاع الصناعي *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-industry">
+                                <SelectValue placeholder="اختر قطاعك" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="marble">
+                                مصانع الرخام والجرانيت
+                              </SelectItem>
+                              <SelectItem value="construction">
+                                شركات المقاولات الإنشائية
+                              </SelectItem>
+                              <SelectItem value="finishing">
+                                شركات التشطيب والترميم
+                              </SelectItem>
+                              <SelectItem value="design">
+                                شركات التصميم والديكور
+                              </SelectItem>
+                              <SelectItem value="kitchen">مصانع المطابخ</SelectItem>
+                              <SelectItem value="aluminum">
+                                شركات الألمنيوم
+                              </SelectItem>
+                              <SelectItem value="other">أخرى</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="w-full text-lg"
-                    variant="default"
-                    data-testid="button-submit-trial"
-                  >
-                    ابدأ تجربتك المجانية الآن
-                  </Button>
+                    <Button
+                      type="submit"
+                      size="lg"
+                      className="w-full text-lg"
+                      variant="default"
+                      disabled={mutation.isPending}
+                      data-testid="button-submit-trial"
+                    >
+                      {mutation.isPending ? (
+                        <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+                      ) : (
+                        <Zap size={20} className="ml-2" />
+                      )}
+                      {mutation.isPending ? "جاري التسجيل..." : "ابدأ تجربتك المجانية الآن"}
+                    </Button>
 
-                  <p className="text-sm text-center text-muted-foreground">
-                    بالتسجيل، أنت توافق على{" "}
-                    <a href="/privacy-policy" className="text-primary underline">
-                      سياسة الخصوصية
-                    </a>
-                  </p>
-                </form>
+                    <p className="text-sm text-center text-muted-foreground">
+                      بالتسجيل، أنت توافق على{" "}
+                      <a href="/privacy-policy" className="text-primary underline">
+                        سياسة الخصوصية
+                      </a>
+                    </p>
+                  </form>
+                </Form>
               </CardContent>
             </Card>
 
-            {/* Benefits */}
             <div className="space-y-6">
               <h2 className="text-2xl font-bold">ماذا ستحصل في التجربة المجانية؟</h2>
               <div className="space-y-4">
@@ -224,10 +314,9 @@ const FreeTrial = () => {
         </div>
       </section>
 
-      {/* Testimonial */}
       <section className="py-20 px-4 bg-muted/50">
         <div className="container mx-auto max-w-4xl text-center">
-          <div className="bg-white rounded-lg p-8 shadow-lg">
+          <div className="bg-white dark:bg-card rounded-lg p-8 shadow-lg">
             <p className="text-lg italic mb-4 text-muted-foreground">
               "التجربة المجانية أعطتنا الوقت الكافي لتقييم النظام بشكل دقيق. الفريق احترافي والنظام 
               ساعدنا في تنظيم جميع عمليات التكييف من البداية للنهاية."

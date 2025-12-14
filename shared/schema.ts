@@ -116,3 +116,24 @@ export const settings = pgTable("settings", {
 });
 
 export type Setting = typeof settings.$inferSelect;
+
+// Trial submissions table for free trial requests
+export const trialSubmissions = pgTable("trial_submissions", {
+  id: serial("id").primaryKey(),
+  fullName: varchar("full_name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 50 }).notNull(),
+  company: varchar("company", { length: 255 }).notNull(),
+  industry: varchar("industry", { length: 100 }).notNull(),
+  isRead: varchar("is_read", { length: 10 }).default("false"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertTrialSchema = createInsertSchema(trialSubmissions).omit({
+  id: true,
+  isRead: true,
+  createdAt: true,
+});
+
+export type InsertTrial = z.infer<typeof insertTrialSchema>;
+export type TrialSubmission = typeof trialSubmissions.$inferSelect;

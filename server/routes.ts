@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isAdmin, hashPassword } from "./auth";
-import { insertArticleSchema, insertContactSchema, insertUserSchema } from "../shared/schema";
+import { insertArticleSchema, insertContactSchema, insertUserSchema, insertTrialSchema } from "../shared/schema";
 import { sendContactNotificationEmail } from "./email";
 import path from "path";
 import fs from "fs";
@@ -387,6 +387,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error saving settings:", error);
       res.status(500).json({ message: "Failed to save settings" });
+    }
+  });
+
+  app.post("/api/trial", async (req, res) => {
+    try {
+      const validatedData = insertTrialSchema.parse(req.body);
+      const trial = await storage.createTrialSubmission(validatedData);
+      
+      const notificationEmail = await storage.getSetting("notification_email") || "admin@mutflex.com";
+      sendContactNotificationEmail(notificationEmail, {
+        name: validatedData.fullName,
+        email: validatedData.email,
+        phone: validatedData.phone,
+        company: validatedData.company,
+        message: `طلب تجربة مجانية - القطاع: ${validatedData.industry}`,
+      }).catch(err => console.error("Failed to send trial email notification:", err));
+      
+      res.status(201).json({ message: "تم تسجيل طلبك بنجاح", trial });
+    } catch (error: any) {
+      console.error("Error creating trial submission:", error);
+      res.status(400).json({ message: error.message || "فشل في تسجيل الطلب" });
+    }
+  });
+
+  app.get("/api/admin/trials", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { page, limit, isRead } = req.query;
+      const result = await storage.getTrialSubmissions({
+        page: page ? parseInt(page as string) : 1,
+        limit: limit ? parseInt(limit as string) : 20,
+        isRead: isRead as string,
+      });
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching trials:", error);
+      res.status(500).json({ message: "Failed to fetch trials" });
+    }
+  });
+
+  app.patch("/api/admin/trials/:id/read", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const trial = await storage.markTrialAsRead(id);
+      if (!trial) {
+        return res.status(404).json({ message: "Trial not found" });
+      }
+      res.json(trial);
+    } catch (error) {
+      console.error("Error marking trial as read:", error);
+      res.status(500).json({ message: "Failed to mark trial as read" });
+    }
+  });
+
+  app.delete("/api/admin/trials/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteTrial(id);
+      res.json({ message: "Trial deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting trial:", error);
+      res.status(500).json({ message: "Failed to delete trial" });
     }
   });
 
