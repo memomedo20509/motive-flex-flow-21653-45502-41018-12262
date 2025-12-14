@@ -12,6 +12,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### December 14, 2025 - Custom Authentication System
+- Replaced Replit Auth with custom authentication system using bcrypt + sessions
+- Created server/auth.ts with login/logout/me endpoints
+- Created Login.tsx page at /login with logo
+- Added user management API (CRUD) for admin at /api/admin/users
+- Created admin/UsersList.tsx for user management UI at /admin/users
+- Integrated Resend for email notifications on contact form submission
+- Added password_hash column to users table
+
 ### December 14, 2025 - Contact System & WhatsApp Button
 - Added WhatsApp floating button (green, bottom-left, opens WhatsApp)
 - Created contact_submissions database table
