@@ -12,6 +12,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### December 14, 2025 - Contact System & WhatsApp Button
+- Added WhatsApp floating button (green, bottom-left, opens WhatsApp)
+- Created contact_submissions database table
+- Added contact form submission API and admin contacts list
+- Updated Contact.tsx to save to database with react-hook-form
+- Created admin contacts management page at /admin/contacts
+
 ### November 12, 2025 - Motion System & UI Enhancements
 
 **Unified Professional Animation System:**
