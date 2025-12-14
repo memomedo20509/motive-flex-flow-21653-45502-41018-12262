@@ -8,7 +8,8 @@ import {
   LogOut,
   Menu,
   X,
-  MessageSquare
+  MessageSquare,
+  Users
 } from "lucide-react";
 import { useState } from "react";
 import type { User } from "@shared/schema";
@@ -37,7 +38,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   if (!user) {
-    window.location.href = "/api/login";
+    window.location.href = "/login";
     return null;
   }
 
@@ -58,6 +59,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const navItems = [
     { href: "/admin", label: "لوحة التحكم", icon: LayoutDashboard },
     { href: "/admin/contacts", label: "رسائل التواصل", icon: MessageSquare },
+    { href: "/admin/users", label: "المستخدمين", icon: Users },
     { href: "/admin/articles", label: "المقالات", icon: FileText },
     { href: "/admin/articles/new", label: "مقال جديد", icon: Plus },
   ];
@@ -126,13 +128,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             <Button
               variant="outline"
               className="w-full justify-start gap-2"
-              asChild
+              onClick={async () => {
+                await fetch("/api/auth/logout", { method: "POST" });
+                window.location.href = "/login";
+              }}
               data-testid="button-logout"
             >
-              <a href="/api/logout">
-                <LogOut className="h-4 w-4" />
-                تسجيل الخروج
-              </a>
+              <LogOut className="h-4 w-4" />
+              تسجيل الخروج
             </Button>
           </div>
         </div>

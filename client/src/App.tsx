@@ -20,6 +20,8 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import AdminArticleList from "./pages/admin/ArticleList";
 import AdminArticleForm from "./pages/admin/ArticleForm";
 import AdminContactsList from "./pages/admin/ContactsList";
+import AdminUsersList from "./pages/admin/UsersList";
+import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { WhatsAppButton } from "./components/WhatsAppButton";
 
@@ -74,8 +76,10 @@ function Router() {
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />
+      <Route path="/login" component={Login} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/contacts" component={AdminContactsList} />
+      <Route path="/admin/users" component={AdminUsersList} />
       <Route path="/admin/articles" component={AdminArticleList} />
       <Route path="/admin/articles/new" component={AdminArticleForm} />
       <Route path="/admin/articles/:id/edit" component={AdminArticleForm} />
