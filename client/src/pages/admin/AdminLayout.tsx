@@ -21,7 +21,7 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ children }: AdminLayoutProps) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { data: user, isLoading } = useQuery<User>({
@@ -39,8 +39,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     );
   }
 
-  const [, setLocation] = useLocation();
-  
   if (!user) {
     setLocation("/login");
     return null;
