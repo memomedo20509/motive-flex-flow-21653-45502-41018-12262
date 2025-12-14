@@ -12,6 +12,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### December 14, 2025 - Free Trial Form System
+- Fixed Free Trial form at /free-trial to save data to database
+- Added trial_submissions table with: id, fullName, email, phone, company, industry, isRead, createdAt
+- Updated FreeTrial.tsx to use react-hook-form with useMutation (same pattern as Contact.tsx)
+- Added API endpoints: POST /api/trial, GET /api/admin/trials, PATCH /api/admin/trials/:id/read, DELETE /api/admin/trials/:id
+- Created admin/TrialsList.tsx for managing trial submissions at /admin/trials
+- Added "طلبات التجربة" nav item in AdminLayout
+
 ### December 14, 2025 - Admin Settings Page
 - Created settings table in database for app configuration
 - Added Settings.tsx page at /admin/settings with email notification settings
