@@ -12,6 +12,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### December 16, 2025 - Performance Optimizations
+- Added width/height attributes to all images to prevent CLS (Cumulative Layout Shift)
+- Implemented loading="lazy" for all below-the-fold images
+- Optimized font loading with preload hints and font-display: swap
+- Reduced Google Fonts weight variants (removed 300, 800, 900)
+- Removed unused Font Awesome CDN link
+- Implemented React.lazy code splitting for all pages except Index (critical path)
+- Added Suspense with loading fallback for lazy-loaded components
+- Files affected: index.html, App.tsx, Navbar.tsx, Footer.tsx, Login.tsx, Blog.tsx, BlogPost.tsx, AdminLayout.tsx, ArticleForm.tsx
+
 ### December 14, 2025 - Free Trial Form System
 - Fixed Free Trial form at /free-trial to save data to database
 - Added trial_submissions table with: id, fullName, email, phone, company, industry, isRead, createdAt
