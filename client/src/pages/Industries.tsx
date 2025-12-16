@@ -3,13 +3,32 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageScaffold } from "@/components/PageScaffold";
 import { SectionHeader } from "@/components/SectionHeader";
 import { AnimateOnScroll } from "@/components/AnimateOnScroll";
-import { CheckCircle } from "lucide-react";
+import { 
+  CheckCircle, 
+  Factory, 
+  Building2, 
+  Paintbrush, 
+  Sparkles, 
+  Hammer, 
+  Settings, 
+  Wrench,
+  Glasses,
+  ArrowUpDown,
+  Home,
+  Leaf,
+  Bug,
+  Rocket,
+  PlayCircle,
+  MessageCircle,
+  HelpCircle,
+  type LucideIcon
+} from "lucide-react";
 import { Link } from "wouter";
 
 const Industries = () => {
-  const industries = [
+  const industries: { icon: LucideIcon; name: string; problem: string; solution: string; benefits: string[] }[] = [
     {
-      icon: "fa-solid fa-industry",
+      icon: Factory,
       name: "مصانع الرخام والجرانيت",
       problem: "صعوبة متابعة مراحل القطع والتلميع والتركيب مع كثرة الطلبات",
       solution:
@@ -22,7 +41,7 @@ const Industries = () => {
       ],
     },
     {
-      icon: "fa-solid fa-building",
+      icon: Building2,
       name: "شركات المقاولات الإنشائية",
       problem: "تعدد المشاريع وصعوبة متابعة فرق العمل والمواد",
       solution:
@@ -35,7 +54,7 @@ const Industries = () => {
       ],
     },
     {
-      icon: "fa-solid fa-palette",
+      icon: Paintbrush,
       name: "شركات التشطيب والترميم",
       problem: "التنسيق بين فرق متعددة وتوثيق التقدم للعملاء",
       solution:
@@ -48,7 +67,7 @@ const Industries = () => {
       ],
     },
     {
-      icon: "fa-solid fa-sparkles",
+      icon: Sparkles,
       name: "شركات التصميم والديكور",
       problem: "التحدي في ترجمة التصاميم إلى واقع مع المتابعة الدقيقة",
       solution:
@@ -61,7 +80,7 @@ const Industries = () => {
       ],
     },
     {
-      icon: "fa-solid fa-hammer",
+      icon: Hammer,
       name: "مصانع المطابخ",
       problem: "كثرة التفاصيل والقياسات وتنسيق مراحل التصنيع والتركيب",
       solution:
@@ -74,7 +93,7 @@ const Industries = () => {
       ],
     },
     {
-      icon: "fa-solid fa-gear",
+      icon: Settings,
       name: "شركات الألمنيوم",
       problem: "صعوبة تتبع الطلبات المخصصة ومراحل التصنيع والتركيب",
       solution:
@@ -87,7 +106,7 @@ const Industries = () => {
       ],
     },
     {
-      icon: "fa-solid fa-wrench",
+      icon: Wrench,
       name: "ورش الحدادة",
       problem: "صعوبة إدارة المشاريع المخصصة وتتبع مراحل التصنيع المعقدة",
       solution:
@@ -100,7 +119,7 @@ const Industries = () => {
       ],
     },
     {
-      icon: "fa-solid fa-glasses",
+      icon: Glasses,
       name: "شركات الزجاج",
       problem: "التحدي في إدارة القياسات الدقيقة ومتابعة مراحل التقطيع والتركيب",
       solution:
@@ -113,7 +132,7 @@ const Industries = () => {
       ],
     },
     {
-      icon: "fa-solid fa-elevator",
+      icon: ArrowUpDown,
       name: "شركات المصاعد",
       problem: "تعقيد عمليات التركيب والصيانة وصعوبة التنسيق بين الفرق",
       solution:
@@ -126,7 +145,7 @@ const Industries = () => {
       ],
     },
     {
-      icon: "fa-solid fa-home",
+      icon: Home,
       name: "شركات البيوت الجاهزة",
       problem: "تحدي متابعة مراحل التصنيع والنقل والتركيب للمشاريع الكبيرة",
       solution:
@@ -139,7 +158,7 @@ const Industries = () => {
       ],
     },
     {
-      icon: "fa-solid fa-leaf",
+      icon: Leaf,
       name: "شركات المشاتل الزراعية",
       problem: "صعوبة إدارة الطلبات الموسمية ومتابعة التوريد والتركيب",
       solution:
@@ -152,7 +171,7 @@ const Industries = () => {
       ],
     },
     {
-      icon: "fa-solid fa-bug-slash",
+      icon: Bug,
       name: "شركات مكافحة الحشرات",
       problem: "صعوبة جدولة الزيارات الدورية ومتابعة العملاء المتكررين",
       solution:
@@ -211,7 +230,7 @@ const Industries = () => {
                       <div className="flex items-center gap-6 mb-8">
                         <div className="relative w-24 h-24 rounded-3xl bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center flex-shrink-0 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110">
                           <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary to-secondary opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
-                          <i className={`${industry.icon} text-5xl text-gradient relative z-10`}></i>
+                          <industry.icon className="w-12 h-12 text-primary relative z-10" />
                         </div>
                         <h2 className="text-2xl md:text-3xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">
                           {industry.name}
@@ -270,7 +289,7 @@ const Industries = () => {
                       <div className="relative z-10 space-y-6">
                         <div className="text-center space-y-3">
                           <div className="inline-block p-3 rounded-2xl bg-gradient-to-br from-primary to-secondary shadow-lg">
-                            <i className="fas fa-rocket text-3xl text-white" />
+                            <Rocket className="w-8 h-8 text-white" />
                           </div>
                           <h3 className="text-2xl font-bold text-foreground">
                             جاهز لتحويل عملك؟
@@ -289,7 +308,7 @@ const Industries = () => {
                             asChild
                           >
                             <Link href="/free-trial">
-                              <i className="fas fa-play-circle ml-2" />
+                              <PlayCircle className="w-5 h-5 ml-2" />
                               ابدأ تجربتك المجانية
                             </Link>
                           </Button>
@@ -300,15 +319,15 @@ const Industries = () => {
                             asChild
                           >
                             <Link href="/contact">
-                              <i className="fas fa-comments ml-2" />
+                              <MessageCircle className="w-5 h-5 ml-2" />
                               تواصل معنا
                             </Link>
                           </Button>
                         </div>
 
                         <div className="pt-4 border-t border-border/50 text-center">
-                          <p className="text-sm text-muted-foreground">
-                            <i className="fas fa-check-circle text-primary ml-1" />
+                          <p className="text-sm text-muted-foreground flex items-center justify-center gap-1">
+                            <CheckCircle className="w-4 h-4 text-primary" />
                             بدون بطاقة ائتمان • جاهز للاستخدام فوراً
                           </p>
                         </div>
@@ -333,7 +352,7 @@ const Industries = () => {
           <div className="max-w-3xl mx-auto space-y-8">
             <AnimateOnScroll>
               <div className="inline-block p-4 rounded-3xl bg-gradient-to-br from-primary/20 to-secondary/20 shadow-xl mb-4">
-                <i className="fas fa-question-circle text-5xl text-gradient" />
+                <HelpCircle className="w-12 h-12 text-primary" />
               </div>
             </AnimateOnScroll>
             
@@ -358,7 +377,7 @@ const Industries = () => {
                   data-testid="button-contact-custom"
                 >
                   <Link href="/contact">
-                    <i className="fas fa-comments ml-2" />
+                    <MessageCircle className="w-5 h-5 ml-2" />
                     تواصل معنا
                   </Link>
                 </Button>
@@ -370,7 +389,7 @@ const Industries = () => {
                   data-testid="button-trial-custom"
                 >
                   <Link href="/free-trial">
-                    <i className="fas fa-play-circle ml-2" />
+                    <PlayCircle className="w-5 h-5 ml-2" />
                     ابدأ تجربتك المجانية
                   </Link>
                 </Button>
@@ -380,15 +399,15 @@ const Industries = () => {
             <AnimateOnScroll>
               <div className="pt-8 flex items-center justify-center gap-8 flex-wrap text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  <i className="fas fa-check-circle text-primary text-xl" />
+                  <CheckCircle className="w-5 h-5 text-primary" />
                   <span>بدون بطاقة ائتمان</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <i className="fas fa-rocket text-secondary text-xl" />
+                  <Rocket className="w-5 h-5 text-secondary" />
                   <span>جاهز للاستخدام فوراً</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <i className="fas fa-cog text-primary text-xl" />
+                  <Settings className="w-5 h-5 text-primary" />
                   <span>قابل للتخصيص الكامل</span>
                 </div>
               </div>
