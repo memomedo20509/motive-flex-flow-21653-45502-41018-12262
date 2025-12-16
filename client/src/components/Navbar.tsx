@@ -36,7 +36,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 hover:scale-105 transition-transform duration-300" data-testid="link-logo-home">
-            <img src={logo} alt="موتفلكس" className="h-14 w-auto drop-shadow-lg" data-testid="logo-main" />
+            <img src={logo} alt="موتفلكس" width={56} height={56} className="h-14 w-auto drop-shadow-lg" data-testid="logo-main" />
           </Link>
 
           {/* Desktop Navigation */}

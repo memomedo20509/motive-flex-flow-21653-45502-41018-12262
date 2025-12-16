@@ -387,6 +387,8 @@ const BlogPost = () => {
                   <img
                     src={article.coverImage}
                     alt={article.title}
+                    width={800}
+                    height={450}
                     className="w-full h-auto max-h-[450px] object-cover"
                     data-testid="img-article-cover"
                   />
@@ -433,6 +435,9 @@ const BlogPost = () => {
                           <img
                             src={related.coverImage}
                             alt={related.title}
+                            loading="lazy"
+                            width={350}
+                            height={176}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
                         ) : (

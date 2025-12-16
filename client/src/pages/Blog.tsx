@@ -191,6 +191,9 @@ const Blog = () => {
                           <img
                             src={article.coverImage}
                             alt={article.title}
+                            loading="lazy"
+                            width={400}
+                            height={208}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             data-testid={`img-article-cover-${article.id}`}
                           />

@@ -383,6 +383,8 @@ const ArticleForm = () => {
                     <img
                       src={coverPreview}
                       alt="Cover preview"
+                      width={400}
+                      height={160}
                       className="w-full h-40 object-cover rounded-lg"
                       data-testid="img-cover-preview"
                     />

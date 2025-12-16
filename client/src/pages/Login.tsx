@@ -75,6 +75,8 @@ export default function Login() {
             <img
               src={logoImg}
               alt="Mutflex Logo"
+              width={64}
+              height={64}
               className="h-16 object-contain"
               data-testid="img-login-logo"
             />

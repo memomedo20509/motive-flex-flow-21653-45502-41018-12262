@@ -120,6 +120,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <img
                   src={user.profileImageUrl}
                   alt={user.firstName || "User"}
+                  width={40}
+                  height={40}
+                  loading="lazy"
                   className="h-10 w-10 rounded-full"
                 />
               )}

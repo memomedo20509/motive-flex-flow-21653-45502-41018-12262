@@ -26,7 +26,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
           {/* Company Info */}
           <div className="space-y-4">
-            <img src={logo} alt="موتفلكس" className="h-14 w-auto mb-6 filter drop-shadow-lg hover:scale-105 transition-transform duration-300" />
+            <img src={logo} alt="موتفلكس" width={56} height={56} loading="lazy" className="h-14 w-auto mb-6 filter drop-shadow-lg hover:scale-105 transition-transform duration-300" />
             <p className="text-sm opacity-90 leading-relaxed">
               نظام إدارة متكامل يحوّل عمليات التصنيع والتركيب إلى تجربة رقمية كاملة
             </p>

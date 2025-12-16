@@ -1,4 +1,5 @@
 import { Switch, Route, useLocation } from "wouter";
+import { lazy, Suspense } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -6,26 +7,39 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AnimatePresence, motion } from "framer-motion";
 import { usePageTransition } from "@/hooks/use-page-transition";
-import Index from "./pages/Index";
-import Features from "./pages/Features";
-import Industries from "./pages/Industries";
-import Pricing from "./pages/Pricing";
-import Contact from "./pages/Contact";
-import About from "./pages/About";
-import FreeTrial from "./pages/FreeTrial";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import Blog from "./pages/Blog";
-import BlogPost from "./pages/BlogPost";
-import AdminDashboard from "./pages/admin/Dashboard";
-import AdminArticleList from "./pages/admin/ArticleList";
-import AdminArticleForm from "./pages/admin/ArticleForm";
-import AdminContactsList from "./pages/admin/ContactsList";
-import AdminTrialsList from "./pages/admin/TrialsList";
-import AdminUsersList from "./pages/admin/UsersList";
-import AdminSettings from "./pages/admin/Settings";
-import Login from "./pages/Login";
-import NotFound from "./pages/NotFound";
 import { WhatsAppButton } from "./components/WhatsAppButton";
+
+// Critical pages loaded immediately
+import Index from "./pages/Index";
+import NotFound from "./pages/NotFound";
+
+// Lazy load other pages for better performance
+const Features = lazy(() => import("./pages/Features"));
+const Industries = lazy(() => import("./pages/Industries"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const Contact = lazy(() => import("./pages/Contact"));
+const About = lazy(() => import("./pages/About"));
+const FreeTrial = lazy(() => import("./pages/FreeTrial"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
+const Login = lazy(() => import("./pages/Login"));
+
+// Admin pages - lazy loaded
+const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
+const AdminArticleList = lazy(() => import("./pages/admin/ArticleList"));
+const AdminArticleForm = lazy(() => import("./pages/admin/ArticleForm"));
+const AdminContactsList = lazy(() => import("./pages/admin/ContactsList"));
+const AdminTrialsList = lazy(() => import("./pages/admin/TrialsList"));
+const AdminUsersList = lazy(() => import("./pages/admin/UsersList"));
+const AdminSettings = lazy(() => import("./pages/admin/Settings"));
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  </div>
+);
 
 const pageVariants = {
   initial: {
@@ -107,7 +121,9 @@ function AppContent() {
     <>
       <Toaster />
       <Sonner />
-      <Router />
+      <Suspense fallback={<PageLoader />}>
+        <Router />
+      </Suspense>
       <WhatsAppButton />
     </>
   );
