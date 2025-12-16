@@ -20,6 +20,12 @@ import {
   Award,
   Clock,
   CheckCircle,
+  Building2,
+  Paintbrush,
+  Sparkles,
+  Hammer,
+  Settings,
+  type LucideIcon,
 } from "lucide-react";
 
 const Index = () => {
@@ -71,13 +77,13 @@ const Index = () => {
     },
   ];
 
-  const industries = [
-    { name: "مصانع الرخام والجرانيت", icon: "fa-solid fa-industry", gradient: "from-blue-500 to-cyan-500" },
-    { name: "شركات المقاولات الإنشائية", icon: "fa-solid fa-building", gradient: "from-purple-500 to-pink-500" },
-    { name: "شركات التشطيب والترميم", icon: "fa-solid fa-palette", gradient: "from-orange-500 to-red-500" },
-    { name: "شركات التصميم والديكور", icon: "fa-solid fa-sparkles", gradient: "from-green-500 to-teal-500" },
-    { name: "مصانع المطابخ", icon: "fa-solid fa-hammer", gradient: "from-yellow-500 to-orange-500" },
-    { name: "شركات الألمنيوم", icon: "fa-solid fa-gear", gradient: "from-gray-500 to-slate-500" },
+  const industries: { name: string; icon: LucideIcon; gradient: string }[] = [
+    { name: "مصانع الرخام والجرانيت", icon: Factory, gradient: "from-blue-500 to-cyan-500" },
+    { name: "شركات المقاولات الإنشائية", icon: Building2, gradient: "from-purple-500 to-pink-500" },
+    { name: "شركات التشطيب والترميم", icon: Paintbrush, gradient: "from-orange-500 to-red-500" },
+    { name: "شركات التصميم والديكور", icon: Sparkles, gradient: "from-green-500 to-teal-500" },
+    { name: "مصانع المطابخ", icon: Hammer, gradient: "from-yellow-500 to-orange-500" },
+    { name: "شركات الألمنيوم", icon: Settings, gradient: "from-gray-500 to-slate-500" },
   ];
 
 
@@ -435,7 +441,7 @@ const Index = () => {
                 <CardContent className="pt-8 pb-8 px-6 text-center">
                   {/* Icon with brand colors background */}
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-5 group-hover:scale-110 transition-transform duration-300">
-                    <i className={`${industry.icon} text-3xl text-primary`}></i>
+                    <industry.icon className="w-8 h-8 text-primary" />
                   </div>
                   
                   <h3 className="font-bold text-lg mb-3 text-foreground leading-relaxed">
