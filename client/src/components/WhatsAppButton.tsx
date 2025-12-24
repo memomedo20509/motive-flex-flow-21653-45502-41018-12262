@@ -7,7 +7,7 @@ interface WhatsAppButtonProps {
 }
 
 export function WhatsAppButton({ 
-  phoneNumber = "966500000000",
+  phoneNumber = "966507051401",
   message = "مرحباً، أريد الاستفسار عن خدمات موتفلكس"
 }: WhatsAppButtonProps) {
   const [location] = useLocation();
