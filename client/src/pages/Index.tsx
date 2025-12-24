@@ -88,7 +88,7 @@ const Index = () => {
 
 
   return (
-    <div className="min-h-screen overflow-hidden" dir="rtl">
+    <div className="min-h-screen overflow-x-hidden" dir="rtl">
       <Navbar />
 
       {/* Hero Section */}
