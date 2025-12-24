@@ -245,7 +245,7 @@ const FreeTrial = () => {
                       {mutation.isPending ? "جاري التسجيل..." : "ابدأ تجربتك المجانية الآن"}
                     </Button>
 
-                    <p className="text-sm text-center text-muted-foreground">
+                    <p className="text-sm text-center text-muted-foreground pb-16 lg:pb-0">
                       بالتسجيل، أنت توافق على{" "}
                       <a href="/privacy-policy" className="text-primary underline">
                         سياسة الخصوصية
