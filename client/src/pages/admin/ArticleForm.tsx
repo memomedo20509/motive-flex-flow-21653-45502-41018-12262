@@ -37,7 +37,7 @@ const ArticleForm = () => {
     content: "",
     coverImage: "",
     author: "فريق موتفلكس",
-    status: "draft" as "draft" | "published",
+    status: "draft" as "draft" | "published" | "scheduled",
     metaTitle: "",
     metaDescription: "",
     metaKeywords: "",
@@ -49,6 +49,7 @@ const ArticleForm = () => {
     robotsDirective: "index, follow",
     readingTime: "",
     tags: [] as string[],
+    scheduledAt: "" as string,
   });
   const [tagInput, setTagInput] = useState("");
   const [coverFile, setCoverFile] = useState<File | null>(null);
@@ -70,7 +71,7 @@ const ArticleForm = () => {
         content: article.content,
         coverImage: article.coverImage || "",
         author: article.author || "فريق موتفلكس",
-        status: article.status as "draft" | "published",
+        status: article.status as "draft" | "published" | "scheduled",
         metaTitle: article.metaTitle || "",
         metaDescription: article.metaDescription || "",
         metaKeywords: article.metaKeywords || "",
@@ -82,6 +83,7 @@ const ArticleForm = () => {
         robotsDirective: article.robotsDirective || "index, follow",
         readingTime: article.readingTime || "",
         tags: article.tags || [],
+        scheduledAt: (article as any).scheduledAt ? new Date((article as any).scheduledAt).toISOString().slice(0, 16) : "",
       });
       if (article.coverImage) {
         setCoverPreview(article.coverImage);
@@ -280,16 +282,26 @@ const ArticleForm = () => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSaveWithStatus = (status: "draft" | "published" | "scheduled") => {
     if (!formData.title.trim()) {
       toast({ title: "العنوان مطلوب", variant: "destructive" });
       return;
     }
-    if (!formData.content.trim()) {
-      toast({ title: "المحتوى مطلوب", variant: "destructive" });
+    if (status === "published" && !formData.content.trim()) {
+      toast({ title: "المحتوى مطلوب للنشر", variant: "destructive" });
       return;
+    }
+
+    let finalStatus = status;
+    let scheduledAtValue = formData.scheduledAt ? new Date(formData.scheduledAt).toISOString() : null;
+
+    if (status === "published" && formData.scheduledAt) {
+      const scheduledDate = new Date(formData.scheduledAt);
+      if (scheduledDate > new Date()) {
+        finalStatus = "scheduled";
+      } else {
+        scheduledAtValue = null;
+      }
     }
 
     const data = new FormData();
@@ -297,7 +309,10 @@ const ArticleForm = () => {
       "data",
       JSON.stringify({
         ...formData,
+        status: finalStatus,
         slug: formData.slug || undefined,
+        scheduledAt: scheduledAtValue,
+        publishedAt: finalStatus === "published" ? new Date().toISOString() : null,
       })
     );
     if (coverFile) {
@@ -309,6 +324,11 @@ const ArticleForm = () => {
     } else {
       createMutation.mutate(data);
     }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSaveWithStatus("published");
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -380,7 +400,7 @@ const ArticleForm = () => {
               type="button"
               variant="outline"
               onClick={() => {
-                setFormData({ ...formData, status: "draft" });
+                handleSaveWithStatus("draft");
               }}
               disabled={isPending}
               data-testid="button-save-draft"
@@ -642,7 +662,7 @@ const ArticleForm = () => {
                   <Label htmlFor="status">الحالة</Label>
                   <Select
                     value={formData.status}
-                    onValueChange={(value: "draft" | "published") =>
+                    onValueChange={(value: "draft" | "published" | "scheduled") =>
                       setFormData({ ...formData, status: value })
                     }
                   >
@@ -652,8 +672,27 @@ const ArticleForm = () => {
                     <SelectContent>
                       <SelectItem value="draft">مسودة</SelectItem>
                       <SelectItem value="published">منشور</SelectItem>
+                      <SelectItem value="scheduled">مجدول</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="scheduledAt">موعد النشر (جدولة)</Label>
+                  <Input
+                    id="scheduledAt"
+                    type="datetime-local"
+                    value={formData.scheduledAt}
+                    onChange={(e) =>
+                      setFormData({ ...formData, scheduledAt: e.target.value })
+                    }
+                    className="text-left"
+                    dir="ltr"
+                    data-testid="input-scheduled-at"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    اتركه فارغاً للنشر الفوري
+                  </p>
                 </div>
 
                 <div className="space-y-2">

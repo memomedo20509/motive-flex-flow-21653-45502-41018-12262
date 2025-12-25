@@ -72,6 +72,8 @@ export const articles = pgTable("articles", {
   robotsDirective: varchar("robots_directive", { length: 50 }).default("index, follow"),
   readingTime: varchar("reading_time", { length: 20 }),
   viewCount: serial("view_count"),
+  publishedAt: timestamp("published_at"),
+  scheduledAt: timestamp("scheduled_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -90,6 +92,7 @@ export type Article = typeof articles.$inferSelect;
 export const ArticleStatus = {
   DRAFT: "draft",
   PUBLISHED: "published",
+  SCHEDULED: "scheduled",
   UNPUBLISHED: "unpublished",
 } as const;
 
