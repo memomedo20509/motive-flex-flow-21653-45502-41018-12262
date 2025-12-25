@@ -219,31 +219,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const htmlContent = req.file.buffer.toString("utf-8");
       const $ = cheerio.load(htmlContent);
 
+      // Extract meta information BEFORE removing elements
       const title = $("title").text().trim() || $("h1").first().text().trim() || "";
-      
       const h1Text = $("h1").first().text().trim();
-      
-      const paragraphs: string[] = [];
-      $("p").each((_, el) => {
-        const text = $(el).text().trim().replace(/&nbsp;/g, " ").replace(/\s+/g, " ");
-        if (text) {
-          paragraphs.push(text);
-        }
-      });
-      const content = paragraphs.join("\n\n");
-      
-      const excerpt = paragraphs.length > 0 ? paragraphs[0].substring(0, 200) : "";
-      
       const metaDescription = $('meta[name="description"]').attr("content") || "";
       const metaKeywords = $('meta[name="keywords"]').attr("content") || "";
-      
       const ogTitle = $('meta[property="og:title"]').attr("content") || "";
       const ogDescription = $('meta[property="og:description"]').attr("content") || "";
       const ogImage = $('meta[property="og:image"]').attr("content") || "";
-      
       const canonicalUrl = $('link[rel="canonical"]').attr("href") || "";
-      
       const robotsMeta = $('meta[name="robots"]').attr("content") || "";
+      
+      // Get first image before removing elements
+      let firstImage = ogImage || "";
+      if (!firstImage) {
+        const imgSrc = $("img").first().attr("src") || "";
+        if (imgSrc) {
+          firstImage = imgSrc;
+        }
+      }
+      
+      // Remove dangerous elements first (globally, these are never content)
+      $("script, style, noscript, object, embed").remove();
+      
+      // Remove event handler attributes from all elements
+      $("*").each((_, el) => {
+        const element = $(el);
+        const attribs = element.attr();
+        if (attribs) {
+          Object.keys(attribs).forEach(attr => {
+            // Remove event handlers (onclick, onload, etc.) and javascript: hrefs
+            if (attr.startsWith("on") || (attr === "href" && (element.attr("href") || "").startsWith("javascript:"))) {
+              element.removeAttr(attr);
+            }
+          });
+        }
+      });
+      
+      // Extended list of content area selectors
+      const contentSelectors = [
+        "article", "main", "[role='main']",
+        ".content", ".article-content", ".post-content", ".entry-content",
+        ".blog-content", ".article-body", ".post-body", ".main-content",
+        ".page-content", ".single-content", ".story-content", ".text-content",
+        ".entry-content", ".hentry", ".post",
+        "#content", "#main", "#article", "#post", "#main-content", "#page-content"
+      ];
+      
+      let contentArea = $(contentSelectors.join(", ")).first();
+      
+      // If no content area found, use heuristic: find element with highest CONTENT DENSITY
+      if (contentArea.length === 0) {
+        const candidates: { element: ReturnType<typeof $>; textLength: number; nodeCount: number; density: number }[] = [];
+        
+        $("div, section, article").each((_, el) => {
+          const element = $(el);
+          const paragraphs = element.find("p");
+          const headings = element.find("h1, h2, h3, h4, h5, h6");
+          
+          // Must have meaningful content
+          if (paragraphs.length >= 2 || (paragraphs.length >= 1 && headings.length >= 1)) {
+            const textLength = element.text().length;
+            const nodeCount = element.find("*").length || 1;
+            
+            // Content density = text length / node count (higher = more content per node)
+            const density = textLength / nodeCount;
+            
+            candidates.push({ element, textLength, nodeCount, density });
+          }
+        });
+        
+        // Sort by density DESC - highest content density wins
+        // This prefers compact, content-rich containers over sparse wrappers
+        candidates.sort((a, b) => b.density - a.density);
+        
+        contentArea = candidates.length > 0 ? candidates[0].element : $("body");
+      }
+      
+      // Remove chrome WITHIN the selected content area (preserve semantic article headers/footers)
+      contentArea.find("nav, .nav, .navbar, .navigation, .menu, #nav, #navbar, #menu").remove();
+      contentArea.find("aside, .sidebar, .widget, .widgets, #sidebar").remove();
+      contentArea.find("footer:not(.entry-footer):not(.article-footer), .site-footer, #footer").remove();
+      contentArea.find(".comments, .comment-section, .comment-list, #comments, #respond").remove();
+      contentArea.find(".share-buttons, .social-share, .sharing, .share-this").remove();
+      contentArea.find(".related-posts, .related, .author-box, .author-info, .bio").remove();
+      contentArea.find(".advertisement, .ad, .ads, .advert, .sponsor").remove();
+      contentArea.find(".pagination, .pager, .page-links, .post-navigation").remove();
+      
+      // Get the full HTML content preserving all structure within the content area
+      let content = contentArea.html() || "";
+      
+      // Minimal cleanup - only normalize whitespace
+      content = content.trim();
+      
+      // Extract first paragraph text for excerpt
+      const firstParagraphText = $("p").first().text().trim().replace(/\s+/g, " ");
+      const excerpt = firstParagraphText.substring(0, 200);
+      
+      // Parse robots directive
       let robotsDirective = "index, follow";
       if (robotsMeta) {
         const lower = robotsMeta.toLowerCase();
@@ -256,18 +329,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      let firstImage = ogImage || "";
-      if (!firstImage) {
-        const imgSrc = $("img").first().attr("src") || "";
-        if (imgSrc) {
-          firstImage = imgSrc;
-        }
-      }
-      
-      const wordCount = content.split(/\s+/).filter(w => w.length > 0).length;
+      // Extract plain text from content for word count and keyword analysis
+      const plainText = content.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      const wordCount = plainText.split(/\s+/).filter(w => w.length > 0).length;
       const readingTime = Math.ceil(wordCount / 200);
       
-      const words = content.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+      const words = plainText.toLowerCase().split(/\s+/).filter(w => w.length > 3);
       const wordFreq: Record<string, number> = {};
       words.forEach(w => {
         const clean = w.replace(/[^\u0621-\u064Aa-z]/g, "");
