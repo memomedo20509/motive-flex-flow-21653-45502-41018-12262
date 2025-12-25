@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Mail, Phone, MapPin, Facebook, Instagram, Youtube } from "lucide-react";
+import { Mail, Phone, MapPin, Facebook, Instagram, Youtube, Linkedin } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 const TikTokIcon = ({ size = 18 }: { size?: number }) => (
@@ -72,6 +72,16 @@ const Footer = () => {
                 data-testid="link-youtube"
               >
                 <Youtube size={18} />
+              </a>
+              <a 
+                href="https://www.linkedin.com/company/mutflex" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center hover:bg-primary hover:scale-110 transition-all duration-300 border border-white/20"
+                aria-label="LinkedIn"
+                data-testid="link-linkedin"
+              >
+                <Linkedin size={18} />
               </a>
             </div>
           </div>
