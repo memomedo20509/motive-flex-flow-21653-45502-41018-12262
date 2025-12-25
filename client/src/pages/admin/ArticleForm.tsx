@@ -54,6 +54,7 @@ const ArticleForm = () => {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [isGeneratingSEO, setIsGeneratingSEO] = useState(false);
 
   const { data: article, isLoading } = useQuery<Article>({
     queryKey: [`/api/admin/articles/${articleId}`],
@@ -160,6 +161,53 @@ const ArticleForm = () => {
       setFormData(prev => ({ ...prev, readingTime: time }));
     }
   }, [formData.content]);
+
+  // Generate SEO with AI
+  const handleGenerateSEO = async () => {
+    if (!formData.content) {
+      toast({ title: "يرجى كتابة المحتوى أولاً", variant: "destructive" });
+      return;
+    }
+
+    setIsGeneratingSEO(true);
+    try {
+      const res = await fetch("/api/admin/articles/generate-seo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: formData.title,
+          content: formData.content,
+          excerpt: formData.excerpt,
+        }),
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "فشل في إنشاء SEO");
+      }
+
+      const seoData = await res.json();
+      
+      setFormData(prev => ({
+        ...prev,
+        metaDescription: seoData.metaDescription || prev.metaDescription,
+        metaKeywords: seoData.metaKeywords || prev.metaKeywords,
+        focusKeyword: seoData.focusKeyword || prev.focusKeyword,
+        ogTitle: seoData.ogTitle || prev.ogTitle,
+        ogDescription: seoData.ogDescription || prev.ogDescription,
+      }));
+
+      toast({ title: "تم إنشاء بيانات SEO بنجاح بالذكاء الاصطناعي!" });
+    } catch (error) {
+      toast({ 
+        title: error instanceof Error ? error.message : "حدث خطأ أثناء إنشاء SEO", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsGeneratingSEO(false);
+    }
+  };
 
   const createMutation = useMutation({
     mutationFn: async (data: FormData) => {
@@ -414,8 +462,25 @@ const ArticleForm = () => {
             </Card>
 
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
                 <CardTitle>تحسين محركات البحث (SEO)</CardTitle>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateSEO}
+                  disabled={isGeneratingSEO || !formData.content}
+                  data-testid="button-generate-seo"
+                >
+                  {isGeneratingSEO ? (
+                    <>
+                      <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                      جاري الإنشاء...
+                    </>
+                  ) : (
+                    "إنشاء SEO بالذكاء الاصطناعي"
+                  )}
+                </Button>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">

@@ -9,6 +9,7 @@ import fs from "fs";
 import multer from "multer";
 import express from "express";
 import * as cheerio from "cheerio";
+import { GoogleGenAI } from "@google/genai";
 
 const uploadDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) {
@@ -550,6 +551,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting trial:", error);
       res.status(500).json({ message: "Failed to delete trial" });
+    }
+  });
+
+  // AI-powered SEO generation endpoint
+  app.post("/api/admin/articles/generate-seo", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const { title, content, excerpt } = req.body;
+
+      if (!content) {
+        return res.status(400).json({ message: "المحتوى مطلوب لإنشاء SEO" });
+      }
+
+      const ai = new GoogleGenAI({
+        apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY,
+        httpOptions: {
+          apiVersion: "",
+          baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL,
+        },
+      });
+
+      const prompt = `أنت خبير SEO. قم بتحليل المقال التالي وإنشاء بيانات SEO محسّنة.
+
+العنوان: ${title || "غير متوفر"}
+الملخص: ${excerpt || "غير متوفر"}
+المحتوى: ${content.substring(0, 3000)}
+
+قم بإرجاع JSON فقط بالتنسيق التالي (بدون أي نص إضافي):
+{
+  "metaDescription": "وصف ميتا محسّن (120-160 حرف)",
+  "metaKeywords": "كلمة1, كلمة2, كلمة3, كلمة4, كلمة5",
+  "focusKeyword": "الكلمة المفتاحية الرئيسية",
+  "ogTitle": "عنوان مناسب للمشاركة على السوشيال ميديا",
+  "ogDescription": "وصف جذاب للمشاركة (60-90 حرف)"
+}`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+      });
+
+      const text = response.text || "";
+      
+      // Extract JSON from response
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error("لم يتم استلام بيانات SEO صالحة");
+      }
+
+      const seoData = JSON.parse(jsonMatch[0]);
+      res.json(seoData);
+    } catch (error: any) {
+      console.error("Error generating SEO:", error);
+      res.status(500).json({ message: error.message || "فشل في إنشاء بيانات SEO" });
     }
   });
 
