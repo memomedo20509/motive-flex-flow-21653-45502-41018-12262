@@ -110,7 +110,7 @@ const FreeTrial = () => {
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-6xl">
           <div className="grid lg:grid-cols-2 gap-12 items-start">
-            <Card>
+            <Card className="max-w-md mx-auto lg:max-w-none lg:mx-0 w-full">
               <CardContent className="pt-6">
                 <h2 className="text-2xl font-bold mb-6">
                   املأ البيانات للبدء
@@ -256,9 +256,9 @@ const FreeTrial = () => {
               </CardContent>
             </Card>
 
-            <div className="space-y-6">
+            <div className="space-y-6 text-center lg:text-right">
               <h2 className="text-2xl font-bold">ماذا ستحصل في التجربة المجانية؟</h2>
-              <div className="space-y-4">
+              <div className="space-y-4 max-w-md mx-auto lg:max-w-none lg:mx-0">
                 {[
                   {
                     title: "وصول كامل لجميع المميزات",
