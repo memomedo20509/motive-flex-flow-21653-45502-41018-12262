@@ -12,6 +12,18 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### December 25, 2025 - SEO Enhancement & HTML Import Feature
+- Added comprehensive SEO fields to articles schema: metaKeywords, focusKeyword, canonicalUrl, ogTitle, ogDescription, ogImage, robotsDirective, readingTime
+- Updated ArticleForm.tsx with:
+  - HTML file import feature via "استيراد HTML" button
+  - SEO fields section with character counts for meta title/description
+  - Open Graph section for social media sharing
+  - Robots directive selector (index/noindex, follow/nofollow)
+  - Auto-calculated reading time display
+- Added `/api/admin/articles/parse-html` endpoint using cheerio for server-side HTML parsing
+- Security: Memory-based upload with 2MB limit, admin-only access
+- Database migration applied for new columns
+
 ### December 16, 2025 - Performance Optimizations
 - Added width/height attributes to all images to prevent CLS (Cumulative Layout Shift)
 - Implemented loading="lazy" for all below-the-fold images
