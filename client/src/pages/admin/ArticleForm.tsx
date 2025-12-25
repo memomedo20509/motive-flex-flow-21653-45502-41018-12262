@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
 import { AdminLayout } from "./AdminLayout";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import RichTextEditor from "@/components/RichTextEditor";
 import {
   Select,
   SelectContent,
@@ -126,9 +127,13 @@ const ArticleForm = () => {
         ogTitle: parsedData.ogTitle || prev.ogTitle,
         ogDescription: parsedData.ogDescription || prev.ogDescription,
         ogImage: parsedData.ogImage || prev.ogImage,
+        canonicalUrl: parsedData.canonicalUrl || prev.canonicalUrl,
+        robotsDirective: parsedData.robotsDirective || prev.robotsDirective,
+        readingTime: parsedData.readingTime || prev.readingTime,
+        focusKeyword: parsedData.focusKeyword || prev.focusKeyword,
       }));
 
-      toast({ title: "تم استيراد المقال بنجاح! راجع البيانات وعدّل ما تحتاج" });
+      toast({ title: "تم استيراد المقال وبيانات SEO بنجاح!" });
     } catch (error) {
       toast({ 
         title: error instanceof Error ? error.message : "حدث خطأ أثناء الاستيراد", 
@@ -395,17 +400,14 @@ const ArticleForm = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="content">المحتوى * (Markdown)</Label>
-                  <Textarea
-                    id="content"
+                  <Label htmlFor="content">المحتوى *</Label>
+                  <p className="text-xs text-muted-foreground">
+                    يمكنك لصق الصور مباشرة من الحافظة (Ctrl+V) أو سحبها وإفلاتها في المحرر
+                  </p>
+                  <RichTextEditor
                     value={formData.content}
-                    onChange={(e) =>
-                      setFormData({ ...formData, content: e.target.value })
-                    }
-                    placeholder="اكتب محتوى المقال هنا... يمكنك استخدام Markdown"
-                    rows={15}
-                    className="font-mono"
-                    data-testid="input-content"
+                    onChange={(content) => setFormData({ ...formData, content })}
+                    placeholder="اكتب محتوى المقال هنا..."
                   />
                 </div>
               </CardContent>

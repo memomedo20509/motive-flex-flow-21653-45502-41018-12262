@@ -239,17 +239,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ogTitle = $('meta[property="og:title"]').attr("content") || "";
       const ogDescription = $('meta[property="og:description"]').attr("content") || "";
       const ogImage = $('meta[property="og:image"]').attr("content") || "";
+      
+      const canonicalUrl = $('link[rel="canonical"]').attr("href") || "";
+      
+      const robotsMeta = $('meta[name="robots"]').attr("content") || "";
+      let robotsDirective = "index, follow";
+      if (robotsMeta) {
+        const lower = robotsMeta.toLowerCase();
+        if (lower.includes("noindex") && lower.includes("nofollow")) {
+          robotsDirective = "noindex, nofollow";
+        } else if (lower.includes("noindex")) {
+          robotsDirective = "noindex, follow";
+        } else if (lower.includes("nofollow")) {
+          robotsDirective = "index, nofollow";
+        }
+      }
+      
+      let firstImage = ogImage || "";
+      if (!firstImage) {
+        const imgSrc = $("img").first().attr("src") || "";
+        if (imgSrc) {
+          firstImage = imgSrc;
+        }
+      }
+      
+      const wordCount = content.split(/\s+/).filter(w => w.length > 0).length;
+      const readingTime = Math.ceil(wordCount / 200);
+      
+      const words = content.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+      const wordFreq: Record<string, number> = {};
+      words.forEach(w => {
+        const clean = w.replace(/[^\u0621-\u064Aa-z]/g, "");
+        if (clean.length > 3) {
+          wordFreq[clean] = (wordFreq[clean] || 0) + 1;
+        }
+      });
+      const sortedWords = Object.entries(wordFreq).sort((a, b) => b[1] - a[1]);
+      const suggestedKeywords = sortedWords.slice(0, 5).map(([word]) => word).join(", ");
 
       res.json({
         title: h1Text || title,
         metaTitle: title,
         content,
         excerpt,
-        metaDescription,
-        metaKeywords,
+        metaDescription: metaDescription || excerpt.substring(0, 160),
+        metaKeywords: metaKeywords || suggestedKeywords,
         ogTitle,
         ogDescription,
-        ogImage,
+        ogImage: firstImage,
+        canonicalUrl,
+        robotsDirective,
+        readingTime: `${readingTime} دقيقة`,
+        focusKeyword: sortedWords.length > 0 ? sortedWords[0][0] : "",
       });
     } catch (error: any) {
       console.error("Error parsing HTML:", error);
