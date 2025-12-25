@@ -268,7 +268,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let contentArea = $(contentSelectors.join(", ")).first();
       
-      // If no content area found, use heuristic: find element with highest CONTENT DENSITY
+      // If no content area found, use heuristic: find the LARGEST element with reasonable density
       if (contentArea.length === 0) {
         const candidates: { element: ReturnType<typeof $>; textLength: number; nodeCount: number; density: number }[] = [];
         
@@ -277,23 +277,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const paragraphs = element.find("p");
           const headings = element.find("h1, h2, h3, h4, h5, h6");
           
-          // Must have meaningful content
+          // Must have meaningful content (at least 2 paragraphs or 1 paragraph + heading)
           if (paragraphs.length >= 2 || (paragraphs.length >= 1 && headings.length >= 1)) {
             const textLength = element.text().length;
             const nodeCount = element.find("*").length || 1;
             
-            // Content density = text length / node count (higher = more content per node)
+            // Content density = text length / node count
             const density = textLength / nodeCount;
             
             candidates.push({ element, textLength, nodeCount, density });
           }
         });
         
-        // Sort by density DESC - highest content density wins
-        // This prefers compact, content-rich containers over sparse wrappers
-        candidates.sort((a, b) => b.density - a.density);
+        // Filter: require minimum density (>10 chars per node) to exclude bloated wrappers
+        // and minimum 500 chars to avoid single paragraphs
+        const goodCandidates = candidates.filter(c => c.density >= 10 && c.textLength >= 500);
+        const pool = goodCandidates.length > 0 ? goodCandidates : candidates;
         
-        contentArea = candidates.length > 0 ? candidates[0].element : $("body");
+        // Sort by TEXT LENGTH DESC - largest content wins (among reasonably dense candidates)
+        // This ensures we get the full article, not just a stub or teaser
+        pool.sort((a, b) => b.textLength - a.textLength);
+        
+        contentArea = pool.length > 0 ? pool[0].element : $("body");
       }
       
       // Remove chrome WITHIN the selected content area (preserve semantic article headers/footers)
