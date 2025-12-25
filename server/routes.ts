@@ -239,16 +239,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Remove dangerous elements first (globally, these are never content)
-      $("script, style, noscript, object, embed").remove();
+      // ======== HYBRID APPROACH: Find content area, then clean within it ========
       
-      // Remove event handler attributes from all elements
+      // 1. Remove dangerous elements GLOBALLY (never content)
+      $("script, style, noscript, object, embed, iframe").remove();
+      $("link, meta, base, head, title").remove();
+      
+      // 2. Remove event handlers from all elements
       $("*").each((_, el) => {
         const element = $(el);
         const attribs = element.attr();
         if (attribs) {
           Object.keys(attribs).forEach(attr => {
-            // Remove event handlers (onclick, onload, etc.) and javascript: hrefs
             if (attr.startsWith("on") || (attr === "href" && (element.attr("href") || "").startsWith("javascript:"))) {
               element.removeAttr(attr);
             }
@@ -256,62 +258,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
       
-      // Extended list of content area selectors
+      // 3. Try to find content area using extended selector list
       const contentSelectors = [
         "article", "main", "[role='main']",
         ".content", ".article-content", ".post-content", ".entry-content",
         ".blog-content", ".article-body", ".post-body", ".main-content",
         ".page-content", ".single-content", ".story-content", ".text-content",
-        ".entry-content", ".hentry", ".post",
+        ".hentry", ".post", ".entry",
         "#content", "#main", "#article", "#post", "#main-content", "#page-content"
       ];
       
       let contentArea = $(contentSelectors.join(", ")).first();
       
-      // If no content area found, use heuristic: find the LARGEST element with reasonable density
+      // If no content area found, use body WITHOUT deleting headers (they may contain title)
       if (contentArea.length === 0) {
-        const candidates: { element: ReturnType<typeof $>; textLength: number; nodeCount: number; density: number }[] = [];
-        
-        $("div, section, article").each((_, el) => {
-          const element = $(el);
-          const paragraphs = element.find("p");
-          const headings = element.find("h1, h2, h3, h4, h5, h6");
-          
-          // Must have meaningful content (at least 2 paragraphs or 1 paragraph + heading)
-          if (paragraphs.length >= 2 || (paragraphs.length >= 1 && headings.length >= 1)) {
-            const textLength = element.text().length;
-            const nodeCount = element.find("*").length || 1;
-            
-            // Content density = text length / node count
-            const density = textLength / nodeCount;
-            
-            candidates.push({ element, textLength, nodeCount, density });
-          }
-        });
-        
-        // Filter: require minimum density (>10 chars per node) to exclude bloated wrappers
-        // and minimum 500 chars to avoid single paragraphs
-        const goodCandidates = candidates.filter(c => c.density >= 10 && c.textLength >= 500);
-        const pool = goodCandidates.length > 0 ? goodCandidates : candidates;
-        
-        // Sort by TEXT LENGTH DESC - largest content wins (among reasonably dense candidates)
-        // This ensures we get the full article, not just a stub or teaser
-        pool.sort((a, b) => b.textLength - a.textLength);
-        
-        contentArea = pool.length > 0 ? pool[0].element : $("body");
+        // Only remove navigation-specific elements, NOT headers/footers (which may be article content)
+        $("body > nav, body > .nav, body > .navbar, body > .navigation").remove();
+        $("body > aside, body > .sidebar").remove();
+        contentArea = $("body");
       }
       
-      // Remove chrome WITHIN the selected content area (preserve semantic article headers/footers)
-      contentArea.find("nav, .nav, .navbar, .navigation, .menu, #nav, #navbar, #menu").remove();
-      contentArea.find("aside, .sidebar, .widget, .widgets, #sidebar").remove();
-      contentArea.find("footer:not(.entry-footer):not(.article-footer), .site-footer, #footer").remove();
-      contentArea.find(".comments, .comment-section, .comment-list, #comments, #respond").remove();
+      // 4. Remove chrome WITHIN the content area (safe - doesn't affect article headers)
+      contentArea.find("nav, .nav, .navbar, .navigation, .menu").remove();
+      contentArea.find(".sidebar, .widget, .widgets").remove();
+      contentArea.find(".comments, .comment-section, .comment-list, #comments").remove();
       contentArea.find(".share-buttons, .social-share, .sharing, .share-this").remove();
-      contentArea.find(".related-posts, .related, .author-box, .author-info, .bio").remove();
-      contentArea.find(".advertisement, .ad, .ads, .advert, .sponsor").remove();
+      contentArea.find(".related-posts, .related, .author-box, .bio").remove();
+      contentArea.find(".advertisement, .ad, .ads, .advert, .sponsor, .banner").remove();
       contentArea.find(".pagination, .pager, .page-links, .post-navigation").remove();
+      contentArea.find(".cookie, .popup, .modal, .overlay, .newsletter, .subscribe").remove();
+      contentArea.find("form, input, button, select, textarea").remove();
       
-      // Get the full HTML content preserving all structure within the content area
+      // 5. Get the content (includes all remaining HTML with images)
       let content = contentArea.html() || "";
       
       // Minimal cleanup - only normalize whitespace
