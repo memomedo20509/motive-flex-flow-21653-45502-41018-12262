@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight, Save, X, Upload, Image as ImageIcon } from "lucide-react";
+import { ArrowRight, Save, X, Upload, Image as ImageIcon, FileText, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { Link } from "wouter";
@@ -39,11 +39,20 @@ const ArticleForm = () => {
     status: "draft" as "draft" | "published",
     metaTitle: "",
     metaDescription: "",
+    metaKeywords: "",
+    focusKeyword: "",
+    canonicalUrl: "",
+    ogTitle: "",
+    ogDescription: "",
+    ogImage: "",
+    robotsDirective: "index, follow",
+    readingTime: "",
     tags: [] as string[],
   });
   const [tagInput, setTagInput] = useState("");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
 
   const { data: article, isLoading } = useQuery<Article>({
     queryKey: [`/api/admin/articles/${articleId}`],
@@ -58,10 +67,18 @@ const ArticleForm = () => {
         excerpt: article.excerpt || "",
         content: article.content,
         coverImage: article.coverImage || "",
-        author: article.author,
+        author: article.author || "فريق موتفلكس",
         status: article.status as "draft" | "published",
         metaTitle: article.metaTitle || "",
         metaDescription: article.metaDescription || "",
+        metaKeywords: article.metaKeywords || "",
+        focusKeyword: article.focusKeyword || "",
+        canonicalUrl: article.canonicalUrl || "",
+        ogTitle: article.ogTitle || "",
+        ogDescription: article.ogDescription || "",
+        ogImage: article.ogImage || "",
+        robotsDirective: article.robotsDirective || "index, follow",
+        readingTime: article.readingTime || "",
         tags: article.tags || [],
       });
       if (article.coverImage) {
@@ -69,6 +86,75 @@ const ArticleForm = () => {
       }
     }
   }, [article]);
+
+  // Handle HTML file import
+  const handleHtmlImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.html') && !file.name.endsWith('.htm')) {
+      toast({ title: "يرجى اختيار ملف HTML صالح", variant: "destructive" });
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append("htmlFile", file);
+
+      const res = await fetch("/api/admin/articles/parse-html", {
+        method: "POST",
+        body: formDataUpload,
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "فشل في تحليل الملف");
+      }
+
+      const parsedData = await res.json();
+      
+      setFormData(prev => ({
+        ...prev,
+        title: parsedData.title || prev.title,
+        content: parsedData.content || prev.content,
+        excerpt: parsedData.excerpt || prev.excerpt,
+        metaTitle: parsedData.metaTitle || prev.metaTitle,
+        metaDescription: parsedData.metaDescription || prev.metaDescription,
+        metaKeywords: parsedData.metaKeywords || prev.metaKeywords,
+        ogTitle: parsedData.ogTitle || prev.ogTitle,
+        ogDescription: parsedData.ogDescription || prev.ogDescription,
+        ogImage: parsedData.ogImage || prev.ogImage,
+      }));
+
+      toast({ title: "تم استيراد المقال بنجاح! راجع البيانات وعدّل ما تحتاج" });
+    } catch (error) {
+      toast({ 
+        title: error instanceof Error ? error.message : "حدث خطأ أثناء الاستيراد", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsImporting(false);
+      e.target.value = "";
+    }
+  };
+
+  // Calculate reading time from content
+  const calculateReadingTime = (text: string) => {
+    const wordsPerMinute = 200;
+    const wordCount = text.trim().split(/\s+/).length;
+    const minutes = Math.ceil(wordCount / wordsPerMinute);
+    return `${minutes} دقيقة`;
+  };
+
+  // Auto-calculate reading time when content changes
+  useEffect(() => {
+    if (formData.content) {
+      const time = calculateReadingTime(formData.content);
+      setFormData(prev => ({ ...prev, readingTime: time }));
+    }
+  }, [formData.content]);
 
   const createMutation = useMutation({
     mutationFn: async (data: FormData) => {
@@ -211,7 +297,32 @@ const ArticleForm = () => {
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <label className="cursor-pointer">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isImporting}
+                asChild
+                data-testid="button-import-html"
+              >
+                <span>
+                  {isImporting ? (
+                    <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                  ) : (
+                    <FileText className="h-4 w-4 ml-2" />
+                  )}
+                  {isImporting ? "جاري الاستيراد..." : "استيراد HTML"}
+                </span>
+              </Button>
+              <input
+                type="file"
+                className="hidden"
+                accept=".html,.htm"
+                onChange={handleHtmlImport}
+                disabled={isImporting}
+              />
+            </label>
             <Button
               type="button"
               variant="outline"
@@ -306,6 +417,19 @@ const ArticleForm = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
+                  <Label htmlFor="focusKeyword">الكلمة المفتاحية الرئيسية (Focus Keyword)</Label>
+                  <Input
+                    id="focusKeyword"
+                    value={formData.focusKeyword}
+                    onChange={(e) =>
+                      setFormData({ ...formData, focusKeyword: e.target.value })
+                    }
+                    placeholder="الكلمة الرئيسية التي تستهدفها"
+                    data-testid="input-focus-keyword"
+                  />
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="metaTitle">عنوان الصفحة (Meta Title)</Label>
                   <Input
                     id="metaTitle"
@@ -316,6 +440,9 @@ const ArticleForm = () => {
                     placeholder="يستخدم العنوان الأساسي إذا تُرك فارغاً"
                     data-testid="input-meta-title"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    {formData.metaTitle.length}/60 حرف (الأفضل 50-60)
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -330,6 +457,109 @@ const ArticleForm = () => {
                     rows={2}
                     data-testid="input-meta-description"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    {formData.metaDescription.length}/160 حرف (الأفضل 120-160)
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="metaKeywords">الكلمات المفتاحية (Meta Keywords)</Label>
+                  <Input
+                    id="metaKeywords"
+                    value={formData.metaKeywords}
+                    onChange={(e) =>
+                      setFormData({ ...formData, metaKeywords: e.target.value })
+                    }
+                    placeholder="كلمة1, كلمة2, كلمة3"
+                    data-testid="input-meta-keywords"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="canonicalUrl">الرابط القانوني (Canonical URL)</Label>
+                  <Input
+                    id="canonicalUrl"
+                    value={formData.canonicalUrl}
+                    onChange={(e) =>
+                      setFormData({ ...formData, canonicalUrl: e.target.value })
+                    }
+                    placeholder="https://example.com/blog/article-slug"
+                    className="text-left"
+                    dir="ltr"
+                    data-testid="input-canonical-url"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="robotsDirective">توجيهات الروبوتات (Robots)</Label>
+                  <Select
+                    value={formData.robotsDirective}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, robotsDirective: value })
+                    }
+                  >
+                    <SelectTrigger data-testid="select-robots">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="index, follow">Index, Follow (افتراضي)</SelectItem>
+                      <SelectItem value="noindex, follow">NoIndex, Follow</SelectItem>
+                      <SelectItem value="index, nofollow">Index, NoFollow</SelectItem>
+                      <SelectItem value="noindex, nofollow">NoIndex, NoFollow</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Open Graph (السوشيال ميديا)</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="ogTitle">عنوان المشاركة (OG Title)</Label>
+                  <Input
+                    id="ogTitle"
+                    value={formData.ogTitle}
+                    onChange={(e) =>
+                      setFormData({ ...formData, ogTitle: e.target.value })
+                    }
+                    placeholder="يستخدم Meta Title إذا تُرك فارغاً"
+                    data-testid="input-og-title"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="ogDescription">وصف المشاركة (OG Description)</Label>
+                  <Textarea
+                    id="ogDescription"
+                    value={formData.ogDescription}
+                    onChange={(e) =>
+                      setFormData({ ...formData, ogDescription: e.target.value })
+                    }
+                    placeholder="يستخدم Meta Description إذا تُرك فارغاً"
+                    rows={2}
+                    data-testid="input-og-description"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="ogImage">رابط صورة المشاركة (OG Image)</Label>
+                  <Input
+                    id="ogImage"
+                    value={formData.ogImage}
+                    onChange={(e) =>
+                      setFormData({ ...formData, ogImage: e.target.value })
+                    }
+                    placeholder="https://example.com/image.jpg"
+                    className="text-left"
+                    dir="ltr"
+                    data-testid="input-og-image"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    الأبعاد المثالية: 1200x630 بكسل
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -369,6 +599,13 @@ const ArticleForm = () => {
                     }
                     data-testid="input-author"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>وقت القراءة</Label>
+                  <div className="text-sm text-muted-foreground bg-muted/50 rounded-md p-2">
+                    {formData.readingTime || "سيتم حسابه تلقائياً"}
+                  </div>
                 </div>
               </CardContent>
             </Card>

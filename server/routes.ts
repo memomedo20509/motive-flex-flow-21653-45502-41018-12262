@@ -8,6 +8,7 @@ import path from "path";
 import fs from "fs";
 import multer from "multer";
 import express from "express";
+import * as cheerio from "cheerio";
 
 const uploadDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) {
@@ -32,6 +33,18 @@ const upload = multer({
       cb(null, true);
     } else {
       cb(new Error("Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed."));
+    }
+  },
+});
+
+const htmlUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === "text/html" || file.originalname.endsWith(".html") || file.originalname.endsWith(".htm")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Invalid file type. Only HTML files are allowed."));
     }
   },
 });
@@ -193,6 +206,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching article:", error);
       res.status(500).json({ message: "Failed to fetch article" });
+    }
+  });
+
+  app.post("/api/admin/articles/parse-html", isAuthenticated, isAdmin, htmlUpload.single("htmlFile"), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "يرجى رفع ملف HTML" });
+      }
+
+      const htmlContent = req.file.buffer.toString("utf-8");
+      const $ = cheerio.load(htmlContent);
+
+      const title = $("title").text().trim() || $("h1").first().text().trim() || "";
+      
+      const h1Text = $("h1").first().text().trim();
+      
+      const paragraphs: string[] = [];
+      $("p").each((_, el) => {
+        const text = $(el).text().trim().replace(/&nbsp;/g, " ").replace(/\s+/g, " ");
+        if (text) {
+          paragraphs.push(text);
+        }
+      });
+      const content = paragraphs.join("\n\n");
+      
+      const excerpt = paragraphs.length > 0 ? paragraphs[0].substring(0, 200) : "";
+      
+      const metaDescription = $('meta[name="description"]').attr("content") || "";
+      const metaKeywords = $('meta[name="keywords"]').attr("content") || "";
+      
+      const ogTitle = $('meta[property="og:title"]').attr("content") || "";
+      const ogDescription = $('meta[property="og:description"]').attr("content") || "";
+      const ogImage = $('meta[property="og:image"]').attr("content") || "";
+
+      res.json({
+        title: h1Text || title,
+        metaTitle: title,
+        content,
+        excerpt,
+        metaDescription,
+        metaKeywords,
+        ogTitle,
+        ogDescription,
+        ogImage,
+      });
+    } catch (error: any) {
+      console.error("Error parsing HTML:", error);
+      res.status(400).json({ message: error.message || "فشل في تحليل ملف HTML" });
     }
   });
 
