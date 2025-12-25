@@ -360,9 +360,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         slug = `${slug}-${Date.now()}`;
       }
       
+      let finalStatus = body.status || "draft";
+      let scheduledAt = body.scheduledAt ? new Date(body.scheduledAt) : null;
+      let publishedAt = null;
+      
+      const now = new Date();
+      
+      if (finalStatus === "draft") {
+        scheduledAt = null;
+        publishedAt = null;
+      } else if (scheduledAt && scheduledAt > now) {
+        finalStatus = "scheduled";
+        publishedAt = null;
+      } else if (finalStatus === "published" || finalStatus === "scheduled" || (scheduledAt && scheduledAt <= now)) {
+        finalStatus = "published";
+        publishedAt = now;
+        scheduledAt = null;
+      }
+      
       const articleData = {
         ...body,
         slug,
+        status: finalStatus,
+        scheduledAt,
+        publishedAt,
         coverImage: req.file ? `/uploads/${req.file.filename}` : body.coverImage,
         tags: body.tags || [],
       };
@@ -415,8 +436,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Article not found" });
       }
       
+      let finalStatus = body.status || existingArticle.status;
+      let scheduledAt = body.scheduledAt ? new Date(body.scheduledAt) : null;
+      let existingPublishedAt = (existingArticle as any).publishedAt || null;
+      let publishedAt = null;
+      
+      const now = new Date();
+      
+      if (finalStatus === "draft") {
+        finalStatus = "draft";
+        scheduledAt = null;
+        publishedAt = null;
+      } else if (scheduledAt && scheduledAt > now) {
+        finalStatus = "scheduled";
+        publishedAt = null;
+      } else if (finalStatus === "published" || finalStatus === "scheduled" || (scheduledAt && scheduledAt <= now)) {
+        finalStatus = "published";
+        publishedAt = existingPublishedAt || now;
+        scheduledAt = null;
+      }
+      
       const articleData: any = {
         ...body,
+        status: finalStatus,
+        scheduledAt,
+        publishedAt,
         tags: body.tags || [],
       };
       

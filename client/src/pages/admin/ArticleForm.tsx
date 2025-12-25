@@ -282,37 +282,29 @@ const ArticleForm = () => {
     });
   };
 
-  const handleSaveWithStatus = (status: "draft" | "published" | "scheduled") => {
+  const handleSaveWithStatus = (targetStatus: "draft" | "published" | "scheduled") => {
     if (!formData.title.trim()) {
       toast({ title: "العنوان مطلوب", variant: "destructive" });
       return;
     }
-    if (status === "published" && !formData.content.trim()) {
+    
+    if (targetStatus !== "draft" && !formData.content.trim()) {
       toast({ title: "المحتوى مطلوب للنشر", variant: "destructive" });
       return;
     }
 
-    let finalStatus = status;
-    let scheduledAtValue = formData.scheduledAt ? new Date(formData.scheduledAt).toISOString() : null;
-
-    if (status === "published" && formData.scheduledAt) {
-      const scheduledDate = new Date(formData.scheduledAt);
-      if (scheduledDate > new Date()) {
-        finalStatus = "scheduled";
-      } else {
-        scheduledAtValue = null;
-      }
-    }
+    const scheduledAtISO = formData.scheduledAt 
+      ? new Date(formData.scheduledAt).toISOString() 
+      : null;
 
     const data = new FormData();
     data.append(
       "data",
       JSON.stringify({
         ...formData,
-        status: finalStatus,
+        status: targetStatus,
         slug: formData.slug || undefined,
-        scheduledAt: scheduledAtValue,
-        publishedAt: finalStatus === "published" ? new Date().toISOString() : null,
+        scheduledAt: scheduledAtISO,
       })
     );
     if (coverFile) {
