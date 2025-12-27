@@ -18,7 +18,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Eye, EyeOff, LogIn, Loader2 } from "lucide-react";
-import logoImg from "@/assets/mutflex-logo.png";
+import logoImg from "@/assets/mutflex-logo.webp";
 
 const loginSchema = z.object({
   email: z.string().email("البريد الإلكتروني غير صالح"),
