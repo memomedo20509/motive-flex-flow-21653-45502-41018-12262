@@ -576,14 +576,169 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/admin/settings", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const { notification_email } = req.body;
-      if (notification_email) {
-        await storage.setSetting("notification_email", notification_email);
+      const settingsToSave = [
+        "notification_email",
+        "site_name",
+        "site_url",
+        "default_meta_description",
+        "default_og_image",
+        "ga_id",
+        "gtm_id",
+        "google_verification",
+        "bing_verification",
+        "robots_txt"
+      ];
+      
+      for (const key of settingsToSave) {
+        if (key in req.body) {
+          const value = req.body[key];
+          
+          // Validate site_url if provided
+          if (key === "site_url" && value) {
+            try {
+              const url = new URL(value);
+              if (!["http:", "https:"].includes(url.protocol)) {
+                return res.status(400).json({ message: "رابط الموقع يجب أن يبدأ بـ http:// أو https://" });
+              }
+            } catch {
+              return res.status(400).json({ message: "رابط الموقع غير صالح" });
+            }
+          }
+          
+          // Allow empty string to clear value
+          await storage.setSetting(key, value || "");
+        }
       }
+      
       res.json({ message: "تم حفظ الإعدادات بنجاح" });
     } catch (error) {
       console.error("Error saving settings:", error);
       res.status(500).json({ message: "Failed to save settings" });
+    }
+  });
+
+  // Helper function to escape XML special characters
+  function escapeXml(str: string): string {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&apos;");
+  }
+
+  // Generate sitemap.xml dynamically
+  app.get("/sitemap.xml", async (req, res) => {
+    try {
+      const storedSiteUrl = await storage.getSetting("site_url");
+      // Default to a safe fallback domain
+      const siteUrl = storedSiteUrl || `https://${process.env.REPLIT_DEV_DOMAIN || "mutflex.com"}`;
+      
+      // Get ALL published articles (no limit)
+      const { articles: publishedArticles } = await storage.getArticles({ status: "published", limit: 10000 });
+      
+      // Static pages
+      const staticPages = [
+        { url: "/", priority: "1.0", changefreq: "daily" },
+        { url: "/features", priority: "0.8", changefreq: "weekly" },
+        { url: "/industries", priority: "0.8", changefreq: "weekly" },
+        { url: "/pricing", priority: "0.8", changefreq: "weekly" },
+        { url: "/about", priority: "0.7", changefreq: "monthly" },
+        { url: "/contact", priority: "0.7", changefreq: "monthly" },
+        { url: "/free-trial", priority: "0.9", changefreq: "weekly" },
+        { url: "/blog", priority: "0.8", changefreq: "daily" },
+        { url: "/privacy-policy", priority: "0.3", changefreq: "yearly" },
+      ];
+      
+      const now = new Date().toISOString().split("T")[0];
+      
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+`;
+      
+      // Add static pages
+      for (const page of staticPages) {
+        xml += `  <url>
+    <loc>${escapeXml(siteUrl)}${escapeXml(page.url)}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>${page.changefreq}</changefreq>
+    <priority>${page.priority}</priority>
+  </url>
+`;
+      }
+      
+      // Add articles
+      for (const article of publishedArticles) {
+        const lastmod = article.updatedAt ? new Date(article.updatedAt).toISOString().split("T")[0] : now;
+        xml += `  <url>
+    <loc>${escapeXml(siteUrl)}/blog/${escapeXml(article.slug)}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+`;
+      }
+      
+      xml += `</urlset>`;
+      
+      // Update last generated timestamp
+      await storage.setSetting("sitemap_last_updated", new Date().toISOString());
+      
+      res.set("Content-Type", "application/xml");
+      res.set("Cache-Control", "public, max-age=3600"); // Cache for 1 hour
+      res.send(xml);
+    } catch (error) {
+      console.error("Error generating sitemap:", error);
+      res.status(500).send("Error generating sitemap");
+    }
+  });
+
+  // Generate robots.txt dynamically
+  app.get("/robots.txt", async (req, res) => {
+    try {
+      const customRobots = await storage.getSetting("robots_txt");
+      const siteUrl = await storage.getSetting("site_url") || `https://${process.env.REPLIT_DEV_DOMAIN || "mutflex.com"}`;
+      
+      let robotsTxt: string;
+      
+      if (customRobots) {
+        robotsTxt = customRobots;
+      } else {
+        // Default robots.txt
+        robotsTxt = `User-agent: *
+Allow: /
+
+# Disallow admin and API paths
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/
+Disallow: /login
+
+# Sitemap
+Sitemap: ${siteUrl}/sitemap.xml
+`;
+      }
+      
+      res.set("Content-Type", "text/plain");
+      res.send(robotsTxt);
+    } catch (error) {
+      console.error("Error generating robots.txt:", error);
+      res.status(500).send("Error generating robots.txt");
+    }
+  });
+
+  // Trigger sitemap regeneration (admin endpoint)
+  app.post("/api/admin/regenerate-sitemap", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      // Just update the timestamp - the sitemap is generated dynamically
+      await storage.setSetting("sitemap_last_updated", new Date().toISOString());
+      res.json({ 
+        message: "تم تحديث خريطة الموقع بنجاح",
+        lastUpdated: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error regenerating sitemap:", error);
+      res.status(500).json({ message: "فشل في تحديث خريطة الموقع" });
     }
   });
 
