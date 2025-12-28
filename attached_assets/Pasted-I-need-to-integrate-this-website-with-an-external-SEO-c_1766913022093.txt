@@ -1,0 +1,39 @@
+I need to integrate this website with an external SEO content management system (SEO Master). 
+Please analyze my current project and tell me:
+1. **Does this project have a database?** If yes, what type? If no, what's the best option to add?
+2. **Does this project have an articles/posts/content system?** 
+   - If yes, show me the current schema/structure
+   - If no, create one with these fields: id, title, slug, content (HTML), metaTitle, metaDescription, status (draft/published), publishedAt, createdAt, updatedAt
+3. **Create or verify these API endpoints exist** (secured with API token authentication):
+   | Endpoint | Method | Purpose |
+   |----------|--------|---------|
+   | /api/external/auth/validate | POST | Validate API token |
+   | /api/external/articles | GET | List all articles |
+   | /api/external/articles | POST | Create new draft article |
+   | /api/external/articles/:id | GET | Get single article |
+   | /api/external/articles/:id | PATCH | Update article |
+   | /api/external/articles/:id/publish | POST | Publish article |
+   | /api/external/pages | GET | List all pages (for internal linking) |
+4. **For authentication**, create a simple token-based system:
+   - Generate a secure API_TOKEN (store in Secrets)
+   - All /api/external/* endpoints require header: `Authorization: Bearer {API_TOKEN}`
+   - Return 401 if token is invalid
+5. **Response format** for articles should be:
+   ```json
+   {
+     "id": "string",
+     "title": "string",
+     "slug": "string", 
+     "content": "string (HTML)",
+     "metaTitle": "string",
+     "metaDescription": "string",
+     "status": "draft | published",
+     "url": "string (full URL when published)",
+     "createdAt": "ISO date",
+     "updatedAt": "ISO date"
+   }
+After implementation, provide me with:
+The base URL of the site
+The API_TOKEN value
+Confirmation that all endpoints are working
+This integration will allow an external system to create and manage SEO-optimized articles on this website.
