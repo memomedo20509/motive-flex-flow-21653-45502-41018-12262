@@ -12,6 +12,24 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### December 28, 2025 - External API Integration (SEO Master)
+- Added external API endpoints for integration with SEO Master tool
+- Token-based authentication using EXTERNAL_API_TOKEN secret
+- Endpoints created:
+  - POST /api/external/auth/validate - Validate API token
+  - GET /api/external/articles - List all articles with pagination
+  - POST /api/external/articles - Create new draft article
+  - GET /api/external/articles/:id - Get single article
+  - PATCH /api/external/articles/:id - Update article
+  - POST /api/external/articles/:id/publish - Publish article
+  - GET /api/external/pages - List all pages (static + articles) for internal linking
+- Response format includes all SEO fields (metaTitle, metaDescription, ogTitle, etc.)
+- Pages endpoint returns both static pages and published articles with full URLs
+
+### December 28, 2025 - SEO Meta Tags for All Pages
+- Added SEOHead component to Contact, Blog, Industries, FreeTrial, PrivacyPolicy pages
+- Each page now has unique title, description, keywords, and canonical URL
+
 ### December 25, 2025 - SEO Enhancement & HTML Import Feature
 - Added comprehensive SEO fields to articles schema: metaKeywords, focusKeyword, canonicalUrl, ogTitle, ogDescription, ogImage, robotsDirective, readingTime
 - Updated ArticleForm.tsx with:
