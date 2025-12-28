@@ -3,11 +3,18 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { CTASection } from "@/components/CTASection";
 import { AnimateOnScroll } from "@/components/AnimateOnScroll";
 import { Card, CardContent } from "@/components/ui/card";
+import { SEOHead } from "@/components/SEOHead";
 import { Target, Eye, Award, Users, Zap } from "lucide-react";
 
 const About = () => {
   return (
     <PageScaffold>
+      <SEOHead
+        title="من نحن"
+        description="تعرف على قصة موتفلكس وفريقنا المتخصص في تطوير حلول تقنية لتحويل القطاع الصناعي رقمياً. رؤيتنا ورسالتنا وقيمنا."
+        keywords="موتفلكس, من نحن, فريق العمل, قصة الشركة, التحول الرقمي"
+        canonicalUrl="https://mutflex.com/about"
+      />
 
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 gradient-hero text-white relative overflow-hidden">

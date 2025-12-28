@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PageScaffold } from "@/components/PageScaffold";
 import { SectionHeader } from "@/components/SectionHeader";
 import { AnimateOnScroll } from "@/components/AnimateOnScroll";
+import { SEOHead } from "@/components/SEOHead";
 import { 
   CheckCircle, 
   Factory, 
@@ -187,6 +188,12 @@ const Industries = () => {
 
   return (
     <PageScaffold>
+      <SEOHead
+        title="القطاعات الصناعية المستفيدة"
+        description="حلول مخصصة لكل قطاع صناعي: مصانع الرخام والجرانيت، شركات المقاولات، التشطيب والديكور، مصانع المطابخ والألمنيوم والمزيد."
+        keywords="قطاعات صناعية, مصانع رخام, مقاولات, ديكور, مطابخ, ألمنيوم"
+        canonicalUrl="https://mutflex.com/industries"
+      />
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 gradient-hero text-white">
         <div className="container mx-auto text-center stagger-children">

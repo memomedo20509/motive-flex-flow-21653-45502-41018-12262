@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { marked } from "marked";
@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimateOnScroll } from "@/components/AnimateOnScroll";
+import { SEOHead } from "@/components/SEOHead";
+import { ArticleSchema } from "@/components/SchemaMarkup";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Calendar, Eye, User, ArrowRight, Share2, Twitter, Facebook, Linkedin, Copy, Check, ArrowLeft, BookOpen, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Article } from "@shared/schema";
@@ -75,107 +78,6 @@ const BlogPost = () => {
     linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
   };
 
-  useEffect(() => {
-    if (!article) return;
-
-    const pageTitle = article.metaTitle || `${article.title} | موتفلكس`;
-    const pageDescription = article.metaDescription || article.excerpt || "";
-    const pageUrl = window.location.href;
-    const pageImage = article.coverImage ? `${window.location.origin}${article.coverImage}` : "";
-    const publishedDate = new Date(article.createdAt).toISOString();
-
-    document.title = pageTitle;
-
-    const setMeta = (property: string, content: string) => {
-      let meta = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement;
-      if (!meta) {
-        meta = document.querySelector(`meta[name="${property}"]`) as HTMLMetaElement;
-      }
-      if (!meta) {
-        meta = document.createElement("meta");
-        if (property.startsWith("og:") || property.startsWith("article:")) {
-          meta.setAttribute("property", property);
-        } else {
-          meta.setAttribute("name", property);
-        }
-        document.head.appendChild(meta);
-      }
-      meta.setAttribute("content", content);
-    };
-
-    setMeta("description", pageDescription);
-
-    setMeta("og:type", "article");
-    setMeta("og:title", article.title);
-    setMeta("og:description", pageDescription);
-    setMeta("og:url", pageUrl);
-    if (pageImage) setMeta("og:image", pageImage);
-    setMeta("og:site_name", "موتفلكس");
-    setMeta("og:locale", "ar_SA");
-
-    setMeta("article:published_time", publishedDate);
-    setMeta("article:author", article.author);
-    
-    document.querySelectorAll('meta[property="article:tag"]').forEach((el) => el.remove());
-    if (article.tags?.length) {
-      article.tags.forEach((tag) => {
-        const meta = document.createElement("meta");
-        meta.setAttribute("property", "article:tag");
-        meta.setAttribute("content", tag);
-        document.head.appendChild(meta);
-      });
-    }
-
-    setMeta("twitter:card", "summary_large_image");
-    setMeta("twitter:title", article.title);
-    setMeta("twitter:description", pageDescription);
-    if (pageImage) setMeta("twitter:image", pageImage);
-
-    let canonicalLink = document.querySelector('link[rel="canonical"]') as HTMLLinkElement;
-    if (!canonicalLink) {
-      canonicalLink = document.createElement("link");
-      canonicalLink.rel = "canonical";
-      document.head.appendChild(canonicalLink);
-    }
-    canonicalLink.href = pageUrl;
-
-    const jsonLd = {
-      "@context": "https://schema.org",
-      "@type": "Article",
-      headline: article.title,
-      description: pageDescription,
-      image: pageImage || undefined,
-      datePublished: publishedDate,
-      author: {
-        "@type": "Person",
-        name: article.author,
-      },
-      publisher: {
-        "@type": "Organization",
-        name: "موتفلكس",
-        logo: {
-          "@type": "ImageObject",
-          url: `${window.location.origin}/logo.png`,
-        },
-      },
-      mainEntityOfPage: {
-        "@type": "WebPage",
-        "@id": pageUrl,
-      },
-    };
-
-    let scriptTag = document.querySelector('script[type="application/ld+json"]') as HTMLScriptElement;
-    if (!scriptTag) {
-      scriptTag = document.createElement("script");
-      scriptTag.type = "application/ld+json";
-      document.head.appendChild(scriptTag);
-    }
-    scriptTag.textContent = JSON.stringify(jsonLd);
-
-    return () => {
-      document.title = "موتفلكس";
-    };
-  }, [article]);
 
   if (isLoading) {
     return (
@@ -233,8 +135,40 @@ const BlogPost = () => {
     );
   }
 
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://mutflex.com";
+  const pageUrl = `${baseUrl}/blog/${article.slug}`;
+  const ogImage = article.ogImage || article.coverImage || "/og-image.webp";
+  const pageDescription = article.metaDescription || article.excerpt || article.title;
+  const publishedDate = new Date(article.createdAt).toISOString();
+  const modifiedDate = article.updatedAt ? new Date(article.updatedAt).toISOString() : publishedDate;
+
   return (
     <div className="min-h-screen bg-background" dir="rtl">
+      <SEOHead
+        title={article.metaTitle || article.title}
+        description={pageDescription}
+        keywords={article.metaKeywords || article.tags?.join(", ")}
+        canonicalUrl={article.canonicalUrl || pageUrl}
+        ogImage={ogImage.startsWith("http") ? ogImage : `${baseUrl}${ogImage}`}
+        ogType="article"
+        article={{
+          publishedTime: publishedDate,
+          modifiedTime: modifiedDate,
+          author: article.author || "فريق موتفلكس",
+          tags: article.tags || [],
+        }}
+        noindex={article.robotsDirective?.includes("noindex")}
+        nofollow={article.robotsDirective?.includes("nofollow")}
+      />
+      <ArticleSchema
+        headline={article.title}
+        description={pageDescription}
+        image={ogImage.startsWith("http") ? ogImage : `${baseUrl}${ogImage}`}
+        datePublished={publishedDate}
+        dateModified={modifiedDate}
+        authorName={article.author || "فريق موتفلكس"}
+        url={pageUrl}
+      />
       <Navbar />
 
       {/* Hero Section - Enhanced */}
@@ -254,10 +188,13 @@ const BlogPost = () => {
         <div className="container mx-auto px-4 relative z-10">
           <AnimateOnScroll>
             <div className="max-w-4xl mx-auto text-white">
-              <Link href="/blog" className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-white/90 hover:text-white hover:bg-white/20 mb-6 transition-all border border-white/20" data-testid="link-back-to-blog">
-                <ArrowRight className="h-4 w-4" />
-                <span>العودة للمدونة</span>
-              </Link>
+              <Breadcrumbs
+                items={[
+                  { label: "المدونة", href: "/blog" },
+                  { label: article.title },
+                ]}
+                className="mb-6 text-white/80"
+              />
               
               {article.tags && article.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4">

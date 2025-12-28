@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimateOnScroll } from "@/components/AnimateOnScroll";
+import { SEOHead } from "@/components/SEOHead";
 import { Search, Calendar, Eye, ArrowLeft, ChevronLeft, ChevronRight, BookOpen, Sparkles, FileText } from "lucide-react";
 import type { Article } from "@shared/schema";
 
@@ -43,6 +44,12 @@ const Blog = () => {
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
+      <SEOHead
+        title="المدونة"
+        description="اقرأ أحدث المقالات والنصائح حول إدارة التصنيع والتركيب، التحول الرقمي للمصانع، وأفضل الممارسات في القطاع الصناعي."
+        keywords="مدونة موتفلكس, مقالات تصنيع, نصائح صناعية, تحول رقمي"
+        canonicalUrl="https://mutflex.com/blog"
+      />
       <Navbar />
 
       {/* Hero Section - Enhanced matching Index.tsx */}

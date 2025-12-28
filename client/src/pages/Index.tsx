@@ -5,6 +5,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
 import { AnimateOnScroll } from "@/components/AnimateOnScroll";
+import { SEOHead } from "@/components/SEOHead";
+import { OrganizationSchema, SoftwareApplicationSchema } from "@/components/SchemaMarkup";
 import {
   Users,
   Calendar,
@@ -89,6 +91,14 @@ const Index = () => {
 
   return (
     <div className="min-h-screen overflow-x-hidden" dir="rtl">
+      <SEOHead
+        title="نظام إدارة التصنيع والتركيب"
+        description="موتفلكس - نظام SaaS متكامل لإدارة عمليات التصنيع، التوريد، والتركيب. حوّل منشأتك من الفوضى إلى نظام رقمي متكامل. تجربة مجانية لمدة شهرين."
+        keywords="إدارة التصنيع, نظام تركيب, برنامج مصانع, إدارة العملاء, برنامج رخام, برنامج جرانيت, SaaS"
+        canonicalUrl="https://mutflex.com/"
+      />
+      <OrganizationSchema />
+      <SoftwareApplicationSchema />
       <Navbar />
 
       {/* Hero Section */}

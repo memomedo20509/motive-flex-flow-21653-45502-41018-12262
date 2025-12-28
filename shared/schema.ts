@@ -57,6 +57,7 @@ export const articles = pgTable("articles", {
   content: text("content").notNull(),
   excerpt: text("excerpt"),
   coverImage: varchar("cover_image", { length: 500 }),
+  coverImageAlt: varchar("cover_image_alt", { length: 255 }),
   tags: text("tags").array().default([]),
   author: varchar("author", { length: 100 }).default("فريق موتفلكس"),
   status: varchar("status", { length: 20 }).default("draft").notNull(),

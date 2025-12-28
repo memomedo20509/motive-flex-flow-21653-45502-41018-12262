@@ -5,6 +5,7 @@ import { PageScaffold } from "@/components/PageScaffold";
 import { SectionHeader } from "@/components/SectionHeader";
 import { CTASection } from "@/components/CTASection";
 import { AnimateOnScroll } from "@/components/AnimateOnScroll";
+import { SEOHead } from "@/components/SEOHead";
 import { Check, Zap } from "lucide-react";
 
 const Pricing = () => {
@@ -58,6 +59,12 @@ const Pricing = () => {
 
   return (
     <PageScaffold>
+      <SEOHead
+        title="الأسعار والباقات"
+        description="تعرف على أسعار باقات موتفلكس المرنة. باقة 6 شهور وباقة سنوية مع تجربة مجانية لمدة شهرين. جميع الباقات تشمل عدد مستخدمين غير محدود."
+        keywords="أسعار موتفلكس, باقات, اشتراك, تجربة مجانية, نظام إدارة المصانع"
+        canonicalUrl="https://mutflex.com/pricing"
+      />
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 gradient-hero text-white relative overflow-hidden">
         <div className="absolute inset-0">

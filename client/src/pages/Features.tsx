@@ -3,6 +3,7 @@ import { PageScaffold } from "@/components/PageScaffold";
 import { SectionHeader } from "@/components/SectionHeader";
 import { CTASection } from "@/components/CTASection";
 import { AnimateOnScroll } from "@/components/AnimateOnScroll";
+import { SEOHead } from "@/components/SEOHead";
 import {
   Users,
   Calendar,
@@ -177,6 +178,12 @@ const Features = () => {
 
   return (
     <PageScaffold>
+      <SEOHead
+        title="المميزات التقنية"
+        description="تعرف على جميع مميزات نظام موتفلكس: إدارة العملاء، جدولة القياسات، متابعة التصنيع والتركيب، أرشفة المستندات، التقارير الشاملة والمزيد."
+        keywords="مميزات موتفلكس, إدارة عملاء, جدولة قياسات, متابعة تصنيع, نظام تركيب"
+        canonicalUrl="https://mutflex.com/features"
+      />
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 gradient-hero text-white relative overflow-hidden">
         <div className="absolute inset-0">

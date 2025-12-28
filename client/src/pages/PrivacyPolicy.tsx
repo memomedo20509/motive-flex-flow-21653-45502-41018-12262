@@ -1,9 +1,16 @@
 import { PageScaffold } from "@/components/PageScaffold";
 import { Card, CardContent } from "@/components/ui/card";
+import { SEOHead } from "@/components/SEOHead";
 
 const PrivacyPolicy = () => {
   return (
     <PageScaffold>
+      <SEOHead
+        title="سياسة الخصوصية"
+        description="تعرف على سياسة الخصوصية في موتفلكس وكيف نحمي بياناتك ومعلوماتك الشخصية."
+        keywords="سياسة الخصوصية, حماية البيانات, أمان المعلومات"
+        canonicalUrl="https://mutflex.com/privacy-policy"
+      />
 
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 bg-muted/50">

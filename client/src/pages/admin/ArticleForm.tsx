@@ -36,6 +36,7 @@ const ArticleForm = () => {
     excerpt: "",
     content: "",
     coverImage: "",
+    coverImageAlt: "",
     author: "فريق موتفلكس",
     status: "draft" as "draft" | "published" | "scheduled",
     metaTitle: "",
@@ -70,6 +71,7 @@ const ArticleForm = () => {
         excerpt: article.excerpt || "",
         content: article.content,
         coverImage: article.coverImage || "",
+        coverImageAlt: (article as any).coverImageAlt || "",
         author: article.author || "فريق موتفلكس",
         status: article.status as "draft" | "published" | "scheduled",
         metaTitle: article.metaTitle || "",
@@ -755,6 +757,22 @@ const ArticleForm = () => {
                     />
                   </label>
                 )}
+                
+                <div className="space-y-2">
+                  <Label htmlFor="coverImageAlt">النص البديل للصورة (Alt Text)</Label>
+                  <Input
+                    id="coverImageAlt"
+                    value={formData.coverImageAlt}
+                    onChange={(e) =>
+                      setFormData({ ...formData, coverImageAlt: e.target.value })
+                    }
+                    placeholder="وصف مختصر للصورة لتحسين SEO والوصول"
+                    data-testid="input-cover-image-alt"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    مهم لتحسين محركات البحث وإمكانية الوصول
+                  </p>
+                </div>
               </CardContent>
             </Card>
 
