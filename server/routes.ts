@@ -803,6 +803,337 @@ Sitemap: ${siteUrl}/sitemap.xml
     }
   });
 
+  // =============================================
+  // External API Endpoints (for SEO Master integration)
+  // =============================================
+  
+  // External API Token Authentication Middleware
+  const validateExternalToken = (req: any, res: any, next: any) => {
+    const authHeader = req.headers.authorization;
+    const apiToken = process.env.EXTERNAL_API_TOKEN;
+    
+    if (!apiToken) {
+      return res.status(500).json({ 
+        success: false, 
+        message: "API token not configured on server" 
+      });
+    }
+    
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "Missing or invalid authorization header" 
+      });
+    }
+    
+    const token = authHeader.substring(7);
+    if (token !== apiToken) {
+      return res.status(401).json({ 
+        success: false, 
+        message: "Invalid API token" 
+      });
+    }
+    
+    next();
+  };
+
+  // Validate API Token
+  app.post("/api/external/auth/validate", validateExternalToken, (req, res) => {
+    res.json({ 
+      success: true, 
+      message: "Token is valid",
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  // Get all articles (external)
+  app.get("/api/external/articles", validateExternalToken, async (req, res) => {
+    try {
+      const { status, limit = "100", page = "1" } = req.query;
+      const result = await storage.getArticles({
+        status: status as string || undefined, 
+        limit: parseInt(limit as string),
+        page: parseInt(page as string)
+      });
+      
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+        : "https://mutflex.com";
+      
+      const formattedArticles = result.articles.map((article: any) => ({
+        id: article.id.toString(),
+        title: article.title,
+        slug: article.slug,
+        content: article.content,
+        excerpt: article.excerpt,
+        metaTitle: article.metaTitle,
+        metaDescription: article.metaDescription,
+        metaKeywords: article.metaKeywords,
+        focusKeyword: article.focusKeyword,
+        canonicalUrl: article.canonicalUrl,
+        ogTitle: article.ogTitle,
+        ogDescription: article.ogDescription,
+        ogImage: article.ogImage,
+        robotsDirective: article.robotsDirective,
+        coverImage: article.coverImage,
+        coverImageAlt: article.coverImageAlt,
+        tags: article.tags,
+        status: article.status,
+        url: article.status === "published" ? `${baseUrl}/blog/${article.slug}` : null,
+        publishedAt: article.publishedAt?.toISOString() || null,
+        createdAt: article.createdAt?.toISOString() || new Date().toISOString(),
+        updatedAt: article.updatedAt?.toISOString() || new Date().toISOString(),
+      }));
+      
+      res.json({ 
+        success: true, 
+        articles: formattedArticles,
+        total: result.total
+      });
+    } catch (error: any) {
+      console.error("External API - Error fetching articles:", error);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  // Create new article (external)
+  app.post("/api/external/articles", validateExternalToken, async (req, res) => {
+    try {
+      const { 
+        title, 
+        content, 
+        excerpt,
+        metaTitle, 
+        metaDescription,
+        metaKeywords,
+        focusKeyword,
+        canonicalUrl,
+        ogTitle,
+        ogDescription,
+        ogImage,
+        robotsDirective,
+        coverImage,
+        coverImageAlt,
+        tags 
+      } = req.body;
+      
+      if (!title) {
+        return res.status(400).json({ success: false, message: "Title is required" });
+      }
+      
+      const slug = generateSlug(title);
+      
+      const article = await storage.createArticle({
+        title,
+        slug,
+        content: content || "",
+        excerpt: excerpt || "",
+        metaTitle: metaTitle || title,
+        metaDescription: metaDescription || "",
+        metaKeywords: metaKeywords || "",
+        focusKeyword: focusKeyword || "",
+        canonicalUrl: canonicalUrl || "",
+        ogTitle: ogTitle || "",
+        ogDescription: ogDescription || "",
+        ogImage: ogImage || "",
+        robotsDirective: robotsDirective || "index, follow",
+        coverImage: coverImage || "",
+        coverImageAlt: coverImageAlt || "",
+        tags: tags || [],
+        status: "draft",
+        author: "API Integration",
+      });
+      
+      res.status(201).json({ 
+        success: true, 
+        article: {
+          id: article.id.toString(),
+          title: article.title,
+          slug: article.slug,
+          status: article.status,
+          createdAt: article.createdAt?.toISOString() || new Date().toISOString(),
+        },
+        message: "Article created successfully"
+      });
+    } catch (error: any) {
+      console.error("External API - Error creating article:", error);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  // Get single article (external)
+  app.get("/api/external/articles/:id", validateExternalToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const article = await storage.getArticleById(id);
+      
+      if (!article) {
+        return res.status(404).json({ success: false, message: "Article not found" });
+      }
+      
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+        : "https://mutflex.com";
+      
+      res.json({ 
+        success: true, 
+        article: {
+          id: article.id.toString(),
+          title: article.title,
+          slug: article.slug,
+          content: article.content,
+          excerpt: article.excerpt,
+          metaTitle: article.metaTitle,
+          metaDescription: article.metaDescription,
+          metaKeywords: article.metaKeywords,
+          focusKeyword: article.focusKeyword,
+          canonicalUrl: article.canonicalUrl,
+          ogTitle: article.ogTitle,
+          ogDescription: article.ogDescription,
+          ogImage: article.ogImage,
+          robotsDirective: article.robotsDirective,
+          coverImage: article.coverImage,
+          coverImageAlt: article.coverImageAlt,
+          tags: article.tags,
+          status: article.status,
+          url: article.status === "published" ? `${baseUrl}/blog/${article.slug}` : null,
+          publishedAt: article.publishedAt?.toISOString() || null,
+          createdAt: article.createdAt?.toISOString() || new Date().toISOString(),
+          updatedAt: article.updatedAt?.toISOString() || new Date().toISOString(),
+        }
+      });
+    } catch (error: any) {
+      console.error("External API - Error fetching article:", error);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  // Update article (external)
+  app.patch("/api/external/articles/:id", validateExternalToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const existingArticle = await storage.getArticleById(id);
+      
+      if (!existingArticle) {
+        return res.status(404).json({ success: false, message: "Article not found" });
+      }
+      
+      const updateData: any = {};
+      const allowedFields = [
+        'title', 'content', 'excerpt', 'metaTitle', 'metaDescription',
+        'metaKeywords', 'focusKeyword', 'canonicalUrl', 'ogTitle',
+        'ogDescription', 'ogImage', 'robotsDirective', 'coverImage',
+        'coverImageAlt', 'tags'
+      ];
+      
+      for (const field of allowedFields) {
+        if (req.body[field] !== undefined) {
+          updateData[field] = req.body[field];
+        }
+      }
+      
+      // Update slug if title changed
+      if (updateData.title) {
+        updateData.slug = generateSlug(updateData.title);
+      }
+      
+      const article = await storage.updateArticle(id, updateData);
+      
+      res.json({ 
+        success: true, 
+        article: {
+          id: article!.id.toString(),
+          title: article!.title,
+          slug: article!.slug,
+          status: article!.status,
+          updatedAt: article!.updatedAt?.toISOString() || new Date().toISOString(),
+        },
+        message: "Article updated successfully"
+      });
+    } catch (error: any) {
+      console.error("External API - Error updating article:", error);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  // Publish article (external)
+  app.post("/api/external/articles/:id/publish", validateExternalToken, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const existingArticle = await storage.getArticleById(id);
+      
+      if (!existingArticle) {
+        return res.status(404).json({ success: false, message: "Article not found" });
+      }
+      
+      const article = await storage.updateArticle(id, { 
+        status: "published",
+        publishedAt: new Date()
+      });
+      
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+        : "https://mutflex.com";
+      
+      res.json({ 
+        success: true, 
+        article: {
+          id: article!.id.toString(),
+          title: article!.title,
+          slug: article!.slug,
+          status: article!.status,
+          url: `${baseUrl}/blog/${article!.slug}`,
+          publishedAt: article!.publishedAt?.toISOString() || new Date().toISOString(),
+        },
+        message: "Article published successfully"
+      });
+    } catch (error: any) {
+      console.error("External API - Error publishing article:", error);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
+  // Get all pages for internal linking (external)
+  app.get("/api/external/pages", validateExternalToken, async (req, res) => {
+    try {
+      const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+        ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+        : "https://mutflex.com";
+      
+      // Static pages
+      const staticPages = [
+        { id: "home", title: "الرئيسية", slug: "", url: baseUrl, type: "static" },
+        { id: "features", title: "المميزات", slug: "features", url: `${baseUrl}/features`, type: "static" },
+        { id: "pricing", title: "الأسعار", slug: "pricing", url: `${baseUrl}/pricing`, type: "static" },
+        { id: "industries", title: "القطاعات", slug: "industries", url: `${baseUrl}/industries`, type: "static" },
+        { id: "about", title: "من نحن", slug: "about", url: `${baseUrl}/about`, type: "static" },
+        { id: "contact", title: "تواصل معنا", slug: "contact", url: `${baseUrl}/contact`, type: "static" },
+        { id: "blog", title: "المدونة", slug: "blog", url: `${baseUrl}/blog`, type: "static" },
+        { id: "free-trial", title: "تجربة مجانية", slug: "free-trial", url: `${baseUrl}/free-trial`, type: "static" },
+        { id: "privacy-policy", title: "سياسة الخصوصية", slug: "privacy-policy", url: `${baseUrl}/privacy-policy`, type: "static" },
+      ];
+      
+      // Published articles
+      const result = await storage.getArticles({ status: "published", limit: 1000 });
+      const articlePages = result.articles.map((article: any) => ({
+        id: `article-${article.id}`,
+        title: article.title,
+        slug: `blog/${article.slug}`,
+        url: `${baseUrl}/blog/${article.slug}`,
+        type: "article",
+      }));
+      
+      res.json({ 
+        success: true, 
+        pages: [...staticPages, ...articlePages],
+        total: staticPages.length + articlePages.length
+      });
+    } catch (error: any) {
+      console.error("External API - Error fetching pages:", error);
+      res.status(500).json({ success: false, message: error.message });
+    }
+  });
+
   // AI-powered SEO generation endpoint
   app.post("/api/admin/articles/generate-seo", isAuthenticated, isAdmin, async (req, res) => {
     try {
