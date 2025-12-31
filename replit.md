@@ -12,6 +12,11 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### December 31, 2025 - Schema Markup Support
+- Added schemaMarkup field to articles table for custom JSON-LD storage
+- Updated all External API endpoints to read/write schemaMarkup
+- Updated BlogPost.tsx to render custom schemaMarkup when available
+
 ### December 28, 2025 - External API Integration (SEO Master)
 - Added external API endpoints for integration with SEO Master tool
 - Token-based authentication using EXTERNAL_API_TOKEN secret
@@ -25,6 +30,154 @@ Preferred communication style: Simple, everyday language.
   - GET /api/external/pages - List all pages (static + articles) for internal linking
 - Response format includes all SEO fields (metaTitle, metaDescription, ogTitle, etc.)
 - Pages endpoint returns both static pages and published articles with full URLs
+
+## External Tool Integration Guide (SEO Master Prompt)
+
+This section provides a comprehensive prompt for the external SEO management tool to properly handle mutflex (custom site) articles.
+
+### Complete Prompt for External Tool
+
+```
+# mutflex Custom Site Integration
+
+When managing mutflex articles, you are working with a CUSTOM SITE (not WordPress).
+This means you interact directly with the External API instead of WordPress REST API.
+
+## Authentication
+
+All requests require Bearer token authentication:
+```
+Authorization: Bearer {EXTERNAL_API_TOKEN}
+```
+
+## Available Endpoints
+
+### 1. List Articles
+GET /api/external/articles?status={status}&limit={limit}&page={page}
+
+### 2. Get Single Article
+GET /api/external/articles/{id}
+
+### 3. Create Article
+POST /api/external/articles
+Body: { title, content, excerpt, metaTitle, metaDescription, metaKeywords, focusKeyword, canonicalUrl, ogTitle, ogDescription, ogImage, robotsDirective, schemaMarkup, coverImage, coverImageAlt, tags }
+
+### 4. Update Article
+PATCH /api/external/articles/{id}
+Body: Any fields from create (all optional)
+
+### 5. Publish Article
+POST /api/external/articles/{id}/publish
+
+### 6. Get All Pages (for internal linking)
+GET /api/external/pages
+
+## SEO Management Capabilities
+
+### 1. Meta Title & Description Optimization
+- Update via PATCH with metaTitle and metaDescription fields
+- Recommended length: Title 50-60 chars, Description 150-160 chars
+- Always include focus keyword naturally
+
+### 2. Canonical URL Setup
+- Set canonicalUrl field to prevent duplicate content issues
+- Format: Full URL (https://mutflex.com/blog/{slug})
+- Use when article content is syndicated or similar pages exist
+
+### 3. Robots Directive Configuration
+- Field: robotsDirective
+- Options: "index, follow" (default), "noindex, follow", "index, nofollow", "noindex, nofollow"
+- Use noindex for thin content, duplicate pages, or private articles
+
+### 4. Schema Markup (JSON-LD)
+- Field: schemaMarkup
+- Store complete JSON-LD schema as a string
+- If provided, this custom schema will be used instead of auto-generated schema
+- If empty/null, system auto-generates ArticleSchema from article data
+
+Example schemaMarkup value:
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Article Title",
+  "description": "Article description",
+  "image": "https://mutflex.com/image.webp",
+  "author": {
+    "@type": "Person",
+    "name": "Author Name"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Mutflex",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://mutflex.com/logo.png"
+    }
+  },
+  "datePublished": "2025-12-31T00:00:00Z",
+  "dateModified": "2025-12-31T00:00:00Z"
+}
+```
+
+### 5. Open Graph Tags
+- ogTitle: Social media title (defaults to article title if empty)
+- ogDescription: Social media description (defaults to metaDescription/excerpt)
+- ogImage: Full URL to social sharing image
+
+### 6. Internal Linking
+- Use GET /api/external/pages to fetch all available pages
+- Returns array of { type, title, slug, url }
+- Types: "static" (fixed pages) and "article" (blog posts)
+- Use these URLs when adding internal links within article content
+
+## Key Differences from WordPress
+
+| Feature | WordPress | mutflex (Custom) |
+|---------|-----------|------------------|
+| API Base | /wp-json/wp/v2/ | /api/external/ |
+| Auth | WordPress cookies/nonce | Bearer Token |
+| Create Post | POST /posts | POST /articles |
+| Update Post | PUT /posts/{id} | PATCH /articles/{id} |
+| Yoast SEO | Separate plugin fields | Built-in fields |
+| Schema | Yoast/plugins | schemaMarkup field |
+| Featured Image | media_id reference | coverImage URL string |
+
+## Response Format
+
+All responses follow this structure:
+```json
+{
+  "success": true,
+  "article": { ... },
+  "message": "Operation description"
+}
+```
+
+Or for lists:
+```json
+{
+  "success": true,
+  "articles": [...],
+  "total": 100
+}
+```
+
+## Error Handling
+
+- 401: Invalid or missing token
+- 404: Article not found
+- 400: Invalid request (missing title, etc.)
+- 500: Server error
+
+## Display Buttons
+
+For mutflex sites, display:
+- "Manage" button: Opens article management interface
+- "Analyze" button: Runs SEO analysis on article
+
+Both buttons should use the External API endpoints documented above.
+```
 
 ### December 28, 2025 - SEO Meta Tags for All Pages
 - Added SEOHead component to Contact, Blog, Industries, FreeTrial, PrivacyPolicy pages
