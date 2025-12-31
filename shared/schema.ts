@@ -71,6 +71,7 @@ export const articles = pgTable("articles", {
   ogDescription: text("og_description"),
   ogImage: varchar("og_image", { length: 500 }),
   robotsDirective: varchar("robots_directive", { length: 50 }).default("index, follow"),
+  schemaMarkup: text("schema_markup"),
   readingTime: varchar("reading_time", { length: 20 }),
   viewCount: serial("view_count"),
   publishedAt: timestamp("published_at"),

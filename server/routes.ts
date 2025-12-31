@@ -875,6 +875,7 @@ Sitemap: ${siteUrl}/sitemap.xml
         ogDescription: article.ogDescription,
         ogImage: article.ogImage,
         robotsDirective: article.robotsDirective,
+        schemaMarkup: article.schemaMarkup,
         coverImage: article.coverImage,
         coverImageAlt: article.coverImageAlt,
         tags: article.tags,
@@ -912,6 +913,7 @@ Sitemap: ${siteUrl}/sitemap.xml
         ogDescription,
         ogImage,
         robotsDirective,
+        schemaMarkup,
         coverImage,
         coverImageAlt,
         tags 
@@ -937,6 +939,7 @@ Sitemap: ${siteUrl}/sitemap.xml
         ogDescription: ogDescription || "",
         ogImage: ogImage || "",
         robotsDirective: robotsDirective || "index, follow",
+        schemaMarkup: schemaMarkup || "",
         coverImage: coverImage || "",
         coverImageAlt: coverImageAlt || "",
         tags: tags || [],
@@ -992,6 +995,7 @@ Sitemap: ${siteUrl}/sitemap.xml
           ogDescription: article.ogDescription,
           ogImage: article.ogImage,
           robotsDirective: article.robotsDirective,
+          schemaMarkup: article.schemaMarkup,
           coverImage: article.coverImage,
           coverImageAlt: article.coverImageAlt,
           tags: article.tags,
@@ -1022,8 +1026,8 @@ Sitemap: ${siteUrl}/sitemap.xml
       const allowedFields = [
         'title', 'content', 'excerpt', 'metaTitle', 'metaDescription',
         'metaKeywords', 'focusKeyword', 'canonicalUrl', 'ogTitle',
-        'ogDescription', 'ogImage', 'robotsDirective', 'coverImage',
-        'coverImageAlt', 'tags'
+        'ogDescription', 'ogImage', 'robotsDirective', 'schemaMarkup',
+        'coverImage', 'coverImageAlt', 'tags'
       ];
       
       for (const field of allowedFields) {
