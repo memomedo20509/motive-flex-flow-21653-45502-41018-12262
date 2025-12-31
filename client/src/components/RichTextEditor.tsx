@@ -1,13 +1,29 @@
-import { useEditor, EditorContent, Editor } from "@tiptap/react";
+import { useEditor, EditorContent, Editor, NodeViewWrapper, NodeViewProps } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import TextAlign from "@tiptap/extension-text-align";
 import Underline from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Bold,
   Italic,
@@ -27,6 +43,9 @@ import {
   Undo,
   Redo,
   Code,
+  Settings,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -35,6 +54,95 @@ interface RichTextEditorProps {
   onChange: (value: string) => void;
   placeholder?: string;
 }
+
+interface ImageAttributes {
+  src: string;
+  alt?: string;
+  title?: string;
+  width?: string;
+  alignment?: 'left' | 'center' | 'right';
+}
+
+const CustomImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      alt: {
+        default: '',
+        parseHTML: element => element.getAttribute('alt'),
+        renderHTML: attributes => {
+          if (!attributes.alt) return {};
+          return { alt: attributes.alt };
+        },
+      },
+      title: {
+        default: '',
+        parseHTML: element => element.getAttribute('title'),
+        renderHTML: attributes => {
+          if (!attributes.title) return {};
+          return { title: attributes.title };
+        },
+      },
+      width: {
+        default: '100%',
+        parseHTML: element => element.style.width || element.getAttribute('width') || '100%',
+        renderHTML: attributes => {
+          return { style: `width: ${attributes.width}` };
+        },
+      },
+      alignment: {
+        default: 'center',
+        parseHTML: element => {
+          const parent = element.parentElement;
+          if (parent?.style.textAlign) return parent.style.textAlign;
+          return 'center';
+        },
+        renderHTML: attributes => {
+          return { 'data-alignment': attributes.alignment };
+        },
+      },
+      loading: {
+        default: 'lazy',
+        renderHTML: () => ({ loading: 'lazy' }),
+      },
+      decoding: {
+        default: 'async',
+        renderHTML: () => ({ decoding: 'async' }),
+      },
+    };
+  },
+  renderHTML({ HTMLAttributes }) {
+    const alignment = HTMLAttributes['data-alignment'] || 'center';
+    delete HTMLAttributes['data-alignment'];
+    
+    const figureStyle = {
+      left: 'text-align: left; margin-right: auto;',
+      center: 'text-align: center; margin-left: auto; margin-right: auto;',
+      right: 'text-align: right; margin-left: auto;',
+    }[alignment] || 'text-align: center;';
+
+    if (HTMLAttributes.title) {
+      return [
+        'figure',
+        { class: 'image-container', style: figureStyle },
+        ['img', { ...HTMLAttributes, loading: 'lazy', decoding: 'async' }],
+        ['figcaption', {}, HTMLAttributes.title],
+      ] as const;
+    }
+
+    return [
+      'figure',
+      { class: 'image-container', style: figureStyle },
+      ['img', { ...HTMLAttributes, loading: 'lazy', decoding: 'async' }],
+    ] as const;
+  },
+  parseHTML() {
+    return [
+      { tag: 'figure img' },
+      { tag: 'img[src]' },
+    ];
+  },
+});
 
 const MenuButton = ({ 
   onClick, 
@@ -57,12 +165,143 @@ const MenuButton = ({
     disabled={disabled}
     className={`h-8 w-8 ${isActive ? "bg-muted" : ""}`}
     title={title}
+    data-testid={`editor-btn-${title?.replace(/\s+/g, '-').toLowerCase()}`}
   >
     {children}
   </Button>
 );
 
-const MenuBar = ({ editor }: { editor: Editor | null }) => {
+interface ImagePropertiesDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  imageAttrs: ImageAttributes;
+  onSave: (attrs: ImageAttributes) => void;
+}
+
+const ImagePropertiesDialog = ({ open, onOpenChange, imageAttrs, onSave }: ImagePropertiesDialogProps) => {
+  const [alt, setAlt] = useState(imageAttrs.alt || '');
+  const [title, setTitle] = useState(imageAttrs.title || '');
+  const [width, setWidth] = useState(imageAttrs.width || '100%');
+  const [alignment, setAlignment] = useState<'left' | 'center' | 'right'>(imageAttrs.alignment || 'center');
+
+  useEffect(() => {
+    setAlt(imageAttrs.alt || '');
+    setTitle(imageAttrs.title || '');
+    setWidth(imageAttrs.width || '100%');
+    setAlignment(imageAttrs.alignment || 'center');
+  }, [imageAttrs]);
+
+  const handleSave = () => {
+    onSave({
+      src: imageAttrs.src,
+      alt,
+      title,
+      width,
+      alignment,
+    });
+    onOpenChange(false);
+  };
+
+  const widthOptions = ['25%', '50%', '75%', '100%'];
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md" data-testid="image-properties-dialog">
+        <DialogHeader>
+          <DialogTitle>خصائص الصورة</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="alt-text">النص البديل (Alt Text) - مهم للـ SEO</Label>
+            <Input
+              id="alt-text"
+              value={alt}
+              onChange={(e) => setAlt(e.target.value)}
+              placeholder="وصف الصورة للقراء ومحركات البحث"
+              dir="rtl"
+              data-testid="input-image-alt"
+            />
+            <p className="text-xs text-muted-foreground">
+              يساعد محركات البحث على فهم محتوى الصورة
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="caption">التسمية التوضيحية (Caption)</Label>
+            <Input
+              id="caption"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="نص يظهر أسفل الصورة"
+              dir="rtl"
+              data-testid="input-image-caption"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>حجم الصورة</Label>
+            <div className="flex gap-2 flex-wrap">
+              {widthOptions.map((w) => (
+                <Button
+                  key={w}
+                  type="button"
+                  variant={width === w ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setWidth(w)}
+                  data-testid={`btn-width-${w.replace('%', '')}`}
+                >
+                  {w}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>محاذاة الصورة</Label>
+            <Select value={alignment} onValueChange={(v) => setAlignment(v as 'left' | 'center' | 'right')}>
+              <SelectTrigger data-testid="select-image-alignment">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="right">يمين</SelectItem>
+                <SelectItem value="center">وسط</SelectItem>
+                <SelectItem value="left">يسار</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="rounded-md border p-2 bg-muted/50">
+            <p className="text-xs font-medium mb-1">معاينة:</p>
+            <div style={{ textAlign: alignment }}>
+              <img 
+                src={imageAttrs.src} 
+                alt={alt || 'معاينة'} 
+                style={{ width, maxWidth: '100%', display: 'inline-block' }}
+              />
+              {title && <p className="text-xs text-muted-foreground mt-1">{title}</p>}
+            </div>
+          </div>
+        </div>
+        <DialogFooter className="gap-2">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            إلغاء
+          </Button>
+          <Button type="button" onClick={handleSave} data-testid="btn-save-image-props">
+            حفظ التغييرات
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const MenuBar = ({ 
+  editor, 
+  onImagePropertiesOpen 
+}: { 
+  editor: Editor | null;
+  onImagePropertiesOpen: () => void;
+}) => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -78,8 +317,20 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
   };
 
   const addImage = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast({ title: "يرجى اختيار ملف صورة صالح", variant: "destructive" });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: "حجم الصورة كبير جداً (الحد الأقصى 10MB)", variant: "destructive" });
+      return;
+    }
+
     const formData = new FormData();
     formData.append("image", file);
+
+    toast({ title: "جاري رفع الصورة..." });
 
     try {
       const res = await fetch("/api/admin/upload", {
@@ -93,7 +344,15 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
       }
 
       const { url } = await res.json();
-      editor.chain().focus().setImage({ src: url }).run();
+      editor.chain().focus().setImage({ 
+        src: url, 
+        alt: '',
+        title: '',
+        width: '100%',
+        alignment: 'center',
+      } as any).run();
+      
+      toast({ title: "تم رفع الصورة بنجاح - اضغط عليها لتعديل الخصائص" });
     } catch (error) {
       toast({ title: "فشل في رفع الصورة", variant: "destructive" });
     }
@@ -107,8 +366,15 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
     e.target.value = "";
   };
 
+  const isImageSelected = editor.isActive('image');
+
   return (
     <div className="flex flex-wrap items-center gap-1 p-2 border-b bg-muted/30">
+      <div className="text-xs text-muted-foreground px-2 hidden sm:block">
+        يمكنك لصق الصور مباشرة من الحافظة (Ctrl+V) أو سحبها وإفلاتها في المحرر
+      </div>
+      <Separator orientation="vertical" className="h-6 mx-1 hidden sm:block" />
+      
       <MenuButton
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().undo()}
@@ -242,12 +508,20 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
       <MenuButton onClick={() => fileInputRef.current?.click()} title="صورة">
         <ImageIcon className="h-4 w-4" />
       </MenuButton>
+      
+      {isImageSelected && (
+        <MenuButton onClick={onImagePropertiesOpen} title="خصائص الصورة">
+          <Settings className="h-4 w-4" />
+        </MenuButton>
+      )}
+      
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
         className="hidden"
         onChange={handleImageSelect}
+        data-testid="input-image-upload"
       />
     </div>
   );
@@ -255,6 +529,44 @@ const MenuBar = ({ editor }: { editor: Editor | null }) => {
 
 export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorProps) {
   const { toast } = useToast();
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
+  const [selectedImageAttrs, setSelectedImageAttrs] = useState<ImageAttributes>({ src: '' });
+  const [selectedImagePos, setSelectedImagePos] = useState<number | null>(null);
+  const isUploadingRef = useRef(false);
+
+  const uploadImage = useCallback(async (file: File): Promise<string | null> => {
+    if (!file.type.startsWith('image/')) {
+      toast({ title: "يرجى اختيار ملف صورة صالح", variant: "destructive" });
+      return null;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: "حجم الصورة كبير جداً (الحد الأقصى 10MB)", variant: "destructive" });
+      return null;
+    }
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    try {
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        throw new Error("فشل في رفع الصورة");
+      }
+
+      const { url } = await res.json();
+      toast({ title: "تم رفع الصورة بنجاح" });
+      return url;
+    } catch (error) {
+      toast({ title: "فشل في رفع الصورة", variant: "destructive" });
+      return null;
+    }
+  }, [toast]);
 
   const editor = useEditor({
     extensions: [
@@ -263,7 +575,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           levels: [1, 2, 3],
         },
       }),
-      Image.configure({
+      CustomImage.configure({
         inline: false,
         allowBase64: true,
       }),
@@ -288,20 +600,69 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
         class: "prose prose-sm dark:prose-invert max-w-none min-h-[300px] p-4 focus:outline-none text-right",
         dir: "rtl",
       },
-      handlePaste: (view, event, slice) => {
-        const items = event.clipboardData?.items;
-        if (items) {
-          for (let i = 0; i < items.length; i++) {
-            if (items[i].type.indexOf("image") !== -1) {
-              const file = items[i].getAsFile();
-              if (file) {
-                event.preventDefault();
-                uploadImage(file);
-                return true;
-              }
+      handlePaste: (view, event) => {
+        const clipboardData = event.clipboardData;
+        if (!clipboardData) return false;
+
+        if (isUploadingRef.current) {
+          toast({ title: "انتظر حتى ينتهي رفع الصورة السابقة" });
+          event.preventDefault();
+          return true;
+        }
+
+        const items = clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf("image") !== -1) {
+            const file = items[i].getAsFile();
+            if (file) {
+              event.preventDefault();
+              isUploadingRef.current = true;
+              uploadImage(file).then(url => {
+                if (url && editor) {
+                  editor.chain().focus().setImage({ 
+                    src: url, 
+                    alt: '',
+                    width: '100%',
+                    alignment: 'center',
+                  } as any).run();
+                }
+              }).finally(() => {
+                isUploadingRef.current = false;
+              });
+              return true;
             }
           }
         }
+
+        const html = clipboardData.getData('text/html');
+        if (html) {
+          const imgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+          if (imgMatch && imgMatch[1]) {
+            const imgSrc = imgMatch[1];
+            if (imgSrc.startsWith('data:image')) {
+              event.preventDefault();
+              editor?.chain().focus().setImage({ 
+                src: imgSrc, 
+                alt: '',
+                width: '100%',
+                alignment: 'center',
+              } as any).run();
+              toast({ title: "تم إضافة الصورة" });
+              return true;
+            } else if (imgSrc.startsWith('http')) {
+              event.preventDefault();
+              editor?.chain().focus().setImage({ 
+                src: imgSrc, 
+                alt: '',
+                width: '100%',
+                alignment: 'center',
+              } as any).run();
+              toast({ title: "تم إضافة الصورة من الرابط" });
+              return true;
+            }
+          }
+        }
+
         return false;
       },
       handleDrop: (view, event, slice, moved) => {
@@ -309,7 +670,61 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
           const file = event.dataTransfer.files[0];
           if (file.type.startsWith("image/")) {
             event.preventDefault();
-            uploadImage(file);
+            uploadImage(file).then(url => {
+              if (url && editor) {
+                editor.chain().focus().setImage({ 
+                  src: url, 
+                  alt: '',
+                  width: '100%',
+                  alignment: 'center',
+                } as any).run();
+              }
+            });
+            return true;
+          }
+        }
+        return false;
+      },
+      handleClick: (view, pos, event) => {
+        const target = event.target as HTMLElement;
+        if (target.tagName === 'IMG') {
+          const resolvedPos = view.state.doc.resolve(pos);
+          let imagePos = pos;
+          let imageNode = view.state.doc.nodeAt(pos);
+          
+          if (!imageNode || imageNode.type.name !== 'image') {
+            for (let d = resolvedPos.depth; d >= 0; d--) {
+              const node = resolvedPos.node(d);
+              if (node.type.name === 'image') {
+                imagePos = resolvedPos.before(d);
+                imageNode = node;
+                break;
+              }
+            }
+          }
+          
+          if (!imageNode) {
+            view.state.doc.descendants((node, nodePos) => {
+              if (node.type.name === 'image' && node.attrs.src === target.getAttribute('src')) {
+                imageNode = node;
+                imagePos = nodePos;
+                return false;
+              }
+              return true;
+            });
+          }
+          
+          if (imageNode && imageNode.type.name === 'image') {
+            const attrs = {
+              src: imageNode.attrs.src || '',
+              alt: imageNode.attrs.alt || '',
+              title: imageNode.attrs.title || '',
+              width: imageNode.attrs.width || '100%',
+              alignment: (imageNode.attrs.alignment || 'center') as 'left' | 'center' | 'right',
+            };
+            setSelectedImageAttrs(attrs);
+            setSelectedImagePos(imagePos);
+            setImageDialogOpen(true);
             return true;
           }
         }
@@ -321,28 +736,52 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
     },
   });
 
-  const uploadImage = useCallback(async (file: File) => {
-    const formData = new FormData();
-    formData.append("image", file);
+  const handleImagePropertiesSave = useCallback((attrs: ImageAttributes) => {
+    if (!editor || selectedImagePos === null) return;
 
-    try {
-      const res = await fetch("/api/admin/upload", {
-        method: "POST",
-        body: formData,
-        credentials: "include",
+    const { state, view } = editor;
+    const node = state.doc.nodeAt(selectedImagePos);
+    
+    if (node && node.type.name === 'image') {
+      const tr = state.tr.setNodeMarkup(selectedImagePos, undefined, {
+        ...node.attrs,
+        alt: attrs.alt || '',
+        title: attrs.title || '',
+        width: attrs.width || '100%',
+        alignment: attrs.alignment || 'center',
       });
-
-      if (!res.ok) {
-        throw new Error("فشل في رفع الصورة");
-      }
-
-      const { url } = await res.json();
-      editor?.chain().focus().setImage({ src: url }).run();
-      toast({ title: "تم رفع الصورة بنجاح" });
-    } catch (error) {
-      toast({ title: "فشل في رفع الصورة", variant: "destructive" });
+      view.dispatch(tr);
+      
+      setTimeout(() => {
+        editor.chain().focus().run();
+      }, 100);
+      
+      toast({ title: "تم تحديث خصائص الصورة" });
+    } else {
+      toast({ title: "لم يتم العثور على الصورة", variant: "destructive" });
     }
-  }, [editor, toast]);
+    
+    setSelectedImagePos(null);
+  }, [editor, selectedImagePos, toast]);
+
+  const openImageProperties = useCallback(() => {
+    if (!editor) return;
+    
+    const { state } = editor;
+    const { selection } = state;
+    const node = state.doc.nodeAt(selection.from);
+    
+    if (node?.type.name === 'image') {
+      setSelectedImageAttrs({
+        src: node.attrs.src || '',
+        alt: node.attrs.alt || '',
+        title: node.attrs.title || '',
+        width: node.attrs.width || '100%',
+        alignment: node.attrs.alignment || 'center',
+      });
+      setImageDialogOpen(true);
+    }
+  }, [editor]);
 
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
@@ -352,8 +791,41 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
 
   return (
     <div className="border rounded-md overflow-hidden bg-background" data-testid="rich-text-editor">
-      <MenuBar editor={editor} />
+      <MenuBar editor={editor} onImagePropertiesOpen={openImageProperties} />
       <EditorContent editor={editor} />
+      <ImagePropertiesDialog
+        open={imageDialogOpen}
+        onOpenChange={setImageDialogOpen}
+        imageAttrs={selectedImageAttrs}
+        onSave={handleImagePropertiesSave}
+      />
+      <style>{`
+        .ProseMirror .image-container {
+          margin: 1rem 0;
+          max-width: 100%;
+        }
+        .ProseMirror .image-container img {
+          max-width: 100%;
+          height: auto;
+          cursor: pointer;
+          border-radius: 0.375rem;
+          transition: box-shadow 0.2s;
+        }
+        .ProseMirror .image-container img:hover {
+          box-shadow: 0 0 0 3px hsl(var(--primary) / 0.3);
+        }
+        .ProseMirror .image-container figcaption {
+          text-align: center;
+          font-size: 0.875rem;
+          color: hsl(var(--muted-foreground));
+          margin-top: 0.5rem;
+          font-style: italic;
+        }
+        .ProseMirror img.ProseMirror-selectednode {
+          outline: 3px solid hsl(var(--primary));
+          outline-offset: 2px;
+        }
+      `}</style>
     </div>
   );
 }

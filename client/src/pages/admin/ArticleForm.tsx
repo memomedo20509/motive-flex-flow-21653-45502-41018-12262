@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight, Save, X, Upload, Image as ImageIcon, FileText, Loader2 } from "lucide-react";
+import { ArrowRight, Save, X, Upload, Image as ImageIcon, FileText, Loader2, CheckCircle, AlertCircle, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { Link } from "wouter";
@@ -707,6 +707,78 @@ const ArticleForm = () => {
                     {formData.readingTime || "سيتم حسابه تلقائياً"}
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* SEO Health Checklist */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  {(() => {
+                    const contentWordCount = formData.content.replace(/<[^>]*>/g, '').trim().split(/\s+/).filter(w => w.length > 0).length;
+                    const checks = [
+                      { name: 'العنوان', ok: formData.title.length >= 10 },
+                      { name: 'Meta Title', ok: formData.metaTitle.length >= 30 && formData.metaTitle.length <= 60 },
+                      { name: 'Meta Description', ok: formData.metaDescription.length >= 120 && formData.metaDescription.length <= 160 },
+                      { name: 'الكلمة المفتاحية', ok: formData.focusKeyword.length > 0 },
+                      { name: 'المحتوى', ok: contentWordCount >= 300 },
+                      { name: 'صورة الغلاف', ok: formData.coverImage.length > 0 },
+                      { name: 'Alt Text للغلاف', ok: formData.coverImageAlt.length > 0 },
+                      { name: 'المقتطف', ok: formData.excerpt.length >= 50 },
+                    ];
+                    const passedCount = checks.filter(c => c.ok).length;
+                    const totalCount = checks.length;
+                    const percentage = Math.round((passedCount / totalCount) * 100);
+                    
+                    let StatusIcon = XCircle;
+                    let statusColor = "text-destructive";
+                    if (percentage >= 75) {
+                      StatusIcon = CheckCircle;
+                      statusColor = "text-green-600";
+                    } else if (percentage >= 50) {
+                      StatusIcon = AlertCircle;
+                      statusColor = "text-yellow-600";
+                    }
+                    
+                    return (
+                      <>
+                        <StatusIcon className={`h-5 w-5 ${statusColor}`} />
+                        <span>فحص SEO ({passedCount}/{totalCount})</span>
+                      </>
+                    );
+                  })()}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {(() => {
+                  const contentWordCount = formData.content.replace(/<[^>]*>/g, '').trim().split(/\s+/).filter(w => w.length > 0).length;
+                  return [
+                    { name: 'العنوان (10+ حرف)', ok: formData.title.length >= 10 },
+                    { name: 'Meta Title (30-60 حرف)', ok: formData.metaTitle.length >= 30 && formData.metaTitle.length <= 60, current: `${formData.metaTitle.length} حرف` },
+                    { name: 'Meta Description (120-160 حرف)', ok: formData.metaDescription.length >= 120 && formData.metaDescription.length <= 160, current: `${formData.metaDescription.length} حرف` },
+                    { name: 'الكلمة المفتاحية', ok: formData.focusKeyword.length > 0 },
+                    { name: 'المحتوى (300+ كلمة)', ok: contentWordCount >= 300, current: `${contentWordCount} كلمة` },
+                    { name: 'صورة الغلاف', ok: formData.coverImage.length > 0 },
+                    { name: 'Alt Text للغلاف', ok: formData.coverImageAlt.length > 0 },
+                    { name: 'المقتطف (50+ حرف)', ok: formData.excerpt.length >= 50, current: `${formData.excerpt.length} حرف` },
+                  ];
+                })().map((check, i) => (
+                  <div key={i} className="flex items-center justify-between gap-2 text-sm" data-testid={`seo-check-${i}`}>
+                    <div className="flex items-center gap-2">
+                      {check.ok ? (
+                        <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                      )}
+                      <span className={check.ok ? "text-foreground" : "text-muted-foreground"}>
+                        {check.name}
+                      </span>
+                    </div>
+                    {check.current && (
+                      <span className="text-xs text-muted-foreground">{check.current}</span>
+                    )}
+                  </div>
+                ))}
               </CardContent>
             </Card>
 
