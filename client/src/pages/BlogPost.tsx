@@ -157,8 +157,8 @@ const BlogPost = () => {
           author: article.author || "فريق موتفلكس",
           tags: article.tags || [],
         }}
-        noindex={article.robotsDirective?.includes("noindex")}
-        nofollow={article.robotsDirective?.includes("nofollow")}
+        noindex={article.robotsDirective?.includes("noindex") || (article as any).isPreview}
+        nofollow={article.robotsDirective?.includes("nofollow") || (article as any).isPreview}
       />
       {article.schemaMarkup ? (
         <script
@@ -177,6 +177,13 @@ const BlogPost = () => {
         />
       )}
       <Navbar />
+
+      {/* Preview Banner */}
+      {(article as any).isPreview && (
+        <div className="bg-yellow-500 text-black py-2 px-4 text-center font-medium" data-testid="preview-banner">
+          وضع المعاينة - هذه المقالة غير منشورة ولن تظهر للزوار أو محركات البحث
+        </div>
+      )}
 
       {/* Hero Section - Enhanced */}
       <section className="relative pt-32 pb-20 overflow-hidden">

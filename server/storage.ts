@@ -40,6 +40,7 @@ export interface IStorage {
   incrementViewCount(id: number): Promise<void>;
   getRelatedArticles(articleId: number, tags: string[], limit?: number): Promise<Article[]>;
   getAllTags(): Promise<string[]>;
+  getScheduledArticlesDue(): Promise<Article[]>;
   
   createContactSubmission(contact: InsertContact): Promise<ContactSubmission>;
   getContactSubmissions(options?: {
@@ -236,6 +237,17 @@ export class DatabaseStorage implements IStorage {
     });
 
     return Array.from(allTags).sort();
+  }
+
+  async getScheduledArticlesDue(): Promise<Article[]> {
+    const now = new Date();
+    return db
+      .select()
+      .from(articles)
+      .where(and(
+        eq(articles.status, "scheduled"),
+        sql`${articles.scheduledAt} <= ${now}`
+      ));
   }
 
   async createContactSubmission(contact: InsertContact): Promise<ContactSubmission> {

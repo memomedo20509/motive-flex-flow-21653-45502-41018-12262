@@ -163,9 +163,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/articles", async (req, res) => {
     try {
-      const { status, tag, search, page, limit } = req.query;
+      const { status, tag, search, page, limit, admin } = req.query;
+      const user = (req.session as any)?.user;
+      const isUserAdmin = user?.isAdmin === "true";
+      
+      // For public requests, only show published articles unless admin=true and user is admin
+      let effectiveStatus = status as string;
+      if (!isUserAdmin || admin !== "true") {
+        effectiveStatus = "published";
+      }
+      
       const result = await storage.getArticles({
-        status: status as string,
+        status: effectiveStatus,
         tag: tag as string,
         search: search as string,
         page: page ? parseInt(page as string) : 1,
@@ -193,6 +202,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const article = await storage.getArticleBySlug(req.params.slug);
       if (!article) {
         return res.status(404).json({ message: "Article not found" });
+      }
+      
+      // Check if article is accessible to public
+      const isPreview = req.query.preview === "true";
+      const user = (req.session as any)?.user;
+      const isUserAdmin = user?.isAdmin === "true";
+      
+      // Only allow access to non-published articles if user is admin and requesting preview
+      if (article.status !== "published") {
+        // For scheduled articles, check if publish time has passed
+        if (article.status === "scheduled" && article.scheduledAt) {
+          const now = new Date();
+          if (article.scheduledAt <= now) {
+            // Auto-publish: update status to published
+            await storage.updateArticle(article.id, { 
+              status: "published", 
+              publishedAt: article.scheduledAt 
+            });
+            article.status = "published";
+            article.publishedAt = article.scheduledAt;
+          }
+        }
+        
+        // After potential auto-publish, check again
+        if (article.status !== "published") {
+          if (!isPreview || !isUserAdmin) {
+            return res.status(404).json({ message: "Article not found" });
+          }
+          // Mark as preview for frontend to show noindex
+          (article as any).isPreview = true;
+        }
       }
       
       await storage.incrementViewCount(article.id);
@@ -1190,6 +1230,27 @@ Sitemap: ${siteUrl}/sitemap.xml
       res.status(500).json({ message: error.message || "فشل في إنشاء بيانات SEO" });
     }
   });
+
+  // Scheduler: Auto-publish scheduled articles every minute
+  const publishScheduledArticles = async () => {
+    try {
+      const scheduledArticles = await storage.getScheduledArticlesDue();
+      for (const article of scheduledArticles) {
+        await storage.updateArticle(article.id, {
+          status: "published",
+          publishedAt: article.scheduledAt || new Date(),
+        });
+        console.log(`Auto-published scheduled article: ${article.title} (ID: ${article.id})`);
+      }
+    } catch (error) {
+      console.error("Error in scheduled article publisher:", error);
+    }
+  };
+  
+  // Run scheduler every minute
+  setInterval(publishScheduledArticles, 60 * 1000);
+  // Also run immediately on startup
+  publishScheduledArticles();
 
   const httpServer = createServer(app);
   return httpServer;
