@@ -160,15 +160,22 @@ const BlogPost = () => {
         noindex={article.robotsDirective?.includes("noindex")}
         nofollow={article.robotsDirective?.includes("nofollow")}
       />
-      <ArticleSchema
-        headline={article.title}
-        description={pageDescription}
-        image={ogImage.startsWith("http") ? ogImage : `${baseUrl}${ogImage}`}
-        datePublished={publishedDate}
-        dateModified={modifiedDate}
-        authorName={article.author || "فريق موتفلكس"}
-        url={pageUrl}
-      />
+      {article.schemaMarkup ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: article.schemaMarkup }}
+        />
+      ) : (
+        <ArticleSchema
+          headline={article.title}
+          description={pageDescription}
+          image={ogImage.startsWith("http") ? ogImage : `${baseUrl}${ogImage}`}
+          datePublished={publishedDate}
+          dateModified={modifiedDate}
+          authorName={article.author || "فريق موتفلكس"}
+          url={pageUrl}
+        />
+      )}
       <Navbar />
 
       {/* Hero Section - Enhanced */}
