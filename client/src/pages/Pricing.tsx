@@ -9,12 +9,13 @@ import { SEOHead } from "@/components/SEOHead";
 import { Check, Zap } from "lucide-react";
 
 const Pricing = () => {
-  const setupFee = {
+  // Mutflex Pro Plans
+  const proSetupFee = {
     price: "690",
     description: "رسوم تأسيس لمرة واحدة شاملة الضريبة",
   };
 
-  const plans = [
+  const proPlans = [
     {
       name: "باقة 6 شهور",
       name_en: "6 Months",
@@ -32,6 +33,8 @@ const Pricing = () => {
         "إنشاء الكاتالوج",
         "لوحة العميل (Client Portal)",
         "تخزين غير محدود",
+        "قائمة أسعار للمنتجات ومواصفاتها",
+        "شاشة عرض خاصة لصالات العرض لقائمة الأسعار والكتالوج",
       ],
       popular: false,
     },
@@ -52,17 +55,37 @@ const Pricing = () => {
         "إنشاء الكاتالوج",
         "لوحة العميل (Client Portal)",
         "تخزين غير محدود",
+        "قائمة أسعار للمنتجات ومواصفاتها",
+        "شاشة عرض خاصة لصالات العرض لقائمة الأسعار والكتالوج",
       ],
       popular: true,
     },
   ];
 
+  // Mutflex Mini Plan
+  const miniPlan = {
+    name: "Mutflex Mini",
+    price: "999",
+    period: "سنوياً",
+    setupFee: "115",
+    trialDays: 14,
+    description: "الحل المثالي للأعمال الصغيرة وصالات العرض",
+    features: [
+      "لوحة تحكم أساسية",
+      "إنشاء الكتالوج",
+      "إنشاء قائمة الأسعار والمواصفات مدعوم بالصور",
+      "شاشة عرض خاصة لصالات العرض للكتالوج وقائمة الأسعار",
+      "إمكانية طباعة التقارير لقائمة الأسعار",
+      "تخزين لا محدود",
+    ],
+  };
+
   return (
     <PageScaffold>
       <SEOHead
         title="الأسعار والباقات"
-        description="تعرف على أسعار باقات موتفلكس المرنة. باقة 6 شهور وباقة سنوية مع تجربة مجانية لمدة شهرين. جميع الباقات تشمل عدد مستخدمين غير محدود."
-        keywords="أسعار موتفلكس, باقات, اشتراك, تجربة مجانية, نظام إدارة المصانع"
+        description="تعرف على أسعار باقات موتفلكس المرنة. Mutflex Pro و Mutflex Mini مع تجربة مجانية. جميع الباقات تشمل عدد مستخدمين غير محدود."
+        keywords="أسعار موتفلكس, باقات, اشتراك, تجربة مجانية, نظام إدارة المصانع, Mutflex Pro, Mutflex Mini"
         canonicalUrl="https://mutflex.com/pricing"
       />
       {/* Hero Section */}
@@ -80,7 +103,7 @@ const Pricing = () => {
           </AnimateOnScroll>
           <AnimateOnScroll>
             <p className="text-lg md:text-xl max-w-3xl mx-auto opacity-95 leading-relaxed" data-testid="text-pricing-description">
-              اختر الباقة المناسبة لحجم عملك - جميع الباقات تشمل تجربة مجانية لمدة شهرين
+              اختر الباقة المناسبة لحجم عملك - من صالات العرض الصغيرة إلى المصانع الكبيرة
             </p>
           </AnimateOnScroll>
           <AnimateOnScroll>
@@ -92,18 +115,17 @@ const Pricing = () => {
         </div>
       </section>
 
-
-      {/* Pricing Cards */}
+      {/* Mutflex Pro Section */}
       <section className="py-20 px-4 bg-gradient-to-b from-background via-muted/10 to-background">
         <div className="container mx-auto max-w-7xl">
           <SectionHeader
-            title="اختر الباقة المناسبة"
-            description="جميع الباقات تشمل نفس المميزات القوية"
+            title="Mutflex Pro"
+            description="النظام الشامل لإدارة المصانع - جميع المميزات القوية"
             badge="تجربة مجانية لمدة شهرين"
           />
           
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto stagger-children">
-            {plans.map((plan, index) => (
+            {proPlans.map((plan, index) => (
               <AnimateOnScroll key={index}>
                 <Card
                   className={`relative ${
@@ -111,7 +133,7 @@ const Pricing = () => {
                       ? "border-primary border-2 shadow-xl scale-105"
                       : "border-2"
                   }`}
-                  data-testid={`card-plan-${index}`}
+                  data-testid={`card-pro-plan-${index}`}
                 >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-bold">
@@ -124,35 +146,27 @@ const Pricing = () => {
                     {plan.description}
                   </p>
                   <div className="flex items-end justify-center gap-2">
-                    {plan.price === "حسب الطلب" ? (
-                      <span className="text-3xl font-bold">{plan.price}</span>
-                    ) : (
-                      <>
-                        <span className="text-4xl md:text-5xl font-bold">
-                          {plan.price}
-                        </span>
-                        <span className="text-lg text-muted-foreground mb-2">
-                          ريال
-                        </span>
-                      </>
-                    )}
-                  </div>
-                  {plan.period && (
-                    <span className="text-sm text-muted-foreground">
-                      {plan.period}
+                    <span className="text-4xl md:text-5xl font-bold">
+                      {plan.price}
                     </span>
-                  )}
+                    <span className="text-lg text-muted-foreground mb-2">
+                      ريال
+                    </span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {plan.period}
+                  </span>
                 </CardHeader>
                 <CardContent className="space-y-4 pb-8">
                   {/* Setup Fee - First Item */}
-                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-4" data-testid={`text-setup-fee-${index}`}>
+                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-4" data-testid={`text-pro-setup-fee-${index}`}>
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
                         <Zap size={18} className="text-primary" />
                         <span className="font-medium text-sm">رسوم التأسيس</span>
                       </div>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-lg font-bold text-primary">{setupFee.price}</span>
+                        <span className="text-lg font-bold text-primary">{proSetupFee.price}</span>
                         <span className="text-xs text-muted-foreground">ريال</span>
                       </div>
                     </div>
@@ -174,12 +188,10 @@ const Pricing = () => {
                     size="lg"
                     className="w-full text-lg"
                     asChild
-                    data-testid={`button-plan-${index}`}
+                    data-testid={`button-pro-plan-${index}`}
                   >
                     <Link href="/free-trial">
-                      {plan.price === "حسب الطلب"
-                        ? "تواصل معنا"
-                        : "ابدأ تجربتك المجانية"}
+                      ابدأ تجربتك المجانية
                     </Link>
                   </Button>
                 </CardContent>
@@ -190,8 +202,89 @@ const Pricing = () => {
         </div>
       </section>
 
-      {/* FAQ Section */}
+      {/* Mutflex Mini Section */}
       <section className="py-20 px-4 bg-muted/20">
+        <div className="container mx-auto max-w-7xl">
+          <SectionHeader
+            title="Mutflex Mini"
+            description="الحل الاقتصادي لصالات العرض والأعمال الصغيرة"
+            badge="تجربة مجانية 14 يوم"
+          />
+          
+          <div className="max-w-xl mx-auto">
+            <AnimateOnScroll>
+              <Card className="border-2" data-testid="card-mini-plan">
+                <CardHeader className="text-center pb-8 pt-8">
+                  <h3 className="text-2xl font-bold mb-2">{miniPlan.name}</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {miniPlan.description}
+                  </p>
+                  <div className="flex items-end justify-center gap-2">
+                    <span className="text-4xl md:text-5xl font-bold">
+                      {miniPlan.price}
+                    </span>
+                    <span className="text-lg text-muted-foreground mb-2">
+                      ريال
+                    </span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {miniPlan.period}
+                  </span>
+                </CardHeader>
+                <CardContent className="space-y-4 pb-8">
+                  {/* Setup Fee */}
+                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-4" data-testid="text-mini-setup-fee">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <Zap size={18} className="text-primary" />
+                        <span className="font-medium text-sm">رسوم التأسيس</span>
+                      </div>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-lg font-bold text-primary">{miniPlan.setupFee}</span>
+                        <span className="text-xs text-muted-foreground">ريال</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">(مرة واحدة فقط)</p>
+                  </div>
+                  
+                  {/* Free Trial Badge */}
+                  <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-4 text-center">
+                    <span className="text-green-600 dark:text-green-400 font-medium text-sm">
+                      تجربة مجانية {miniPlan.trialDays} يوم
+                    </span>
+                  </div>
+
+                  <ul className="space-y-3 mb-6">
+                    {miniPlan.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-3">
+                        <Check
+                          size={20}
+                          className="text-primary flex-shrink-0 mt-0.5"
+                        />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    variant="default"
+                    size="lg"
+                    className="w-full text-lg"
+                    asChild
+                    data-testid="button-mini-plan"
+                  >
+                    <Link href="/free-trial">
+                      ابدأ تجربتك المجانية
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </AnimateOnScroll>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-20 px-4 bg-gradient-to-b from-background via-muted/10 to-background">
         <div className="container mx-auto max-w-4xl">
           <SectionHeader
             title="الأسئلة الشائعة"
@@ -200,12 +293,16 @@ const Pricing = () => {
           <div className="space-y-6 stagger-children">
             {[
               {
+                q: "ما الفرق بين Mutflex Pro و Mutflex Mini؟",
+                a: "Mutflex Pro هو النظام الشامل لإدارة المصانع بكافة المميزات، بينما Mutflex Mini مصمم لصالات العرض والأعمال الصغيرة مع التركيز على الكتالوج وقوائم الأسعار.",
+              },
+              {
                 q: "هل هناك رسوم خفية؟",
                 a: "لا، جميع الأسعار شاملة ولا توجد أي رسوم خفية. ما تراه هو ما تدفعه.",
               },
               {
                 q: "هل يمكنني تغيير الباقة لاحقاً؟",
-                a: "بالتأكيد! يمكنك الترقية أو التخفيض في أي وقت حسب احتياجاتك.",
+                a: "بالتأكيد! يمكنك الترقية من Mini إلى Pro أو تغيير مدة الاشتراك في أي وقت حسب احتياجاتك.",
               },
               {
                 q: "ماذا يحدث بعد انتهاء التجربة المجانية؟",
@@ -237,7 +334,7 @@ const Pricing = () => {
       <CTASection
         title="جاهز للبدء؟"
         description="ابدأ تجربتك المجانية اليوم - بدون بطاقة ائتمان"
-        primaryButtonText="ابدأ تجربتك المجانية - شهرين"
+        primaryButtonText="ابدأ تجربتك المجانية"
         primaryButtonLink="/free-trial"
         primaryButtonIcon={Zap}
       />
