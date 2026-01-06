@@ -62,14 +62,14 @@ const Pricing = () => {
     },
   ];
 
-  // Mutflex Mini Plan
-  const miniPlan = {
-    name: "Mutflex Mini",
+  // Mutflex Catalog Plan
+  const catalogPlan = {
+    name: "Mutflex Catalog",
     price: "999",
     period: "سنوياً",
     setupFee: "115",
     trialDays: 14,
-    description: "الحل المثالي للأعمال الصغيرة وصالات العرض",
+    description: "نظام الكتالوج وقوائم الأسعار - الحل الأمثل لصالات العرض",
     features: [
       "لوحة تحكم أساسية",
       "إنشاء الكتالوج",
@@ -84,8 +84,8 @@ const Pricing = () => {
     <PageScaffold>
       <SEOHead
         title="الأسعار والباقات"
-        description="تعرف على أسعار باقات موتفلكس المرنة. Mutflex Pro و Mutflex Mini مع تجربة مجانية. جميع الباقات تشمل عدد مستخدمين غير محدود."
-        keywords="أسعار موتفلكس, باقات, اشتراك, تجربة مجانية, نظام إدارة المصانع, Mutflex Pro, Mutflex Mini"
+        description="تعرف على أسعار باقات موتفلكس المرنة. Mutflex Pro و Mutflex Catalog مع تجربة مجانية. جميع الباقات تشمل عدد مستخدمين غير محدود."
+        keywords="أسعار موتفلكس, باقات, اشتراك, تجربة مجانية, نظام إدارة المصانع, Mutflex Pro, Mutflex Catalog"
         canonicalUrl="https://mutflex.com/pricing"
       />
       {/* Hero Section */}
@@ -202,45 +202,45 @@ const Pricing = () => {
         </div>
       </section>
 
-      {/* Mutflex Mini Section */}
+      {/* Mutflex Catalog Section */}
       <section className="py-20 px-4 bg-muted/20">
         <div className="container mx-auto max-w-7xl">
           <SectionHeader
-            title="Mutflex Mini"
-            description="الحل الاقتصادي لصالات العرض والأعمال الصغيرة"
+            title="Mutflex Catalog"
+            description="الحل الاقتصادي للكتالوج وقوائم الأسعار - مثالي لصالات العرض"
             badge="تجربة مجانية 14 يوم"
           />
           
           <div className="max-w-xl mx-auto">
             <AnimateOnScroll>
-              <Card className="border-2" data-testid="card-mini-plan">
+              <Card className="border-2" data-testid="card-catalog-plan">
                 <CardHeader className="text-center pb-8 pt-8">
-                  <h3 className="text-2xl font-bold mb-2">{miniPlan.name}</h3>
+                  <h3 className="text-2xl font-bold mb-2">{catalogPlan.name}</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    {miniPlan.description}
+                    {catalogPlan.description}
                   </p>
                   <div className="flex items-end justify-center gap-2">
                     <span className="text-4xl md:text-5xl font-bold">
-                      {miniPlan.price}
+                      {catalogPlan.price}
                     </span>
                     <span className="text-lg text-muted-foreground mb-2">
                       ريال
                     </span>
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    {miniPlan.period}
+                    {catalogPlan.period}
                   </span>
                 </CardHeader>
                 <CardContent className="space-y-4 pb-8">
                   {/* Setup Fee */}
-                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-4" data-testid="text-mini-setup-fee">
+                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-4" data-testid="text-catalog-setup-fee">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
                         <Zap size={18} className="text-primary" />
                         <span className="font-medium text-sm">رسوم التأسيس</span>
                       </div>
                       <div className="flex items-baseline gap-1">
-                        <span className="text-lg font-bold text-primary">{miniPlan.setupFee}</span>
+                        <span className="text-lg font-bold text-primary">{catalogPlan.setupFee}</span>
                         <span className="text-xs text-muted-foreground">ريال</span>
                       </div>
                     </div>
@@ -250,12 +250,12 @@ const Pricing = () => {
                   {/* Free Trial Badge */}
                   <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-4 text-center">
                     <span className="text-green-600 dark:text-green-400 font-medium text-sm">
-                      تجربة مجانية {miniPlan.trialDays} يوم
+                      تجربة مجانية {catalogPlan.trialDays} يوم
                     </span>
                   </div>
 
                   <ul className="space-y-3 mb-6">
-                    {miniPlan.features.map((feature, idx) => (
+                    {catalogPlan.features.map((feature, idx) => (
                       <li key={idx} className="flex items-start gap-3">
                         <Check
                           size={20}
@@ -270,7 +270,7 @@ const Pricing = () => {
                     size="lg"
                     className="w-full text-lg"
                     asChild
-                    data-testid="button-mini-plan"
+                    data-testid="button-catalog-plan"
                   >
                     <Link href="/free-trial">
                       ابدأ تجربتك المجانية
@@ -293,8 +293,8 @@ const Pricing = () => {
           <div className="space-y-6 stagger-children">
             {[
               {
-                q: "ما الفرق بين Mutflex Pro و Mutflex Mini؟",
-                a: "Mutflex Pro هو النظام الشامل لإدارة المصانع بكافة المميزات، بينما Mutflex Mini مصمم لصالات العرض والأعمال الصغيرة مع التركيز على الكتالوج وقوائم الأسعار.",
+                q: "ما الفرق بين Mutflex Pro و Mutflex Catalog؟",
+                a: "Mutflex Pro هو النظام الشامل لإدارة المصانع بكافة المميزات، بينما Mutflex Catalog مصمم خصيصاً للكتالوج وقوائم الأسعار - مثالي لصالات العرض.",
               },
               {
                 q: "هل هناك رسوم خفية؟",
@@ -302,7 +302,7 @@ const Pricing = () => {
               },
               {
                 q: "هل يمكنني تغيير الباقة لاحقاً؟",
-                a: "بالتأكيد! يمكنك الترقية من Mini إلى Pro أو تغيير مدة الاشتراك في أي وقت حسب احتياجاتك.",
+                a: "بالتأكيد! يمكنك الترقية من Catalog إلى Pro أو تغيير مدة الاشتراك في أي وقت حسب احتياجاتك.",
               },
               {
                 q: "ماذا يحدث بعد انتهاء التجربة المجانية؟",
