@@ -329,61 +329,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       contentArea.find(".cookie, .popup, .modal, .overlay, .newsletter, .subscribe").remove();
       contentArea.find("form, input, button, select, textarea").remove();
       
-      // 5. Transform block structure for TipTap compatibility
-      // Convert standalone divs to paragraphs (but preserve semantic containers)
-      // Process from innermost to outermost to handle nested divs correctly
-      const processedDivs = new Set();
+      // 5. SIMPLIFIED PARAGRAPH NORMALIZATION
+      // Keep existing block structure, only wrap loose text
       
-      const convertDivsToParagraphs = () => {
-        let changed = false;
-        contentArea.find("div").each((_, el) => {
-          const $el = $(el);
-          // Skip already processed or removed elements
-          if (processedDivs.has(el)) return;
-          
-          // Skip divs that contain block elements (they're containers)
-          const hasBlockChildren = $el.children("div, p, h1, h2, h3, h4, h5, h6, ul, ol, li, blockquote, table, tr, td, th, pre, article, section, aside, header, footer, nav, figure, figcaption, dl, dt, dd, hr, address, form").length > 0;
-          
-          if (!hasBlockChildren) {
-            // This div only contains inline content, convert to <p>
-            const html = $el.html();
-            if (html && html.trim()) {
-              $el.replaceWith(`<p>${html}</p>`);
-              changed = true;
-            } else {
-              // Empty div, just remove it
-              $el.remove();
-            }
-          }
-          processedDivs.add(el);
-        });
-        return changed;
-      };
-      
-      // Run multiple passes to handle nested divs
-      let passes = 0;
-      while (convertDivsToParagraphs() && passes < 10) {
-        passes++;
-      }
-      
-      // 6. Normalize br tags within paragraphs only
-      // Don't touch br tags inside lists, tables, or other containers
-      contentArea.find("p").each((_, el) => {
-        const $el = $(el);
-        let html = $el.html() || "";
-        // Normalize br tags format
-        html = html.replace(/<br\s*\/?>/gi, '<br>');
-        $el.html(html);
+      // Step 1: Remove wrapper elements but keep their content
+      const wrapperTags = ["div", "section", "article", "aside", "header", "footer", "main", "nav"];
+      wrapperTags.forEach(tag => {
+        let iterations = 0;
+        while (contentArea.find(tag).length > 0 && iterations < 50) {
+          iterations++;
+          contentArea.find(tag).each((_, el) => {
+            const $el = $(el);
+            if ($el.parents("pre, code, table, ul, ol, blockquote").length > 0) return;
+            $el.replaceWith($el.html() || '');
+          });
+        }
       });
       
-      // 7. Get the content
+      // Step 2: Unwrap span and font but keep their content and formatting
+      ["span", "font"].forEach(tag => {
+        let iterations = 0;
+        while (contentArea.find(tag).length > 0 && iterations < 50) {
+          iterations++;
+          contentArea.find(tag).each((_, el) => {
+            const $el = $(el);
+            if ($el.parents("pre, code").length > 0) return;
+            $el.replaceWith($el.html() || '');
+          });
+        }
+      });
+      
+      // Step 3: Get the HTML
       let content = contentArea.html() || "";
       
-      // Minimal cleanup - preserve structure
+      // Step 4: Normalize br tags
+      content = content.replace(/<br\s*\/?>/gi, '<br>');
+      
+      // Step 5: Normalize line endings
+      content = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      
+      // Step 6: Clean up whitespace between tags (but not inside pre/code)
+      // This preserves the visual structure
+      
+      // Step 7: Clean up empty paragraphs
       content = content
-        // Remove empty paragraphs
         .replace(/<p>\s*<\/p>/gi, '')
-        // Trim whitespace
+        .replace(/<p>\s*<br>\s*<\/p>/gi, '')
         .trim();
       
       // Extract first paragraph text for excerpt
