@@ -331,33 +331,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // 5. Transform block structure for TipTap compatibility
       // Convert standalone divs to paragraphs (but preserve semantic containers)
-      contentArea.find("div").each((_, el) => {
-        const $el = $(el);
-        // Skip divs that contain other block elements (they're containers)
-        const hasBlockChildren = $el.children("div, p, h1, h2, h3, h4, h5, h6, ul, ol, blockquote, table, pre, article, section, aside, header, footer, nav, figure").length > 0;
-        
-        if (!hasBlockChildren) {
-          // This div only contains inline content, convert to <p>
-          const html = $el.html();
-          if (html && html.trim()) {
-            $el.replaceWith(`<p>${html}</p>`);
+      // Process from innermost to outermost to handle nested divs correctly
+      const processedDivs = new Set();
+      
+      const convertDivsToParagraphs = () => {
+        let changed = false;
+        contentArea.find("div").each((_, el) => {
+          const $el = $(el);
+          // Skip already processed or removed elements
+          if (processedDivs.has(el)) return;
+          
+          // Skip divs that contain block elements (they're containers)
+          const hasBlockChildren = $el.children("div, p, h1, h2, h3, h4, h5, h6, ul, ol, li, blockquote, table, tr, td, th, pre, article, section, aside, header, footer, nav, figure, figcaption, dl, dt, dd, hr, address, form").length > 0;
+          
+          if (!hasBlockChildren) {
+            // This div only contains inline content, convert to <p>
+            const html = $el.html();
+            if (html && html.trim()) {
+              $el.replaceWith(`<p>${html}</p>`);
+              changed = true;
+            } else {
+              // Empty div, just remove it
+              $el.remove();
+            }
           }
-        }
+          processedDivs.add(el);
+        });
+        return changed;
+      };
+      
+      // Run multiple passes to handle nested divs
+      let passes = 0;
+      while (convertDivsToParagraphs() && passes < 10) {
+        passes++;
+      }
+      
+      // 6. Normalize br tags within paragraphs only
+      // Don't touch br tags inside lists, tables, or other containers
+      contentArea.find("p").each((_, el) => {
+        const $el = $(el);
+        let html = $el.html() || "";
+        // Normalize br tags format
+        html = html.replace(/<br\s*\/?>/gi, '<br>');
+        $el.html(html);
       });
       
-      // 6. Get the content (includes all remaining HTML with images)
+      // 7. Get the content
       let content = contentArea.html() || "";
       
-      // Clean up the HTML structure for TipTap
+      // Minimal cleanup - preserve structure
       content = content
-        // Ensure self-closing br tags are proper HTML
-        .replace(/<br\s*\/?>/gi, '<br>')
-        // Convert multiple consecutive br tags to paragraph breaks
-        .replace(/(<br>\s*){2,}/gi, '</p><p>')
         // Remove empty paragraphs
         .replace(/<p>\s*<\/p>/gi, '')
-        // Normalize whitespace between tags (but keep structure)
-        .replace(/>\s+</g, '> <')
+        // Trim whitespace
         .trim();
       
       // Extract first paragraph text for excerpt
