@@ -332,8 +332,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // 5. Get the content (includes all remaining HTML with images)
       let content = contentArea.html() || "";
       
-      // Minimal cleanup - only normalize whitespace
-      content = content.trim();
+      // Normalize whitespace but preserve <br> and <p> tags
+      // Only clean up excessive whitespace while keeping HTML structure intact
+      content = content
+        .replace(/[\r\n]+/g, '\n') // Normalize line endings
+        .replace(/\n{3,}/g, '\n\n') // Limit consecutive newlines to 2
+        .trim();
       
       // Extract first paragraph text for excerpt
       const firstParagraphText = $("p").first().text().trim().replace(/\s+/g, " ");
@@ -373,6 +377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         metaTitle: title,
         content,
         excerpt,
+        author: "فريق موتفلكس",
         metaDescription: metaDescription || excerpt.substring(0, 160),
         metaKeywords: metaKeywords || suggestedKeywords,
         ogTitle,

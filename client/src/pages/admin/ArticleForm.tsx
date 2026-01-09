@@ -126,6 +126,7 @@ const ArticleForm = () => {
         title: parsedData.title || prev.title,
         content: parsedData.content || prev.content,
         excerpt: parsedData.excerpt || prev.excerpt,
+        author: parsedData.author || prev.author,
         metaTitle: parsedData.metaTitle || prev.metaTitle,
         metaDescription: parsedData.metaDescription || prev.metaDescription,
         metaKeywords: parsedData.metaKeywords || prev.metaKeywords,
@@ -253,6 +254,7 @@ const ArticleForm = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/articles"] });
       queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/admin/articles/${articleId}`] });
       toast({ title: "تم تحديث المقال بنجاح" });
       navigate("/admin/articles");
     },
