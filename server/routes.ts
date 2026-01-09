@@ -329,14 +329,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       contentArea.find(".cookie, .popup, .modal, .overlay, .newsletter, .subscribe").remove();
       contentArea.find("form, input, button, select, textarea").remove();
       
-      // 5. Get the content (includes all remaining HTML with images)
+      // 5. Transform block structure for TipTap compatibility
+      // Convert standalone divs to paragraphs (but preserve semantic containers)
+      contentArea.find("div").each((_, el) => {
+        const $el = $(el);
+        // Skip divs that contain other block elements (they're containers)
+        const hasBlockChildren = $el.children("div, p, h1, h2, h3, h4, h5, h6, ul, ol, blockquote, table, pre, article, section, aside, header, footer, nav, figure").length > 0;
+        
+        if (!hasBlockChildren) {
+          // This div only contains inline content, convert to <p>
+          const html = $el.html();
+          if (html && html.trim()) {
+            $el.replaceWith(`<p>${html}</p>`);
+          }
+        }
+      });
+      
+      // 6. Get the content (includes all remaining HTML with images)
       let content = contentArea.html() || "";
       
-      // Normalize whitespace but preserve <br> and <p> tags
-      // Only clean up excessive whitespace while keeping HTML structure intact
+      // Clean up the HTML structure for TipTap
       content = content
-        .replace(/[\r\n]+/g, '\n') // Normalize line endings
-        .replace(/\n{3,}/g, '\n\n') // Limit consecutive newlines to 2
+        // Ensure self-closing br tags are proper HTML
+        .replace(/<br\s*\/?>/gi, '<br>')
+        // Convert multiple consecutive br tags to paragraph breaks
+        .replace(/(<br>\s*){2,}/gi, '</p><p>')
+        // Remove empty paragraphs
+        .replace(/<p>\s*<\/p>/gi, '')
+        // Normalize whitespace between tags (but keep structure)
+        .replace(/>\s+</g, '> <')
         .trim();
       
       // Extract first paragraph text for excerpt
