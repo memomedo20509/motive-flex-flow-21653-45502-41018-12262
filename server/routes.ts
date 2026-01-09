@@ -259,7 +259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const htmlContent = req.file.buffer.toString("utf-8");
       const $ = cheerio.load(htmlContent);
 
-      // Extract meta information BEFORE removing elements (including author)
+      // Extract meta information BEFORE removing elements
       const title = $("title").text().trim() || $("h1").first().text().trim() || "";
       const h1Text = $("h1").first().text().trim();
       const metaDescription = $('meta[name="description"]').attr("content") || "";
@@ -269,11 +269,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ogImage = $('meta[property="og:image"]').attr("content") || "";
       const canonicalUrl = $('link[rel="canonical"]').attr("href") || "";
       const robotsMeta = $('meta[name="robots"]').attr("content") || "";
-      
-      // Extract author BEFORE removing meta elements
-      const metaAuthor = $('meta[name="author"]').attr("content") || "";
-      const schemaAuthor = $('[itemprop="author"]').text().trim() || "";
-      const authorName = metaAuthor || schemaAuthor || "فريق موتفلكس";
       
       // Get first image before removing elements
       let firstImage = ogImage || "";
@@ -334,192 +329,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       contentArea.find(".cookie, .popup, .modal, .overlay, .newsletter, .subscribe").remove();
       contentArea.find("form, input, button, select, textarea").remove();
       
-      // 5. Process content for TipTap - DOM-based processing to preserve structure
-      
-      const protectedTags = new Set(['ul', 'ol', 'li', 'table', 'thead', 'tbody', 'tfoot', 'tr', 'td', 'th', 'pre', 'code', 'figure', 'figcaption', 'script', 'style']);
-      const blockTags = new Set(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'div', 'section', 'article', 'aside', 'main', 'header', 'footer', 'blockquote', 'ul', 'ol', 'table', 'figure', 'pre', 'hr', 'address', 'nav']);
-      const containerTags = new Set(['div', 'section', 'article', 'aside', 'main', 'header', 'footer', 'body']);
-      
-      // Process text nodes within paragraphs - convert newlines to <br>
-      const processTextNodesInElement = (element: any) => {
-        $(element).contents().each((_, child) => {
-          if (child.type === 'text') {
-            const text = child.data || '';
-            if (text.includes('\n')) {
-              $(child).replaceWith(text.replace(/\n/g, '<br>'));
-            }
-          } else if (child.type === 'tag') {
-            const tagName = (child.name || '').toLowerCase();
-            if (!protectedTags.has(tagName)) {
-              processTextNodesInElement(child);
-            }
-          }
-        });
-      };
-      
-      // Wrap a group of inline nodes in paragraph(s), splitting on double newlines
-      const wrapGroupInParagraphs = (groupNodes: any[], insertBefore: any) => {
-        if (groupNodes.length === 0) return;
-        
-        // Collect all text content from the group to detect double newlines
-        let combinedHtml = groupNodes.map(n => {
-          if (n.type === 'text') return n.data || '';
-          return $.html(n);
-        }).join('');
-        
-        // Check if there are double newlines in text content
-        const hasDoubleNewlines = groupNodes.some(n => {
-          if (n.type === 'text') return /\n\n+/.test(n.data || '');
-          return false;
-        });
-        
-        if (hasDoubleNewlines) {
-          // Split content on double newlines into separate paragraphs
-          // First, get text-only content to find split points
-          let textContent = groupNodes.filter(n => n.type === 'text').map(n => n.data || '').join('');
-          const parts = textContent.split(/\n\n+/).filter(p => p.trim());
-          
-          if (parts.length > 1) {
-            // Create multiple paragraphs
-            let insertPoint = $(insertBefore);
-            parts.forEach((part, idx) => {
-              const pText = part.trim().replace(/\n/g, '<br>');
-              const p = $(`<p>${pText}</p>`);
-              insertPoint.before(p);
-            });
-            // Remove original nodes
-            groupNodes.forEach(n => $(n).remove());
-            return;
-          }
-        }
-        
-        // Single paragraph - wrap all nodes together
-        const wrapper = $('<p></p>');
-        $(insertBefore).before(wrapper);
-        groupNodes.forEach(n => wrapper.append($(n)));
-      };
-      
-      // Wrap loose text/inline siblings in paragraphs within a container
-      const wrapLooseTextInContainer = (container: any) => {
-        const $container = $(container);
-        const tagName = (container.name || '').toLowerCase();
-        
-        // Skip protected containers
-        if (protectedTags.has(tagName)) return;
-        
-        // Only process actual container elements
-        if (!containerTags.has(tagName) && tagName !== 'body') return;
-        
-        // Get all direct children
-        const children = $container.contents().toArray();
-        
-        // Find groups of consecutive text/inline nodes
-        let groupStart = -1;
-        let i = 0;
-        
-        while (i < children.length) {
-          const child = children[i];
-          const isTextNode = child.type === 'text';
-          const isTag = child.type === 'tag';
-          const childTagName = isTag ? (child.name || '').toLowerCase() : '';
-          const isBlockTag = isTag && blockTags.has(childTagName);
-          const isInlineContent = isTextNode || (isTag && !isBlockTag);
-          
-          if (isInlineContent) {
-            // Check if this inline content has meaningful text
-            const hasContent = isTextNode 
-              ? (child.data || '').trim().length > 0
-              : $(child).text().trim().length > 0 || childTagName === 'img' || childTagName === 'br';
-            
-            if (hasContent && groupStart === -1) {
-              groupStart = i;
-            }
-          } else {
-            // Hit a block element - wrap previous group if exists
-            if (groupStart !== -1) {
-              const groupNodes = children.slice(groupStart, i);
-              const hasRealContent = groupNodes.some(n => {
-                if (n.type === 'text') return (n.data || '').trim().length > 0;
-                return $(n).text().trim().length > 0 || (n.name || '').toLowerCase() === 'img';
-              });
-              
-              if (hasRealContent) {
-                wrapGroupInParagraphs(groupNodes, child);
-              }
-              groupStart = -1;
-            }
-            
-            // Recursively process nested containers
-            if (isTag && containerTags.has(childTagName)) {
-              wrapLooseTextInContainer(child);
-            }
-          }
-          i++;
-        }
-        
-        // Handle trailing group - need a reference point
-        if (groupStart !== -1) {
-          const groupNodes = children.slice(groupStart);
-          const hasRealContent = groupNodes.some(n => {
-            if (n.type === 'text') return (n.data || '').trim().length > 0;
-            return $(n).text().trim().length > 0 || (n.name || '').toLowerCase() === 'img';
-          });
-          
-          if (hasRealContent) {
-            // For trailing group, append to container instead of inserting before
-            // Check if there are double newlines
-            const hasDoubleNewlines = groupNodes.some(n => {
-              if (n.type === 'text') return /\n\n+/.test(n.data || '');
-              return false;
-            });
-            
-            if (hasDoubleNewlines) {
-              let textContent = groupNodes.filter(n => n.type === 'text').map(n => n.data || '').join('');
-              const parts = textContent.split(/\n\n+/).filter(p => p.trim());
-              
-              if (parts.length > 1) {
-                // Remove original nodes first
-                groupNodes.forEach(n => $(n).remove());
-                // Append new paragraphs
-                parts.forEach((part) => {
-                  const pText = part.trim().replace(/\n/g, '<br>');
-                  $container.append(`<p>${pText}</p>`);
-                });
-                return;
-              }
-            }
-            
-            // Single paragraph
-            const wrapper = $('<p></p>');
-            $container.append(wrapper);
-            groupNodes.forEach(n => wrapper.append($(n)));
-          }
-        }
-      };
-      
-      // First wrap loose text in the content area
-      wrapLooseTextInContainer(contentArea[0]);
-      
-      // Then process newlines in all paragraphs
-      contentArea.find("p").each((_, el) => {
-        processTextNodesInElement(el);
-      });
-      
-      // Process blockquotes without internal paragraphs
-      contentArea.find("blockquote").each((_, el) => {
-        const element = $(el);
-        if (element.find("p, div").length === 0) {
-          processTextNodesInElement(el);
-        }
-      });
-      
+      // 5. Get the content (includes all remaining HTML with images)
       let content = contentArea.html() || "";
       
-      // Minimal cleanup - only remove empty paragraphs
-      content = content
-        .replace(/<p>\s*<\/p>/gi, '') // Remove empty paragraphs
-        .replace(/<p><br\s*\/?><\/p>/gi, '') // Remove paragraphs with only a break
-        .trim();
+      // Minimal cleanup - only normalize whitespace
+      content = content.trim();
       
       // Extract first paragraph text for excerpt
       const firstParagraphText = $("p").first().text().trim().replace(/\s+/g, " ");
@@ -559,7 +373,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         metaTitle: title,
         content,
         excerpt,
-        author: authorName,
         metaDescription: metaDescription || excerpt.substring(0, 160),
         metaKeywords: metaKeywords || suggestedKeywords,
         ogTitle,

@@ -574,10 +574,6 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
         heading: {
           levels: [1, 2, 3],
         },
-        hardBreak: {
-          keepMarks: true,
-          HTMLAttributes: {},
-        },
       }),
       CustomImage.configure({
         inline: false,
