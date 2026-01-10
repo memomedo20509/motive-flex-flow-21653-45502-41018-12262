@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { marked } from "marked";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,20 +36,22 @@ const BlogPost = () => {
 
   const htmlContent = useMemo(() => {
     if (!article?.content) return "";
-    return marked(article.content);
+    return article.content;
   }, [article?.content]);
 
   const tableOfContents = useMemo(() => {
     if (!article?.content) return [];
     const headings: { level: number; text: string; id: string }[] = [];
-    const regex = /^(#{1,3})\s+(.+)$/gm;
-    let match;
-    while ((match = regex.exec(article.content)) !== null) {
-      const level = match[1].length;
-      const text = match[2];
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(article.content, 'text/html');
+    const headingElements = doc.querySelectorAll('h1, h2, h3');
+    headingElements.forEach((el) => {
+      const tagName = el.tagName.toLowerCase();
+      const level = parseInt(tagName.charAt(1));
+      const text = el.textContent || '';
       const id = text.toLowerCase().replace(/\s+/g, "-").replace(/[^\u0621-\u064Aa-z0-9-]/g, "");
       headings.push({ level, text, id });
-    }
+    });
     return headings;
   }, [article?.content]);
 

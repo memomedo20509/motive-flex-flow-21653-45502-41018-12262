@@ -266,3 +266,53 @@ All colors MUST be HSL.
     }
   }
 }
+
+/* Prose content styles for tables, blockquotes, and line breaks */
+.prose table {
+  @apply w-full border-collapse my-6;
+}
+
+.prose table th,
+.prose table td {
+  @apply border border-border px-4 py-2 text-right;
+}
+
+.prose table th {
+  @apply bg-muted font-bold;
+}
+
+.prose table tr:nth-child(even) {
+  @apply bg-muted/50;
+}
+
+.prose blockquote {
+  @apply border-r-4 border-secondary pr-4 my-6 italic text-muted-foreground;
+}
+
+.prose br {
+  @apply block;
+  content: "";
+  margin-top: 0.5em;
+}
+
+/* Tiptap editor table styles */
+.ProseMirror table {
+  @apply w-full border-collapse my-4;
+}
+
+.ProseMirror table th,
+.ProseMirror table td {
+  @apply border border-border px-4 py-2 text-right min-w-[100px];
+}
+
+.ProseMirror table th {
+  @apply bg-muted font-bold;
+}
+
+.ProseMirror table .selectedCell {
+  @apply bg-secondary/20;
+}
+
+.ProseMirror blockquote {
+  @apply border-r-4 border-secondary pr-4 my-4 italic text-muted-foreground;
+}
