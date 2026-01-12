@@ -156,7 +156,7 @@ const Blog = () => {
                       setSelectedTag(tag);
                       setPage(1);
                     }}
-                    className={!isTagsExpanded && index >= INITIAL_TAGS_TO_SHOW ? "hidden md:inline-flex" : ""}
+                    className={!isTagsExpanded && index >= INITIAL_TAGS_TO_SHOW ? "hidden" : ""}
                     data-testid={`button-filter-tag-${tag}`}
                   >
                     {tag}
@@ -167,7 +167,7 @@ const Blog = () => {
                     variant="ghost"
                     size="sm"
                     onClick={() => setIsTagsExpanded(!isTagsExpanded)}
-                    className="md:hidden gap-1 text-primary hover:text-primary"
+                    className="gap-1 text-primary hover:text-primary"
                     aria-expanded={isTagsExpanded}
                     aria-controls="tags-filter-list"
                     data-testid="button-toggle-tags"
@@ -242,21 +242,28 @@ const Blog = () => {
                             height={208}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             data-testid={`img-article-cover-${article.id}`}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const fallback = target.nextElementSibling as HTMLElement;
+                              if (fallback) fallback.style.display = 'flex';
+                            }}
                           />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-secondary via-primary/80 to-primary flex items-center justify-center relative">
-                            <div className="absolute inset-0 bg-black/10"></div>
-                            <div className="relative z-10 text-center">
-                              <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-3">
-                                <FileText className="w-8 h-8 text-white" />
-                              </div>
-                              <span className="text-white/80 text-sm font-medium">مقال موتفلكس</span>
+                        ) : null}
+                        <div 
+                          className="w-full h-full bg-gradient-to-br from-secondary via-primary/80 to-primary items-center justify-center relative"
+                          style={{ display: article.coverImage ? 'none' : 'flex' }}
+                        >
+                          <div className="absolute inset-0 bg-black/10"></div>
+                          <div className="relative z-10 text-center">
+                            <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-3">
+                              <FileText className="w-8 h-8 text-white" />
                             </div>
-                            {/* Decorative circles */}
-                            <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white/10 blur-xl"></div>
-                            <div className="absolute bottom-4 left-4 w-16 h-16 rounded-full bg-white/10 blur-xl"></div>
+                            <span className="text-white/80 text-sm font-medium">مقال موتفلكس</span>
                           </div>
-                        )}
+                          <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white/10 blur-xl"></div>
+                          <div className="absolute bottom-4 left-4 w-16 h-16 rounded-full bg-white/10 blur-xl"></div>
+                        </div>
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                         
                         {/* Date badge on image */}
