@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AnimateOnScroll } from "@/components/AnimateOnScroll";
 import { SEOHead } from "@/components/SEOHead";
 import { BreadcrumbSchema } from "@/components/SchemaMarkup";
-import { Search, Calendar, Eye, ArrowLeft, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, BookOpen, Sparkles, FileText } from "lucide-react";
+import { Search, Calendar, Eye, ArrowLeft, ChevronLeft, ChevronRight, BookOpen, Sparkles, FileText } from "lucide-react";
 import type { Article } from "@shared/schema";
 
 interface ArticlesResponse {
@@ -19,13 +19,10 @@ interface ArticlesResponse {
   total: number;
 }
 
-const INITIAL_TAGS_TO_SHOW = 12;
-
 const Blog = () => {
   const [search, setSearch] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const [isTagsExpanded, setIsTagsExpanded] = useState(false);
   const limit = 9;
 
   const { data: tagsData } = useQuery<string[]>({
@@ -129,63 +126,32 @@ const Blog = () => {
             </div>
 
             {/* Tags Filter */}
-            <div className="w-full md:w-auto">
-              <div 
-                id="tags-filter-list"
-                className="flex flex-wrap gap-2 justify-center"
-                role="group"
-                aria-label="تصفية المقالات حسب الوسوم"
+            <div className="flex flex-wrap gap-2 justify-center">
+              <Button
+                variant={selectedTag === null ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setSelectedTag(null);
+                  setPage(1);
+                }}
+                data-testid="button-filter-all"
               >
+                الكل
+              </Button>
+              {tagsData?.map((tag) => (
                 <Button
-                  variant={selectedTag === null ? "default" : "outline"}
+                  key={tag}
+                  variant={selectedTag === tag ? "default" : "outline"}
                   size="sm"
                   onClick={() => {
-                    setSelectedTag(null);
+                    setSelectedTag(tag);
                     setPage(1);
                   }}
-                  data-testid="button-filter-all"
+                  data-testid={`button-filter-tag-${tag}`}
                 >
-                  الكل
+                  {tag}
                 </Button>
-                {tagsData?.map((tag, index) => (
-                  <Button
-                    key={tag}
-                    variant={selectedTag === tag ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => {
-                      setSelectedTag(tag);
-                      setPage(1);
-                    }}
-                    className={!isTagsExpanded && index >= INITIAL_TAGS_TO_SHOW ? "hidden" : ""}
-                    data-testid={`button-filter-tag-${tag}`}
-                  >
-                    {tag}
-                  </Button>
-                ))}
-                {tagsData && tagsData.length > INITIAL_TAGS_TO_SHOW && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsTagsExpanded(!isTagsExpanded)}
-                    className="gap-1 text-primary hover:text-primary"
-                    aria-expanded={isTagsExpanded}
-                    aria-controls="tags-filter-list"
-                    data-testid="button-toggle-tags"
-                  >
-                    {isTagsExpanded ? (
-                      <>
-                        عرض أقل
-                        <ChevronUp className="h-4 w-4" />
-                      </>
-                    ) : (
-                      <>
-                        عرض المزيد ({tagsData.length - INITIAL_TAGS_TO_SHOW})
-                        <ChevronDown className="h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
+              ))}
             </div>
           </div>
         </div>
@@ -242,28 +208,21 @@ const Blog = () => {
                             height={208}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             data-testid={`img-article-cover-${article.id}`}
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                              const fallback = target.nextElementSibling as HTMLElement;
-                              if (fallback) fallback.style.display = 'flex';
-                            }}
                           />
-                        ) : null}
-                        <div 
-                          className="w-full h-full bg-gradient-to-br from-secondary via-primary/80 to-primary items-center justify-center relative"
-                          style={{ display: article.coverImage ? 'none' : 'flex' }}
-                        >
-                          <div className="absolute inset-0 bg-black/10"></div>
-                          <div className="relative z-10 text-center">
-                            <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-3">
-                              <FileText className="w-8 h-8 text-white" />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-secondary via-primary/80 to-primary flex items-center justify-center relative">
+                            <div className="absolute inset-0 bg-black/10"></div>
+                            <div className="relative z-10 text-center">
+                              <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-3">
+                                <FileText className="w-8 h-8 text-white" />
+                              </div>
+                              <span className="text-white/80 text-sm font-medium">مقال موتفلكس</span>
                             </div>
-                            <span className="text-white/80 text-sm font-medium">مقال موتفلكس</span>
+                            {/* Decorative circles */}
+                            <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white/10 blur-xl"></div>
+                            <div className="absolute bottom-4 left-4 w-16 h-16 rounded-full bg-white/10 blur-xl"></div>
                           </div>
-                          <div className="absolute top-4 right-4 w-12 h-12 rounded-full bg-white/10 blur-xl"></div>
-                          <div className="absolute bottom-4 left-4 w-16 h-16 rounded-full bg-white/10 blur-xl"></div>
-                        </div>
+                        )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                         
                         {/* Date badge on image */}
