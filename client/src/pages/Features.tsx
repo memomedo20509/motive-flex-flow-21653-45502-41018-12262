@@ -4,6 +4,7 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { CTASection } from "@/components/CTASection";
 import { AnimateOnScroll } from "@/components/AnimateOnScroll";
 import { SEOHead } from "@/components/SEOHead";
+import { BreadcrumbSchema } from "@/components/SchemaMarkup";
 import {
   Users,
   Calendar,
@@ -197,6 +198,10 @@ const Features = () => {
         keywords="مميزات موتفلكس, إدارة عملاء, جدولة قياسات, متابعة تصنيع, نظام تركيب"
         canonicalUrl="https://mutflex.com/features"
       />
+      <BreadcrumbSchema items={[
+        { name: "الرئيسية", url: "https://mutflex.com/" },
+        { name: "المميزات", url: "https://mutflex.com/features" }
+      ]} />
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 gradient-hero text-white relative overflow-hidden">
         <div className="absolute inset-0">

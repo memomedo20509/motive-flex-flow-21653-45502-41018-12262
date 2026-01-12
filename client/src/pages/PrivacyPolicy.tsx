@@ -1,6 +1,7 @@
 import { PageScaffold } from "@/components/PageScaffold";
 import { Card, CardContent } from "@/components/ui/card";
 import { SEOHead } from "@/components/SEOHead";
+import { BreadcrumbSchema } from "@/components/SchemaMarkup";
 
 const PrivacyPolicy = () => {
   return (
@@ -11,6 +12,10 @@ const PrivacyPolicy = () => {
         keywords="سياسة الخصوصية, حماية البيانات, أمان المعلومات"
         canonicalUrl="https://mutflex.com/privacy-policy"
       />
+      <BreadcrumbSchema items={[
+        { name: "الرئيسية", url: "https://mutflex.com/" },
+        { name: "سياسة الخصوصية", url: "https://mutflex.com/privacy-policy" }
+      ]} />
 
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 bg-muted/50">

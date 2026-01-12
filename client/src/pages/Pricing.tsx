@@ -6,6 +6,7 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { CTASection } from "@/components/CTASection";
 import { AnimateOnScroll } from "@/components/AnimateOnScroll";
 import { SEOHead } from "@/components/SEOHead";
+import { BreadcrumbSchema } from "@/components/SchemaMarkup";
 import { Check, Zap } from "lucide-react";
 
 const Pricing = () => {
@@ -88,6 +89,10 @@ const Pricing = () => {
         keywords="أسعار موتفلكس, باقات, اشتراك, تجربة مجانية, نظام إدارة المصانع, Mutflex Pro, Mutflex Catalog"
         canonicalUrl="https://mutflex.com/pricing"
       />
+      <BreadcrumbSchema items={[
+        { name: "الرئيسية", url: "https://mutflex.com/" },
+        { name: "الأسعار", url: "https://mutflex.com/pricing" }
+      ]} />
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 gradient-hero text-white relative overflow-hidden">
         <div className="absolute inset-0">

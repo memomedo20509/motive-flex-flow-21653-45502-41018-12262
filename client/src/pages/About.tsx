@@ -4,6 +4,7 @@ import { CTASection } from "@/components/CTASection";
 import { AnimateOnScroll } from "@/components/AnimateOnScroll";
 import { Card, CardContent } from "@/components/ui/card";
 import { SEOHead } from "@/components/SEOHead";
+import { BreadcrumbSchema } from "@/components/SchemaMarkup";
 import { Target, Eye, Award, Users, Zap } from "lucide-react";
 
 const About = () => {
@@ -15,6 +16,10 @@ const About = () => {
         keywords="موتفلكس, من نحن, فريق العمل, قصة الشركة, التحول الرقمي"
         canonicalUrl="https://mutflex.com/about"
       />
+      <BreadcrumbSchema items={[
+        { name: "الرئيسية", url: "https://mutflex.com/" },
+        { name: "من نحن", url: "https://mutflex.com/about" }
+      ]} />
 
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 gradient-hero text-white relative overflow-hidden">

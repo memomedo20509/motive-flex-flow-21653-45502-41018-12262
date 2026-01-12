@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
 import { AnimateOnScroll } from "@/components/AnimateOnScroll";
 import { SEOHead } from "@/components/SEOHead";
-import { OrganizationSchema, SoftwareApplicationSchema } from "@/components/SchemaMarkup";
+import { OrganizationSchema, SoftwareApplicationSchema, WebSiteSchema } from "@/components/SchemaMarkup";
 import {
   Users,
   Calendar,
@@ -99,6 +99,7 @@ const Index = () => {
       />
       <OrganizationSchema />
       <SoftwareApplicationSchema />
+      <WebSiteSchema />
       <Navbar />
 
       {/* Hero Section */}

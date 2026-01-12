@@ -152,9 +152,45 @@ export function SoftwareApplicationSchema({
   );
 }
 
+interface WebSiteSchemaProps {
+  name?: string;
+  url?: string;
+  description?: string;
+}
+
+export function WebSiteSchema({
+  name = "موتفلكس - Mutflex",
+  url = "https://mutflex.com",
+  description = "نظام إدارة التصنيع والتركيب الشامل - منصة SaaS لتحويل الفوضى إلى نظام رقمي متكامل",
+}: WebSiteSchemaProps) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name,
+    url,
+    description,
+    inLanguage: "ar",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${url}/blog?search={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+
+  return (
+    <Helmet>
+      <script type="application/ld+json">{JSON.stringify(schema)}</script>
+    </Helmet>
+  );
+}
+
 export default {
   OrganizationSchema,
   ArticleSchema,
   BreadcrumbSchema,
   SoftwareApplicationSchema,
+  WebSiteSchema,
 };

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AnimateOnScroll } from "@/components/AnimateOnScroll";
 import { SEOHead } from "@/components/SEOHead";
+import { BreadcrumbSchema } from "@/components/SchemaMarkup";
 import { Search, Calendar, Eye, ArrowLeft, ChevronLeft, ChevronRight, BookOpen, Sparkles, FileText } from "lucide-react";
 import type { Article } from "@shared/schema";
 
@@ -50,6 +51,10 @@ const Blog = () => {
         keywords="مدونة موتفلكس, مقالات تصنيع, نصائح صناعية, تحول رقمي"
         canonicalUrl="https://mutflex.com/blog"
       />
+      <BreadcrumbSchema items={[
+        { name: "الرئيسية", url: "https://mutflex.com/" },
+        { name: "المدونة", url: "https://mutflex.com/blog" }
+      ]} />
       <Navbar />
 
       {/* Hero Section - Enhanced matching Index.tsx */}

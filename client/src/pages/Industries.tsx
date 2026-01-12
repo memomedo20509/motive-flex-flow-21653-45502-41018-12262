@@ -4,6 +4,7 @@ import { PageScaffold } from "@/components/PageScaffold";
 import { SectionHeader } from "@/components/SectionHeader";
 import { AnimateOnScroll } from "@/components/AnimateOnScroll";
 import { SEOHead } from "@/components/SEOHead";
+import { BreadcrumbSchema } from "@/components/SchemaMarkup";
 import { 
   CheckCircle, 
   Factory, 
@@ -194,6 +195,10 @@ const Industries = () => {
         keywords="قطاعات صناعية, مصانع رخام, مقاولات, ديكور, مطابخ, ألمنيوم"
         canonicalUrl="https://mutflex.com/industries"
       />
+      <BreadcrumbSchema items={[
+        { name: "الرئيسية", url: "https://mutflex.com/" },
+        { name: "القطاعات", url: "https://mutflex.com/industries" }
+      ]} />
       {/* Hero Section */}
       <section className="pt-32 pb-16 px-4 gradient-hero text-white">
         <div className="container mx-auto text-center stagger-children">

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select";
 import { PageScaffold } from "@/components/PageScaffold";
 import { SEOHead } from "@/components/SEOHead";
+import { BreadcrumbSchema } from "@/components/SchemaMarkup";
 import { CheckCircle, Zap, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -79,6 +80,10 @@ const FreeTrial = () => {
         keywords="تجربة مجانية, موتفلكس, نظام إدارة المصانع, شهرين مجاناً"
         canonicalUrl="https://mutflex.com/free-trial"
       />
+      <BreadcrumbSchema items={[
+        { name: "الرئيسية", url: "https://mutflex.com/" },
+        { name: "تجربة مجانية", url: "https://mutflex.com/free-trial" }
+      ]} />
 
       <section className="pt-32 pb-16 px-4 gradient-hero text-white">
         <div className="container mx-auto text-center">

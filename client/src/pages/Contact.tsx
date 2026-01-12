@@ -7,6 +7,7 @@ import { PageScaffold } from "@/components/PageScaffold";
 import { SectionHeader } from "@/components/SectionHeader";
 import { AnimateOnScroll } from "@/components/AnimateOnScroll";
 import { SEOHead } from "@/components/SEOHead";
+import { BreadcrumbSchema } from "@/components/SchemaMarkup";
 import { Mail, Phone, MapPin, Send, Zap, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -74,6 +75,10 @@ const Contact = () => {
         keywords="تواصل معنا, دعم فني, استفسارات, موتفلكس"
         canonicalUrl="https://mutflex.com/contact"
       />
+      <BreadcrumbSchema items={[
+        { name: "الرئيسية", url: "https://mutflex.com/" },
+        { name: "تواصل معنا", url: "https://mutflex.com/contact" }
+      ]} />
       <section className="pt-32 pb-16 px-4 gradient-hero text-white relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-20 right-10 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse-slow"></div>
