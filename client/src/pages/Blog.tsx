@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AnimateOnScroll } from "@/components/AnimateOnScroll";
 import { SEOHead } from "@/components/SEOHead";
 import { BreadcrumbSchema } from "@/components/SchemaMarkup";
-import { Search, Calendar, Eye, ArrowLeft, ChevronLeft, ChevronRight, BookOpen, Sparkles, FileText } from "lucide-react";
+import { Search, Calendar, Eye, ArrowLeft, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, BookOpen, Sparkles, FileText } from "lucide-react";
 import type { Article } from "@shared/schema";
 
 interface ArticlesResponse {
@@ -19,10 +19,13 @@ interface ArticlesResponse {
   total: number;
 }
 
+const INITIAL_TAGS_TO_SHOW = 12;
+
 const Blog = () => {
   const [search, setSearch] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [isTagsExpanded, setIsTagsExpanded] = useState(false);
   const limit = 9;
 
   const { data: tagsData } = useQuery<string[]>({
@@ -126,32 +129,63 @@ const Blog = () => {
             </div>
 
             {/* Tags Filter */}
-            <div className="flex flex-wrap gap-2 justify-center">
-              <Button
-                variant={selectedTag === null ? "default" : "outline"}
-                size="sm"
-                onClick={() => {
-                  setSelectedTag(null);
-                  setPage(1);
-                }}
-                data-testid="button-filter-all"
+            <div className="w-full md:w-auto">
+              <div 
+                id="tags-filter-list"
+                className="flex flex-wrap gap-2 justify-center"
+                role="group"
+                aria-label="تصفية المقالات حسب الوسوم"
               >
-                الكل
-              </Button>
-              {tagsData?.map((tag) => (
                 <Button
-                  key={tag}
-                  variant={selectedTag === tag ? "default" : "outline"}
+                  variant={selectedTag === null ? "default" : "outline"}
                   size="sm"
                   onClick={() => {
-                    setSelectedTag(tag);
+                    setSelectedTag(null);
                     setPage(1);
                   }}
-                  data-testid={`button-filter-tag-${tag}`}
+                  data-testid="button-filter-all"
                 >
-                  {tag}
+                  الكل
                 </Button>
-              ))}
+                {tagsData?.map((tag, index) => (
+                  <Button
+                    key={tag}
+                    variant={selectedTag === tag ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setSelectedTag(tag);
+                      setPage(1);
+                    }}
+                    className={!isTagsExpanded && index >= INITIAL_TAGS_TO_SHOW ? "hidden md:inline-flex" : ""}
+                    data-testid={`button-filter-tag-${tag}`}
+                  >
+                    {tag}
+                  </Button>
+                ))}
+                {tagsData && tagsData.length > INITIAL_TAGS_TO_SHOW && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsTagsExpanded(!isTagsExpanded)}
+                    className="md:hidden gap-1 text-primary hover:text-primary"
+                    aria-expanded={isTagsExpanded}
+                    aria-controls="tags-filter-list"
+                    data-testid="button-toggle-tags"
+                  >
+                    {isTagsExpanded ? (
+                      <>
+                        عرض أقل
+                        <ChevronUp className="h-4 w-4" />
+                      </>
+                    ) : (
+                      <>
+                        عرض المزيد ({tagsData.length - INITIAL_TAGS_TO_SHOW})
+                        <ChevronDown className="h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </div>
