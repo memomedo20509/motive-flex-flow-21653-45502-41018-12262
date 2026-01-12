@@ -347,7 +347,7 @@ const BlogPost = () => {
                 </div>
               )}
 
-              <Card className="border-0 shadow-none bg-transparent">
+              <Card className="border-0 shadow-none hover:shadow-none bg-transparent">
                 <CardContent className="p-0">
                   <div 
                     className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-secondary prose-strong:text-foreground prose-ul:text-muted-foreground prose-ol:text-muted-foreground prose-blockquote:border-secondary prose-blockquote:text-muted-foreground"
