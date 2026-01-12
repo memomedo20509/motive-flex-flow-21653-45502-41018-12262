@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isAdmin, hashPassword } from "./auth";
 import { insertArticleSchema, insertContactSchema, insertUserSchema, insertTrialSchema } from "../shared/schema";
 import { sendContactNotificationEmail } from "./email";
+import { uploadToCloudinary, validateImage } from "./cloudinary";
 import path from "path";
 import fs from "fs";
 import multer from "multer";
@@ -17,23 +18,14 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      const ext = path.extname(file.originalname);
-      cb(null, `cover-${uniqueSuffix}${ext}`);
-    },
-  }),
-  limits: { fileSize: 5 * 1024 * 1024 },
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error("Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed."));
+      cb(new Error("نوع الملف غير مسموح. الأنواع المسموحة: JPG, PNG, WebP"));
     }
   },
 });
@@ -461,13 +453,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         scheduledAt = null;
       }
       
+      let coverImageUrl = body.coverImage;
+      if (req.file) {
+        const validation = validateImage(req.file);
+        if (!validation.valid) {
+          return res.status(400).json({ message: validation.error });
+        }
+        const uploadResult = await uploadToCloudinary(req.file, 'mutflex/covers');
+        coverImageUrl = uploadResult.secure_url;
+      }
+      
       const articleData = {
         ...body,
         slug,
         status: finalStatus,
         scheduledAt,
         publishedAt,
-        coverImage: req.file ? `/uploads/${req.file.filename}` : body.coverImage,
+        coverImage: coverImageUrl,
         tags: body.tags || [],
       };
       
@@ -548,7 +550,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       if (req.file) {
-        articleData.coverImage = `/uploads/${req.file.filename}`;
+        const validation = validateImage(req.file);
+        if (!validation.valid) {
+          return res.status(400).json({ message: validation.error });
+        }
+        const uploadResult = await uploadToCloudinary(req.file, 'mutflex/covers');
+        articleData.coverImage = uploadResult.secure_url;
       }
       
       const article = await storage.updateArticle(id, articleData);
@@ -575,7 +582,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
       }
-      res.json({ url: `/uploads/${req.file.filename}` });
+      
+      const validation = validateImage(req.file);
+      if (!validation.valid) {
+        return res.status(400).json({ message: validation.error });
+      }
+      
+      const uploadResult = await uploadToCloudinary(req.file, 'mutflex/images');
+      res.json({ url: uploadResult.secure_url });
     } catch (error) {
       console.error("Error uploading file:", error);
       res.status(500).json({ message: "Failed to upload file" });
