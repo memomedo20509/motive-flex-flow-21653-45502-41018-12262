@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AnimateOnScroll } from "@/components/AnimateOnScroll";
 import { SEOHead } from "@/components/SEOHead";
 import { BreadcrumbSchema } from "@/components/SchemaMarkup";
-import { Search, Calendar, Eye, ArrowLeft, ChevronLeft, ChevronRight, BookOpen, Sparkles, FileText } from "lucide-react";
+import { Search, Calendar, Eye, ArrowLeft, ChevronLeft, ChevronRight, BookOpen, Sparkles, FileText, ChevronDown, ChevronUp } from "lucide-react";
 import type { Article } from "@shared/schema";
 
 interface ArticlesResponse {
@@ -19,10 +19,13 @@ interface ArticlesResponse {
   total: number;
 }
 
+const VISIBLE_TAGS_COUNT = 10;
+
 const Blog = () => {
   const [search, setSearch] = useState("");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [showAllTags, setShowAllTags] = useState(false);
   const limit = 9;
 
   const { data: tagsData } = useQuery<string[]>({
@@ -125,33 +128,98 @@ const Blog = () => {
               />
             </div>
 
-            {/* Tags Filter */}
-            <div className="flex flex-wrap gap-2 justify-center">
-              <Button
-                variant={selectedTag === null ? "default" : "outline"}
-                size="sm"
-                onClick={() => {
-                  setSelectedTag(null);
-                  setPage(1);
-                }}
-                data-testid="button-filter-all"
-              >
-                الكل
-              </Button>
-              {tagsData?.map((tag) => (
-                <Button
-                  key={tag}
-                  variant={selectedTag === tag ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => {
-                    setSelectedTag(tag);
-                    setPage(1);
-                  }}
-                  data-testid={`button-filter-tag-${tag}`}
-                >
-                  {tag}
-                </Button>
-              ))}
+            {/* Tags Filter - Progressive Disclosure for SEO */}
+            <div className="w-full">
+              {/* All tags in a semantic list for SEO - always in DOM */}
+              <nav aria-label="تصفية حسب الوسوم" className="flex flex-col items-center gap-3">
+                {/* Visible Tags Row */}
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <Button
+                    variant={selectedTag === null ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setSelectedTag(null);
+                      setPage(1);
+                    }}
+                    data-testid="button-filter-all"
+                  >
+                    الكل
+                  </Button>
+                  {tagsData?.slice(0, VISIBLE_TAGS_COUNT).map((tag) => (
+                    <Button
+                      key={tag}
+                      variant={selectedTag === tag ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        setSelectedTag(tag);
+                        setPage(1);
+                      }}
+                      data-testid={`button-filter-tag-${tag}`}
+                    >
+                      {tag}
+                    </Button>
+                  ))}
+                </div>
+                
+                {/* Expandable Tags Section - Hidden but in DOM for SEO */}
+                {tagsData && tagsData.length > VISIBLE_TAGS_COUNT && (
+                  <>
+                    <div 
+                      id="expanded-tags"
+                      className={`flex flex-wrap gap-2 justify-center overflow-hidden transition-all duration-300 ease-in-out ${
+                        showAllTags ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+                      }`}
+                      aria-hidden={!showAllTags}
+                    >
+                      {tagsData.slice(VISIBLE_TAGS_COUNT).map((tag) => (
+                        <Button
+                          key={tag}
+                          variant={selectedTag === tag ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => {
+                            setSelectedTag(tag);
+                            setPage(1);
+                          }}
+                          tabIndex={showAllTags ? 0 : -1}
+                          data-testid={`button-filter-tag-${tag}`}
+                        >
+                          {tag}
+                        </Button>
+                      ))}
+                    </div>
+                    
+                    {/* Toggle Button */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowAllTags(!showAllTags)}
+                      className="text-muted-foreground hover:text-foreground gap-1"
+                      aria-expanded={showAllTags}
+                      aria-controls="expanded-tags"
+                      data-testid="button-toggle-tags"
+                    >
+                      {showAllTags ? (
+                        <>
+                          <ChevronUp className="h-4 w-4" />
+                          إخفاء الوسوم
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="h-4 w-4" />
+                          عرض كل الوسوم ({tagsData.length - VISIBLE_TAGS_COUNT} وسم إضافي)
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
+              </nav>
+              
+              {/* Hidden semantic list for SEO - all tags always crawlable */}
+              <ul className="sr-only" aria-label="جميع الوسوم">
+                {tagsData?.map((tag) => (
+                  <li key={tag}>{tag}</li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>
