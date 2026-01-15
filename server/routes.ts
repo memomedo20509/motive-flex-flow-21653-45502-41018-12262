@@ -1311,26 +1311,50 @@ Sitemap: ${siteUrl}/sitemap.xml
 
   // ============ SEO Routes ============
   
-  // robots.txt
-  app.get("/robots.txt", (req, res) => {
-    const baseUrl = process.env.SITE_URL || `https://${req.get('host')}`;
-    const robotsTxt = `User-agent: *
+  // robots.txt - reads from settings in database
+  app.get("/robots.txt", async (req, res) => {
+    try {
+      // Get robots.txt content from settings (customized by admin)
+      const customRobotsTxt = await storage.getSetting("robots_txt");
+      const siteUrl = await storage.getSetting("site_url");
+      const baseUrl = siteUrl || process.env.SITE_URL || `https://${req.get('host')}`;
+      
+      let robotsTxt: string;
+      
+      if (customRobotsTxt && customRobotsTxt.trim()) {
+        // Use custom content from settings
+        robotsTxt = customRobotsTxt;
+      } else {
+        // Default robots.txt
+        robotsTxt = `User-agent: *
 Allow: /
+
+# Disallow admin and API paths
 Disallow: /admin
-Disallow: /admin/*
-Disallow: /api/*
+Disallow: /admin/
+Disallow: /api/
 Disallow: /login
 
-Sitemap: ${baseUrl}/sitemap.xml
-`;
-    res.set("Content-Type", "text/plain");
-    res.send(robotsTxt);
+# Sitemap
+Sitemap: ${baseUrl}/sitemap.xml`;
+      }
+      
+      res.set("Content-Type", "text/plain");
+      res.send(robotsTxt);
+    } catch (error) {
+      console.error("Error serving robots.txt:", error);
+      // Fallback to basic robots.txt
+      res.set("Content-Type", "text/plain");
+      res.send("User-agent: *\nAllow: /");
+    }
   });
 
-  // sitemap.xml
+  // sitemap.xml - reads site_url from settings
   app.get("/sitemap.xml", async (req, res) => {
     try {
-      const baseUrl = process.env.SITE_URL || `https://${req.get('host')}`;
+      // Get site URL from settings (customized by admin)
+      const siteUrl = await storage.getSetting("site_url");
+      const baseUrl = siteUrl || process.env.SITE_URL || `https://${req.get('host')}`;
       
       // Static pages
       const staticPages = [
