@@ -1,6 +1,6 @@
 import { renderToString } from "react-dom/server";
 import { HelmetProvider } from "react-helmet-async";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, dehydrate } from "@tanstack/react-query";
 import { Switch, Route, Router } from "wouter";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -31,6 +31,7 @@ interface SSRResult {
     link: string;
     script: string;
   };
+  dehydratedState: unknown;
 }
 
 function AppRoutes() {
@@ -58,6 +59,7 @@ export function render(url: string, initialData?: Record<string, unknown>): SSRR
       queries: {
         staleTime: 60 * 1000,
         retry: false,
+        queryFn: () => Promise.resolve(null),
       },
     },
   });
@@ -102,5 +104,6 @@ export function render(url: string, initialData?: Record<string, unknown>): SSRR
       link: helmet?.link?.toString() || "",
       script: helmet?.script?.toString() || "",
     },
+    dehydratedState: dehydrate(queryClient),
   };
 }

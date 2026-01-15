@@ -117,7 +117,7 @@ export async function serveStatic(app: Express) {
   });
 
   // Try to load SSR module for production
-  let ssrRender: ((url: string, initialData?: Record<string, unknown>) => { html: string; helmet: any }) | null = null;
+  let ssrRender: ((url: string, initialData?: Record<string, unknown>) => { html: string; helmet: any; dehydratedState: unknown }) | null = null;
   const ssrEntryPath = path.resolve(ssrPath, "entry-server.js");
   
   if (fs.existsSync(ssrEntryPath)) {
@@ -176,7 +176,7 @@ export async function serveStatic(app: Express) {
           }
         }
         
-        const { html: appHtml, helmet } = ssrRender(url, initialData);
+        const { html: appHtml, helmet, dehydratedState } = ssrRender(url, initialData);
         log(`SSR rendered ${appHtml.length} chars for ${url}`);
         
         let finalHtml = template;
@@ -195,6 +195,12 @@ export async function serveStatic(app: Express) {
         
         // Inject SSR content
         finalHtml = finalHtml.replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`);
+        
+        // Inject dehydrated state for client hydration
+        if (dehydratedState) {
+          const stateScript = `<script>window.__REACT_QUERY_STATE__=${JSON.stringify(dehydratedState).replace(/</g, '\\u003c')}</script>`;
+          finalHtml = finalHtml.replace('</body>', `${stateScript}</body>`);
+        }
         
         res.status(200).set({ "Content-Type": "text/html", "Cache-Control": "no-cache" }).end(finalHtml);
         return;

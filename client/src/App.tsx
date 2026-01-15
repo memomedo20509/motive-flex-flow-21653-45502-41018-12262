@@ -1,7 +1,7 @@
 import { Switch, Route, useLocation } from "wouter";
 import { lazy, Suspense } from "react";
 import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, HydrationBoundary } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -9,6 +9,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AnimatePresence, motion } from "framer-motion";
 import { usePageTransition } from "@/hooks/use-page-transition";
 import { WhatsAppButton } from "./components/WhatsAppButton";
+
+declare global {
+  interface Window {
+    __REACT_QUERY_STATE__?: unknown;
+  }
+}
 
 // Critical pages loaded immediately
 import Index from "./pages/Index";
@@ -131,12 +137,16 @@ function AppContent() {
 }
 
 export default function App() {
+  const dehydratedState = typeof window !== 'undefined' ? window.__REACT_QUERY_STATE__ : undefined;
+  
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <AppContent />
-        </TooltipProvider>
+        <HydrationBoundary state={dehydratedState}>
+          <TooltipProvider>
+            <AppContent />
+          </TooltipProvider>
+        </HydrationBoundary>
       </QueryClientProvider>
     </HelmetProvider>
   );
