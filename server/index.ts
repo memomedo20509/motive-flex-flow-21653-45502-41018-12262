@@ -50,7 +50,7 @@ app.use((req, res, next) => {
   });
 
   if (process.env.NODE_ENV === "production") {
-    serveStatic(app);
+    await serveStatic(app);
   } else {
     await setupVite(app, server);
   }

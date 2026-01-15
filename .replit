@@ -9,8 +9,8 @@ packages = ["imagemagick"]
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["npm", "run", "start"]
-build = ["npm", "run", "build"]
+run = ["node", "dist/index.js"]
+build = ["bash", "-c", "npm run build:client && vite build --config vite.config.ssr.ts && npm run build:server"]
 
 [workflows]
 runButton = "Project"
@@ -39,3 +39,8 @@ waitForPort = 5000
 [[ports]]
 localPort = 5000
 externalPort = 80
+
+[userenv]
+
+[userenv.production]
+SITE_URL = "https://mutflex.com"

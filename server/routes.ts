@@ -1309,6 +1309,90 @@ Sitemap: ${siteUrl}/sitemap.xml
   // Also run immediately on startup
   publishScheduledArticles();
 
+  // ============ SEO Routes ============
+  
+  // robots.txt
+  app.get("/robots.txt", (req, res) => {
+    const baseUrl = process.env.SITE_URL || `https://${req.get('host')}`;
+    const robotsTxt = `User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /api/*
+Disallow: /login
+
+Sitemap: ${baseUrl}/sitemap.xml
+`;
+    res.set("Content-Type", "text/plain");
+    res.send(robotsTxt);
+  });
+
+  // sitemap.xml
+  app.get("/sitemap.xml", async (req, res) => {
+    try {
+      const baseUrl = process.env.SITE_URL || `https://${req.get('host')}`;
+      
+      // Static pages
+      const staticPages = [
+        { url: "/", priority: "1.0", changefreq: "daily" },
+        { url: "/features", priority: "0.9", changefreq: "weekly" },
+        { url: "/industries", priority: "0.9", changefreq: "weekly" },
+        { url: "/pricing", priority: "0.9", changefreq: "weekly" },
+        { url: "/contact", priority: "0.8", changefreq: "monthly" },
+        { url: "/about", priority: "0.8", changefreq: "monthly" },
+        { url: "/free-trial", priority: "0.9", changefreq: "weekly" },
+        { url: "/privacy-policy", priority: "0.3", changefreq: "yearly" },
+        { url: "/blog", priority: "0.9", changefreq: "daily" },
+      ];
+
+      // Get published articles
+      const { articles } = await storage.getArticles({
+        status: "published",
+        page: 1,
+        limit: 1000,
+      });
+
+      const now = new Date().toISOString().split('T')[0];
+
+      let sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+`;
+
+      // Add static pages
+      for (const page of staticPages) {
+        sitemap += `  <url>
+    <loc>${baseUrl}${page.url}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>${page.changefreq}</changefreq>
+    <priority>${page.priority}</priority>
+  </url>
+`;
+      }
+
+      // Add blog articles
+      for (const article of articles) {
+        const lastmod = article.updatedAt 
+          ? new Date(article.updatedAt).toISOString().split('T')[0]
+          : now;
+        sitemap += `  <url>
+    <loc>${baseUrl}/blog/${article.slug}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+`;
+      }
+
+      sitemap += `</urlset>`;
+
+      res.set("Content-Type", "application/xml");
+      res.send(sitemap);
+    } catch (error) {
+      console.error("Error generating sitemap:", error);
+      res.status(500).send("Error generating sitemap");
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

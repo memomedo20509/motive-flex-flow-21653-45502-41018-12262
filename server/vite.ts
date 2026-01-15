@@ -91,8 +91,9 @@ export async function setupVite(app: Express, server: any) {
   return server;
 }
 
-export function serveStatic(app: Express) {
+export async function serveStatic(app: Express) {
   const distPath = path.resolve(__dirname, "public");
+  const ssrPath = path.resolve(__dirname, "ssr");
 
   if (!fs.existsSync(distPath)) {
     log(`ERROR: Could not find the build directory: ${distPath}`);
@@ -106,7 +107,60 @@ export function serveStatic(app: Express) {
   log(`Serving static files from: ${distPath}`);
   app.use(express.static(distPath));
 
-  app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+  // Try to load SSR module for production
+  let ssrRender: ((url: string) => { html: string; helmet: any }) | null = null;
+  const ssrEntryPath = path.resolve(ssrPath, "entry-server.js");
+  
+  if (fs.existsSync(ssrEntryPath)) {
+    try {
+      const ssrModule = await import(ssrEntryPath);
+      ssrRender = ssrModule.render;
+      log(`SSR enabled for production`);
+    } catch (e) {
+      log(`SSR module load failed: ${(e as Error).message}`);
+    }
+  } else {
+    log(`SSR entry not found at ${ssrEntryPath}, falling back to CSR`);
+  }
+
+  // Read the template once
+  const templatePath = path.resolve(distPath, "index.html");
+  const template = fs.readFileSync(templatePath, "utf-8");
+
+  app.use("*", async (req, res) => {
+    const url = req.originalUrl;
+    
+    // Try SSR for SEO-critical routes
+    if (ssrRender && isSSRRoute(url)) {
+      try {
+        const { html: appHtml, helmet } = ssrRender(url);
+        
+        let finalHtml = template;
+        
+        // Replace title
+        if (helmet.title) {
+          finalHtml = finalHtml.replace(/<title>.*?<\/title>/s, helmet.title);
+        }
+        
+        // Add meta tags
+        const headEnd = finalHtml.indexOf("</head>");
+        if (headEnd !== -1) {
+          const metaTags = `${helmet.meta || ''}${helmet.link || ''}`;
+          finalHtml = finalHtml.slice(0, headEnd) + metaTags + finalHtml.slice(headEnd);
+        }
+        
+        // Inject SSR content
+        finalHtml = finalHtml.replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`);
+        
+        res.status(200).set({ "Content-Type": "text/html", "Cache-Control": "no-cache" }).end(finalHtml);
+        return;
+      } catch (ssrError) {
+        log(`Production SSR error for ${url}: ${(ssrError as Error).message}`);
+        // Fall through to CSR
+      }
+    }
+    
+    // Fallback to CSR
+    res.sendFile(templatePath);
   });
 }
