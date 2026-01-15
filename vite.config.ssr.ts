@@ -7,11 +7,11 @@ export default defineConfig({
   build: {
     outDir: "../dist/ssr",
     emptyOutDir: true,
-    ssr: true,
+    ssr: "./src/entry-server.tsx",
     rollupOptions: {
-      input: "./client/src/entry-server.tsx",
       output: {
         format: "esm",
+        entryFileNames: "entry-server.js",
       },
     },
   },

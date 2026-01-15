@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch --ignore client --ignore dist --ignore 'vite.config.ts.timestamp-*' --ignore '**/*.timestamp-*' server/index.ts",
-    "build": "npm run build:client && npm run build:server",
+    "build": "npm run build:client && npm run build:ssr && npm run build:server",
     "build:client": "vite build",
+    "build:ssr": "vite build --config vite.config.ssr.ts",
     "build:server": "esbuild server/index.ts --bundle --platform=node --packages=external --format=esm --outfile=dist/index.js",
     "start": "NODE_ENV=production node dist/index.js",
     "lint": "eslint .",
