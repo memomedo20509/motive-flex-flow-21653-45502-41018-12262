@@ -66,10 +66,18 @@ export async function setupVite(app: Express, server: any) {
             finalHtml = finalHtml.replace(/<title>.*?<\/title>/s, helmet.title);
           }
           
+          // Remove template's default meta description to avoid duplicates (only if SEOHead provides one)
+          if (helmet.meta && helmet.meta.includes('name="description"')) {
+            finalHtml = finalHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, '');
+          }
+          
+          // Add helmet meta and link tags
           const headEnd = finalHtml.indexOf("</head>");
           if (headEnd !== -1) {
-            const metaTags = `${helmet.meta}${helmet.link}`;
-            finalHtml = finalHtml.slice(0, headEnd) + metaTags + finalHtml.slice(headEnd);
+            const metaTags = `${helmet.meta || ''}${helmet.link || ''}`;
+            if (metaTags) {
+              finalHtml = finalHtml.slice(0, headEnd) + metaTags + finalHtml.slice(headEnd);
+            }
           }
           
           finalHtml = finalHtml.replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`);
@@ -200,11 +208,18 @@ export async function serveStatic(app: Express) {
           finalHtml = finalHtml.replace(/<title>.*?<\/title>/s, helmet.title);
         }
         
-        // Add meta tags
+        // Remove template's default meta description to avoid duplicates (only if SEOHead provides one)
+        if (helmet.meta && helmet.meta.includes('name="description"')) {
+          finalHtml = finalHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, '');
+        }
+        
+        // Add helmet meta and link tags
         const headEnd = finalHtml.indexOf("</head>");
         if (headEnd !== -1) {
           const metaTags = `${helmet.meta || ''}${helmet.link || ''}`;
-          finalHtml = finalHtml.slice(0, headEnd) + metaTags + finalHtml.slice(headEnd);
+          if (metaTags) {
+            finalHtml = finalHtml.slice(0, headEnd) + metaTags + finalHtml.slice(headEnd);
+          }
         }
         
         // Inject SSR content
