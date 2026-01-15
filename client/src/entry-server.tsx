@@ -53,6 +53,9 @@ function AppRoutes() {
 }
 
 export function render(url: string, initialData?: Record<string, unknown>): SSRResult {
+  // Decode URL for proper routing (wouter's useParams decodes on client)
+  const decodedUrl = decodeURIComponent(url);
+  
   const helmetContext: Record<string, any> = {};
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -77,7 +80,7 @@ export function render(url: string, initialData?: Record<string, unknown>): SSRR
   }
 
   const useStaticLocation = (): [string, (to: string) => void] => {
-    return [url, () => {}];
+    return [decodedUrl, () => {}];
   };
 
   const html = renderToString(

@@ -41,6 +41,9 @@ const BlogPost = () => {
 
   const tableOfContents = useMemo(() => {
     if (!article?.content) return [];
+    // Skip DOMParser on server (SSR) - only parse on client
+    if (typeof window === "undefined") return [];
+    
     const headings: { level: number; text: string; id: string }[] = [];
     const parser = new DOMParser();
     const doc = parser.parseFromString(article.content, 'text/html');
