@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath, pathToFileURL } from "url";
 import { createServer as createViteServer, type ViteDevServer } from "vite";
+import { storage } from "./storage";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -116,7 +117,7 @@ export async function serveStatic(app: Express) {
   });
 
   // Try to load SSR module for production
-  let ssrRender: ((url: string) => { html: string; helmet: any }) | null = null;
+  let ssrRender: ((url: string, initialData?: Record<string, unknown>) => { html: string; helmet: any }) | null = null;
   const ssrEntryPath = path.resolve(ssrPath, "entry-server.js");
   
   if (fs.existsSync(ssrEntryPath)) {
@@ -140,12 +141,42 @@ export async function serveStatic(app: Express) {
 
   app.use("*", async (req, res) => {
     const url = req.originalUrl;
+    const pathname = url.split("?")[0];
     
     // Try SSR for SEO-critical routes
     if (ssrRender && isSSRRoute(url)) {
       try {
         log(`SSR rendering: ${url}`);
-        const { html: appHtml, helmet } = ssrRender(url);
+        
+        // Fetch initial data for specific routes
+        let initialData: Record<string, unknown> = {};
+        
+        // For /blog page, fetch published articles
+        if (pathname === "/blog") {
+          try {
+            const { articles, total } = await storage.getArticles({ status: "published", page: 1, limit: 100 });
+            initialData["/api/articles"] = { articles, total };
+            log(`SSR pre-fetched ${articles.length} articles for /blog`);
+          } catch (e) {
+            log(`SSR data fetch error: ${(e as Error).message}`);
+          }
+        }
+        
+        // For individual blog posts, fetch the article
+        if (pathname.startsWith("/blog/") && pathname !== "/blog") {
+          const slug = pathname.replace("/blog/", "");
+          try {
+            const article = await storage.getArticleBySlug(slug);
+            if (article) {
+              initialData[`/api/articles/slug/${slug}`] = article;
+              log(`SSR pre-fetched article: ${slug}`);
+            }
+          } catch (e) {
+            log(`SSR article fetch error: ${(e as Error).message}`);
+          }
+        }
+        
+        const { html: appHtml, helmet } = ssrRender(url, initialData);
         log(`SSR rendered ${appHtml.length} chars for ${url}`);
         
         let finalHtml = template;

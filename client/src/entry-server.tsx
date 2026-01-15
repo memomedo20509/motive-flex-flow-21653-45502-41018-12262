@@ -62,9 +62,15 @@ export function render(url: string, initialData?: Record<string, unknown>): SSRR
     },
   });
 
+  // Hydrate QueryClient with initial data from server
   if (initialData) {
     Object.entries(initialData).forEach(([key, data]) => {
-      queryClient.setQueryData([key], data);
+      // For /api/articles, set with query params to match Blog.tsx query
+      if (key === "/api/articles") {
+        queryClient.setQueryData(["/api/articles", { status: "published", tag: null, search: "", page: 1, limit: 9 }], data);
+      } else {
+        queryClient.setQueryData([key], data);
+      }
     });
   }
 
