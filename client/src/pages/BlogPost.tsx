@@ -80,9 +80,16 @@ const BlogPost = () => {
   };
 
 
+  // Generate title from slug as fallback for SSR
+  const slugTitle = slug ? decodeURIComponent(slug).replace(/-/g, ' ') : 'مقال';
+  
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background" dir="rtl">
+        <SEOHead 
+          title={`${slugTitle} | موتفلكس`}
+          description={`اقرأ مقال ${slugTitle} على مدونة موتفلكس`}
+        />
         <Navbar />
         <div className="pt-32 pb-16">
           <section className="relative py-16 overflow-hidden">
@@ -113,6 +120,11 @@ const BlogPost = () => {
   if (error || !article) {
     return (
       <div className="min-h-screen bg-background" dir="rtl">
+        <SEOHead 
+          title={`${slugTitle} | موتفلكس`}
+          description={`اقرأ مقال ${slugTitle} على مدونة موتفلكس`}
+          noindex={true}
+        />
         <Navbar />
         <section className="relative pt-32 pb-20 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-[hsl(177,81%,30%)] via-[hsl(177,81%,35%)] to-[hsl(45,76%,51%)]"></div>
