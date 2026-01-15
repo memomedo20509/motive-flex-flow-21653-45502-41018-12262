@@ -162,14 +162,27 @@ export async function serveStatic(app: Express) {
           }
         }
         
-        // For individual blog posts, fetch the article
+        // For individual blog posts, fetch the article with related articles
         if (pathname.startsWith("/blog/") && pathname !== "/blog") {
           const slug = pathname.replace("/blog/", "");
           try {
             const article = await storage.getArticleBySlug(slug);
             if (article) {
-              initialData[`/api/articles/slug/${slug}`] = article;
-              log(`SSR pre-fetched article: ${slug}`);
+              // Fetch related articles (same tags, excluding current)
+              let relatedArticles: any[] = [];
+              try {
+                const { articles } = await storage.getArticles({ 
+                  status: "published", 
+                  tag: article.tags?.[0] || undefined, 
+                  page: 1, 
+                  limit: 4 
+                });
+                relatedArticles = articles.filter(a => a.id !== article.id).slice(0, 3);
+              } catch {}
+              
+              // Match the exact queryKey format used in BlogPost.tsx
+              initialData[`/api/articles/${slug}`] = { article, relatedArticles };
+              log(`SSR pre-fetched article: ${slug} (${article.content?.length || 0} chars content)`);
             }
           } catch (e) {
             log(`SSR article fetch error: ${(e as Error).message}`);
