@@ -105,7 +105,15 @@ export async function serveStatic(app: Express) {
   }
 
   log(`Serving static files from: ${distPath}`);
-  app.use(express.static(distPath));
+  
+  // Serve static files but skip index.html for SSR routes
+  app.use((req, res, next) => {
+    // Skip SSR routes - let them be handled by SSR handler
+    if (isSSRRoute(req.path)) {
+      return next();
+    }
+    express.static(distPath)(req, res, next);
+  });
 
   // Try to load SSR module for production
   let ssrRender: ((url: string) => { html: string; helmet: any }) | null = null;
@@ -136,7 +144,9 @@ export async function serveStatic(app: Express) {
     // Try SSR for SEO-critical routes
     if (ssrRender && isSSRRoute(url)) {
       try {
+        log(`SSR rendering: ${url}`);
         const { html: appHtml, helmet } = ssrRender(url);
+        log(`SSR rendered ${appHtml.length} chars for ${url}`);
         
         let finalHtml = template;
         
