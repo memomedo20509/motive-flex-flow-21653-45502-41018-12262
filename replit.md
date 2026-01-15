@@ -19,6 +19,11 @@ Key UI/UX decisions include:
 - **Reusable Components**: `useIntersection` hook and `AnimateOnScroll` wrapper.
 - **Landing Page Enhancements**: Simplified CTA design, enhanced typography, trust badges, icon-accent lighting on hover for workflow cards, and staggered grid reveals for features.
 - **SEO Integration**: Comprehensive SEO fields (metaTitle, metaDescription, metaKeywords, canonicalUrl, ogTitle, ogDescription, ogImage, robotsDirective, readingTime) are integrated into article schemas and managed through an enhanced ArticleForm. This includes an HTML file import feature and server-side HTML parsing using Cheerio. SEO meta tags are dynamically generated for all static and dynamic pages.
+- **SEO Infrastructure**: 
+  - Dynamic `sitemap.xml` endpoint that includes all static pages and published blog articles with proper priorities and change frequencies.
+  - `robots.txt` endpoint with proper disallow rules for admin/api paths and sitemap reference.
+  - Server-Side Rendering (SSR) support for production builds to ensure search engines can crawl all pages.
+  - `SEOHead` component using react-helmet-async for managing meta tags across all pages.
 - **Performance**: Images include `width`/`height` attributes and `loading="lazy"`. Font loading is optimized with preload hints and `font-display: swap`, and unused font weights/CDNs are removed. React.lazy and Suspense are used for code splitting on non-critical paths.
 
 ### Backend Architecture
