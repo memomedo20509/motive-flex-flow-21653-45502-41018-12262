@@ -1,7 +1,7 @@
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
+import { fileURLToPath, pathToFileURL } from "url";
 import { createServer as createViteServer, type ViteDevServer } from "vite";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -113,11 +113,14 @@ export async function serveStatic(app: Express) {
   
   if (fs.existsSync(ssrEntryPath)) {
     try {
-      const ssrModule = await import(ssrEntryPath);
+      // Use file:// URL for ESM dynamic imports
+      const ssrModuleUrl = pathToFileURL(ssrEntryPath).href;
+      const ssrModule = await import(ssrModuleUrl);
       ssrRender = ssrModule.render;
       log(`SSR enabled for production`);
     } catch (e) {
       log(`SSR module load failed: ${(e as Error).message}`);
+      console.error('SSR load error details:', e);
     }
   } else {
     log(`SSR entry not found at ${ssrEntryPath}, falling back to CSR`);
