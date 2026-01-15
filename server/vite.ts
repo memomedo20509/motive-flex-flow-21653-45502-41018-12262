@@ -164,7 +164,8 @@ export async function serveStatic(app: Express) {
         
         // For individual blog posts, fetch the article with related articles
         if (pathname.startsWith("/blog/") && pathname !== "/blog") {
-          const slug = pathname.replace("/blog/", "");
+          // Decode the slug to match what useParams returns on client
+          const slug = decodeURIComponent(pathname.replace("/blog/", ""));
           try {
             const article = await storage.getArticleBySlug(slug);
             if (article) {
