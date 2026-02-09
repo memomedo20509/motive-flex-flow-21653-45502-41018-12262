@@ -11,7 +11,7 @@ import { AnimateOnScroll } from "@/components/AnimateOnScroll";
 import { SEOHead } from "@/components/SEOHead";
 import { ArticleSchema } from "@/components/SchemaMarkup";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
-import { Calendar, Eye, User, ArrowRight, Share2, Twitter, Facebook, Linkedin, Copy, Check, ArrowLeft, BookOpen, FileText } from "lucide-react";
+import { Calendar, Eye, User, ArrowRight, Share2, Twitter, Facebook, Linkedin, Copy, Check, ArrowLeft, BookOpen, FileText, Zap, CheckCircle, Phone, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Article } from "@shared/schema";
 
@@ -38,6 +38,27 @@ const BlogPost = () => {
     if (!article?.content) return "";
     return article.content;
   }, [article?.content]);
+
+  const contentParts = useMemo(() => {
+    if (!htmlContent) return { before: "", after: "" };
+    const parser = typeof window !== "undefined" ? new DOMParser() : null;
+    if (!parser) return { before: htmlContent, after: "" };
+    
+    const doc = parser.parseFromString(htmlContent, 'text/html');
+    const allElements = Array.from(doc.body.children);
+    const totalElements = allElements.length;
+    
+    if (totalElements < 6) return { before: htmlContent, after: "" };
+    
+    const splitIndex = Math.floor(totalElements * 0.4);
+    const beforeElements = allElements.slice(0, splitIndex);
+    const afterElements = allElements.slice(splitIndex);
+    
+    const before = beforeElements.map(el => el.outerHTML).join("");
+    const after = afterElements.map(el => el.outerHTML).join("");
+    
+    return { before, after };
+  }, [htmlContent]);
 
   const tableOfContents = useMemo(() => {
     if (!article?.content) return [];
@@ -343,6 +364,59 @@ const BlogPost = () => {
                       </div>
                     </CardContent>
                   </Card>
+
+                  {/* Sidebar CTA - Free Trial */}
+                  <Card className="border-2 border-secondary/30 bg-gradient-to-br from-secondary/10 via-card to-primary/10" data-testid="card-sidebar-cta">
+                    <CardContent className="p-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 rounded-md bg-secondary/20 flex items-center justify-center">
+                          <Sparkles className="h-4 w-4 text-secondary" />
+                        </div>
+                        <h3 className="font-bold text-sm">جرّب موتفلكس مجاناً</h3>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+                        ابدأ تجربتك المجانية لمدة شهر كامل واكتشف كيف يمكن لموتفلكس تحويل عملك
+                      </p>
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <CheckCircle className="h-3.5 w-3.5 text-secondary shrink-0" />
+                          <span>بدون بطاقة ائتمان</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <CheckCircle className="h-3.5 w-3.5 text-secondary shrink-0" />
+                          <span>دعم فني متواصل</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <CheckCircle className="h-3.5 w-3.5 text-secondary shrink-0" />
+                          <span>جميع المميزات مفتوحة</span>
+                        </div>
+                      </div>
+                      <Button
+                        className="w-full"
+                        variant="default"
+                        size="default"
+                        asChild
+                        data-testid="button-sidebar-cta-trial"
+                      >
+                        <Link href="/free-trial">
+                          <Zap className="h-4 w-4 ml-2" />
+                          ابدأ تجربتك المجانية
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="w-full mt-2 text-xs"
+                        size="sm"
+                        asChild
+                        data-testid="button-sidebar-cta-contact"
+                      >
+                        <Link href="/contact">
+                          <Phone className="h-3 w-3 ml-1" />
+                          أو تواصل معنا
+                        </Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
                 </div>
               </aside>
             )}
@@ -364,15 +438,135 @@ const BlogPost = () => {
 
               <Card className="border-0 shadow-none hover:shadow-none bg-transparent">
                 <CardContent className="p-0">
-                  <div 
-                    className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-secondary prose-strong:text-foreground prose-ul:text-muted-foreground prose-ol:text-muted-foreground prose-blockquote:border-secondary prose-blockquote:text-muted-foreground"
-                    dangerouslySetInnerHTML={{ __html: htmlContent }}
-                    data-testid="article-content"
-                  />
+                  {contentParts.after ? (
+                    <>
+                      <div 
+                        className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-secondary prose-strong:text-foreground prose-ul:text-muted-foreground prose-ol:text-muted-foreground prose-blockquote:border-secondary prose-blockquote:text-muted-foreground"
+                        dangerouslySetInnerHTML={{ __html: contentParts.before }}
+                        data-testid="article-content-before"
+                      />
+
+                      {/* Inline CTA */}
+                      <div className="my-10 rounded-md bg-gradient-to-l from-secondary/10 via-secondary/5 to-primary/10 border border-secondary/20 p-6 md:p-8" data-testid="card-inline-cta">
+                        <div className="flex flex-col md:flex-row flex-wrap items-center gap-6">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Zap className="h-5 w-5 text-primary" />
+                              <h3 className="font-bold text-lg">هل تبحث عن حل ذكي لإدارة عملك؟</h3>
+                            </div>
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                              جرّب موتفلكس مجاناً لمدة شهر كامل واكتشف كيف يمكن لنظامنا تبسيط عمليات التصنيع والتركيب في منشأتك
+                            </p>
+                          </div>
+                          <div className="flex flex-col sm:flex-row flex-wrap gap-3 shrink-0">
+                            <Button
+                              variant="default"
+                              asChild
+                              data-testid="button-inline-cta-trial"
+                            >
+                              <Link href="/free-trial">
+                                <Zap className="h-4 w-4 ml-2" />
+                                ابدأ تجربتك المجانية
+                              </Link>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              asChild
+                              data-testid="button-inline-cta-features"
+                            >
+                              <Link href="/features">
+                                اكتشف المميزات
+                              </Link>
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div 
+                        className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-secondary prose-strong:text-foreground prose-ul:text-muted-foreground prose-ol:text-muted-foreground prose-blockquote:border-secondary prose-blockquote:text-muted-foreground"
+                        dangerouslySetInnerHTML={{ __html: contentParts.after }}
+                        data-testid="article-content-after"
+                      />
+                    </>
+                  ) : (
+                    <div 
+                      className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-secondary prose-strong:text-foreground prose-ul:text-muted-foreground prose-ol:text-muted-foreground prose-blockquote:border-secondary prose-blockquote:text-muted-foreground"
+                      dangerouslySetInnerHTML={{ __html: htmlContent }}
+                      data-testid="article-content"
+                    />
+                  )}
                 </CardContent>
               </Card>
             </article>
           </div>
+        </div>
+      </section>
+
+      {/* End of Article CTA */}
+      <section className="py-16 relative overflow-hidden" data-testid="section-end-cta">
+        <div className="absolute inset-0 bg-gradient-to-br from-[hsl(177,81%,30%)] from-0% via-[hsl(177,81%,35%)] via-35% to-[hsl(45,76%,51%)] to-100%"></div>
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="absolute inset-0">
+          <div className="absolute top-10 right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-pulse-slow"></div>
+          <div className="absolute bottom-10 left-20 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1.5s' }}></div>
+        </div>
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <AnimateOnScroll>
+            <div className="max-w-3xl mx-auto text-center text-white">
+              <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm mb-6">
+                <Zap className="w-7 h-7 text-white" />
+              </div>
+              <h2 className="text-2xl md:text-3xl font-bold mb-4">
+                حوّل منشأتك من الفوضى إلى النظام الذكي
+              </h2>
+              <p className="text-lg text-white/90 mb-6 leading-relaxed max-w-2xl mx-auto">
+                انضم لمئات المنشآت التي تدير عملياتها بكفاءة عالية مع موتفلكس. جرّب النظام مجاناً لمدة شهر كامل
+              </p>
+
+              <div className="flex flex-wrap justify-center gap-4 mb-8">
+                <div className="flex items-center gap-2 text-sm bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+                  <CheckCircle className="h-4 w-4 text-primary" />
+                  <span>تجربة مجانية لمدة شهر</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+                  <CheckCircle className="h-4 w-4 text-primary" />
+                  <span>بدون بطاقة ائتمان</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+                  <CheckCircle className="h-4 w-4 text-primary" />
+                  <span>دعم فني متواصل</span>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center items-center">
+                <Button
+                  size="default"
+                  className="px-10 bg-white text-primary shadow-xl font-bold"
+                  asChild
+                  data-testid="button-end-cta-trial"
+                >
+                  <Link href="/free-trial">
+                    <Zap className="ml-2 w-4 h-4" />
+                    ابدأ تجربتك المجانية الآن
+                  </Link>
+                </Button>
+                
+                <Button
+                  size="default"
+                  variant="outline"
+                  className="px-10 border-white/50 text-white backdrop-blur-md shadow-xl font-semibold"
+                  asChild
+                  data-testid="button-end-cta-contact"
+                >
+                  <Link href="/contact">
+                    <Phone className="ml-2 w-4 h-4" />
+                    تواصل معنا
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </AnimateOnScroll>
         </div>
       </section>
 
