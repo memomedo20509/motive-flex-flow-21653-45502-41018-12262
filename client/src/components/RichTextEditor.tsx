@@ -50,6 +50,10 @@ import {
   Settings,
   Maximize2,
   Minimize2,
+  Upload,
+  LinkIcon as LinkIconLucide,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -180,24 +184,36 @@ interface ImagePropertiesDialogProps {
   onOpenChange: (open: boolean) => void;
   imageAttrs: ImageAttributes;
   onSave: (attrs: ImageAttributes) => void;
+  onDelete: () => void;
+  onReplace: (file: File) => Promise<string | null>;
 }
 
-const ImagePropertiesDialog = ({ open, onOpenChange, imageAttrs, onSave }: ImagePropertiesDialogProps) => {
+const ImagePropertiesDialog = ({ open, onOpenChange, imageAttrs, onSave, onDelete, onReplace }: ImagePropertiesDialogProps) => {
   const [alt, setAlt] = useState(imageAttrs.alt || '');
   const [title, setTitle] = useState(imageAttrs.title || '');
   const [width, setWidth] = useState(imageAttrs.width || '100%');
   const [alignment, setAlignment] = useState<'left' | 'center' | 'right'>(imageAttrs.alignment || 'center');
+  const [currentSrc, setCurrentSrc] = useState(imageAttrs.src || '');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [urlValue, setUrlValue] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const replaceFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setAlt(imageAttrs.alt || '');
     setTitle(imageAttrs.title || '');
     setWidth(imageAttrs.width || '100%');
     setAlignment(imageAttrs.alignment || 'center');
+    setCurrentSrc(imageAttrs.src || '');
+    setShowDeleteConfirm(false);
+    setShowUrlInput(false);
+    setUrlValue('');
   }, [imageAttrs]);
 
   const handleSave = () => {
     onSave({
-      src: imageAttrs.src,
+      src: currentSrc,
       alt,
       title,
       width,
@@ -206,15 +222,124 @@ const ImagePropertiesDialog = ({ open, onOpenChange, imageAttrs, onSave }: Image
     onOpenChange(false);
   };
 
+  const handleFileReplace = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    setIsUploading(true);
+    const url = await onReplace(file);
+    setIsUploading(false);
+    if (url) {
+      setCurrentSrc(url);
+    }
+  };
+
+  const handleUrlReplace = () => {
+    const trimmed = urlValue.trim();
+    if (!trimmed) return;
+    try {
+      const parsed = new URL(trimmed);
+      if (!['http:', 'https:'].includes(parsed.protocol)) {
+        return;
+      }
+      setCurrentSrc(trimmed);
+      setShowUrlInput(false);
+      setUrlValue('');
+    } catch {
+      return;
+    }
+  };
+
+  const handleDelete = () => {
+    onDelete();
+    onOpenChange(false);
+    setShowDeleteConfirm(false);
+  };
+
   const widthOptions = ['25%', '50%', '75%', '100%'];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md" data-testid="image-properties-dialog">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto" data-testid="image-properties-dialog">
         <DialogHeader>
           <DialogTitle>خصائص الصورة</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
+          <div className="rounded-md border p-3 bg-muted/50 space-y-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <p className="text-sm font-medium">الصورة الحالية</p>
+              <div className="flex gap-2 flex-wrap">
+                <input
+                  ref={replaceFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileReplace}
+                  data-testid="input-replace-image-file"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => replaceFileInputRef.current?.click()}
+                  disabled={isUploading}
+                  data-testid="button-replace-image-upload"
+                >
+                  <Upload className="h-3.5 w-3.5 ml-1.5" />
+                  {isUploading ? 'جاري الرفع...' : 'رفع بديلة'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowUrlInput(!showUrlInput)}
+                  data-testid="button-replace-image-url"
+                >
+                  <LinkIconLucide className="h-3.5 w-3.5 ml-1.5" />
+                  رابط URL
+                </Button>
+              </div>
+            </div>
+
+            {showUrlInput && (
+              <div className="flex gap-2">
+                <Input
+                  value={urlValue}
+                  onChange={(e) => setUrlValue(e.target.value)}
+                  placeholder="https://example.com/image.jpg"
+                  dir="ltr"
+                  className="flex-1"
+                  data-testid="input-replace-image-url"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleUrlReplace();
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleUrlReplace}
+                  disabled={!urlValue.trim()}
+                  data-testid="button-confirm-url-replace"
+                >
+                  تطبيق
+                </Button>
+              </div>
+            )}
+
+            <div style={{ textAlign: alignment }}>
+              <img
+                src={currentSrc}
+                alt={alt || 'معاينة'}
+                style={{ width, maxWidth: '100%', display: 'inline-block' }}
+                className="rounded-md"
+              />
+              {title && <p className="text-xs text-muted-foreground mt-1">{title}</p>}
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="alt-text">النص البديل (Alt Text) - مهم للـ SEO</Label>
             <Input
@@ -274,20 +399,52 @@ const ImagePropertiesDialog = ({ open, onOpenChange, imageAttrs, onSave }: Image
             </Select>
           </div>
 
-          <div className="rounded-md border p-2 bg-muted/50">
-            <p className="text-xs font-medium mb-1">معاينة:</p>
-            <div style={{ textAlign: alignment }}>
-              <img 
-                src={imageAttrs.src} 
-                alt={alt || 'معاينة'} 
-                style={{ width, maxWidth: '100%', display: 'inline-block' }}
-              />
-              {title && <p className="text-xs text-muted-foreground mt-1">{title}</p>}
+          {!showDeleteConfirm ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full text-destructive"
+              onClick={() => setShowDeleteConfirm(true)}
+              data-testid="button-delete-image"
+            >
+              <Trash2 className="h-3.5 w-3.5 ml-1.5" />
+              حذف الصورة من المقالة
+            </Button>
+          ) : (
+            <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3 space-y-2">
+              <div className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <p className="text-sm font-medium">هل أنت متأكد من حذف الصورة؟</p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                سيتم إزالة الصورة نهائياً من المقالة ولا يمكن التراجع عن هذا الإجراء.
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDelete}
+                  data-testid="button-confirm-delete-image"
+                >
+                  نعم، احذف الصورة
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  data-testid="button-cancel-delete-image"
+                >
+                  إلغاء
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
         <DialogFooter className="gap-2">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} data-testid="button-cancel-image-props">
             إلغاء
           </Button>
           <Button type="button" onClick={handleSave} data-testid="btn-save-image-props">
@@ -755,6 +912,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
     if (node && node.type.name === 'image') {
       const tr = state.tr.setNodeMarkup(selectedImagePos, undefined, {
         ...node.attrs,
+        src: attrs.src || node.attrs.src,
         alt: attrs.alt || '',
         title: attrs.title || '',
         width: attrs.width || '100%',
@@ -771,6 +929,28 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
       toast({ title: "لم يتم العثور على الصورة", variant: "destructive" });
     }
     
+    setSelectedImagePos(null);
+  }, [editor, selectedImagePos, toast]);
+
+  const handleImageDelete = useCallback(() => {
+    if (!editor || selectedImagePos === null) return;
+
+    const { state, view } = editor;
+    const node = state.doc.nodeAt(selectedImagePos);
+
+    if (node && node.type.name === 'image') {
+      const tr = state.tr.delete(selectedImagePos, selectedImagePos + node.nodeSize);
+      view.dispatch(tr);
+
+      setTimeout(() => {
+        editor.chain().focus().run();
+      }, 100);
+
+      toast({ title: "تم حذف الصورة من المقالة" });
+    } else {
+      toast({ title: "لم يتم العثور على الصورة", variant: "destructive" });
+    }
+
     setSelectedImagePos(null);
   }, [editor, selectedImagePos, toast]);
 
@@ -808,6 +988,8 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
         onOpenChange={setImageDialogOpen}
         imageAttrs={selectedImageAttrs}
         onSave={handleImagePropertiesSave}
+        onDelete={handleImageDelete}
+        onReplace={uploadImage}
       />
       <style>{`
         .ProseMirror .image-container {
