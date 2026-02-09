@@ -729,8 +729,12 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   const [htmlSource, setHtmlSource] = useState(value);
   const [isSuperArticle, setIsSuperArticle] = useState(false);
   const [showSwitchWarning, setShowSwitchWarning] = useState(false);
+  const [sourceTab, setSourceTab] = useState<'edit' | 'preview'>('edit');
+  const [previewHtml, setPreviewHtml] = useState('');
   const initialCheckDone = useRef(false);
   const isSourceModeRef = useRef(false);
+  const previewIframeRef = useRef<HTMLIFrameElement>(null);
+  const previewDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const uploadImage = useCallback(async (file: File): Promise<string | null> => {
     if (!file.type.startsWith('image/')) {
@@ -1065,7 +1069,27 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   const handleSourceChange = useCallback((newHtml: string) => {
     setHtmlSource(newHtml);
     onChange(newHtml);
+    if (previewDebounceRef.current) {
+      clearTimeout(previewDebounceRef.current);
+    }
+    previewDebounceRef.current = setTimeout(() => {
+      setPreviewHtml(newHtml);
+    }, 500);
   }, [onChange]);
+
+  useEffect(() => {
+    if (sourceTab === 'preview') {
+      setPreviewHtml(htmlSource);
+    }
+  }, [sourceTab]);
+
+  useEffect(() => {
+    return () => {
+      if (previewDebounceRef.current) {
+        clearTimeout(previewDebounceRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="border rounded-md overflow-hidden bg-background" data-testid="rich-text-editor">
@@ -1118,15 +1142,92 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
       )}
 
       {isSourceMode ? (
-        <textarea
-          value={htmlSource}
-          onChange={(e) => handleSourceChange(e.target.value)}
-          className="w-full min-h-[400px] p-4 font-mono text-sm bg-muted/20 text-foreground focus:outline-none resize-y"
-          dir="ltr"
-          spellCheck={false}
-          placeholder="اكتب كود HTML هنا..."
-          data-testid="textarea-html-source"
-        />
+        <div>
+          <div className="flex border-b" data-testid="source-mode-tabs">
+            <button
+              type="button"
+              onClick={() => setSourceTab('edit')}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                sourceTab === 'edit'
+                  ? 'border-b-2 border-primary text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              data-testid="tab-html-edit"
+            >
+              <FileCode className="h-3.5 w-3.5 inline-block ml-1.5" />
+              تعديل HTML
+            </button>
+            <button
+              type="button"
+              onClick={() => setSourceTab('preview')}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                sourceTab === 'preview'
+                  ? 'border-b-2 border-primary text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              data-testid="tab-preview"
+            >
+              <Eye className="h-3.5 w-3.5 inline-block ml-1.5" />
+              معاينة
+            </button>
+          </div>
+
+          {sourceTab === 'edit' ? (
+            <textarea
+              value={htmlSource}
+              onChange={(e) => handleSourceChange(e.target.value)}
+              className="w-full min-h-[400px] p-4 font-mono text-sm bg-muted/20 text-foreground focus:outline-none resize-y"
+              dir="ltr"
+              spellCheck={false}
+              placeholder="اكتب كود HTML هنا..."
+              data-testid="textarea-html-source"
+            />
+          ) : (
+            <div className="min-h-[400px] bg-white" data-testid="preview-container">
+              <iframe
+                ref={previewIframeRef}
+                srcDoc={`<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { 
+    font-family: 'Tajawal', 'Segoe UI', sans-serif; 
+    line-height: 1.8; 
+    color: #333; 
+    padding: 24px;
+    direction: rtl;
+    font-size: 16px;
+  }
+  img { max-width: 100%; height: auto; border-radius: 8px; }
+  h1, h2, h3, h4, h5, h6 { margin: 1em 0 0.5em; line-height: 1.4; }
+  h1 { font-size: 1.8em; }
+  h2 { font-size: 1.5em; }
+  h3 { font-size: 1.25em; }
+  p { margin: 0.75em 0; }
+  ul, ol { padding-right: 1.5em; margin: 0.75em 0; }
+  a { color: #0d9488; text-decoration: none; }
+  table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+  th, td { border: 1px solid #e5e7eb; padding: 8px 12px; text-align: right; }
+  th { background: #f9fafb; font-weight: 600; }
+  blockquote { border-right: 4px solid #0d9488; padding: 12px 16px; margin: 1em 0; background: #f0fdfa; }
+  strong { font-weight: 700; }
+</style>
+</head>
+<body>${previewHtml}</body>
+</html>`}
+                className="w-full min-h-[400px] border-0"
+                style={{ height: '600px' }}
+                title="معاينة المقالة"
+                sandbox="allow-same-origin"
+                data-testid="preview-iframe"
+              />
+            </div>
+          )}
+        </div>
       ) : (
         <EditorContent editor={editor} />
       )}
