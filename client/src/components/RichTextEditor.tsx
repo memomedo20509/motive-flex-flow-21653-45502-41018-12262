@@ -54,6 +54,8 @@ import {
   LinkIcon as LinkIconLucide,
   Trash2,
   AlertTriangle,
+  FileCode,
+  Eye,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -458,10 +460,14 @@ const ImagePropertiesDialog = ({ open, onOpenChange, imageAttrs, onSave, onDelet
 
 const MenuBar = ({ 
   editor, 
-  onImagePropertiesOpen 
+  onImagePropertiesOpen,
+  isSourceMode,
+  onToggleSourceMode,
 }: { 
   editor: Editor | null;
   onImagePropertiesOpen: () => void;
+  isSourceMode: boolean;
+  onToggleSourceMode: () => void;
 }) => {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -670,11 +676,22 @@ const MenuBar = ({
         <ImageIcon className="h-4 w-4" />
       </MenuButton>
       
-      {isImageSelected && (
+      {isImageSelected && !isSourceMode && (
         <MenuButton onClick={onImagePropertiesOpen} title="خصائص الصورة">
           <Settings className="h-4 w-4" />
         </MenuButton>
       )}
+
+      <Separator orientation="vertical" className="h-6 mx-1" />
+
+      <MenuButton
+        onClick={onToggleSourceMode}
+        isActive={isSourceMode}
+        title={isSourceMode ? "المحرر المرئي" : "كود HTML"}
+        data-testid="button-toggle-source-mode"
+      >
+        {isSourceMode ? <Eye className="h-4 w-4" /> : <FileCode className="h-4 w-4" />}
+      </MenuButton>
       
       <input
         ref={fileInputRef}
@@ -688,12 +705,32 @@ const MenuBar = ({
   );
 };
 
+function detectSuperArticle(html: string): boolean {
+  if (!html) return false;
+  const superPatterns = [
+    /style\s*=\s*"[^"]*display\s*:\s*flex/i,
+    /style\s*=\s*"[^"]*linear-gradient/i,
+    /style\s*=\s*"[^"]*box-shadow/i,
+    /style\s*=\s*"[^"]*border-radius\s*:\s*\d+/i,
+    /style\s*=\s*"[^"]*background\s*:/i,
+    /style\s*=\s*"[^"]*grid-template/i,
+  ];
+  const matchCount = superPatterns.filter(p => p.test(html)).length;
+  return matchCount >= 2;
+}
+
 export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorProps) {
   const { toast } = useToast();
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
   const [selectedImageAttrs, setSelectedImageAttrs] = useState<ImageAttributes>({ src: '' });
   const [selectedImagePos, setSelectedImagePos] = useState<number | null>(null);
   const isUploadingRef = useRef(false);
+  const [isSourceMode, setIsSourceMode] = useState(false);
+  const [htmlSource, setHtmlSource] = useState(value);
+  const [isSuperArticle, setIsSuperArticle] = useState(false);
+  const [showSwitchWarning, setShowSwitchWarning] = useState(false);
+  const initialCheckDone = useRef(false);
+  const isSourceModeRef = useRef(false);
 
   const uploadImage = useCallback(async (file: File): Promise<string | null> => {
     if (!file.type.startsWith('image/')) {
@@ -899,7 +936,9 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
       },
     },
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      if (!isSourceModeRef.current) {
+        onChange(editor.getHTML());
+      }
     },
   });
 
@@ -974,15 +1013,123 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   }, [editor]);
 
   useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
+    isSourceModeRef.current = isSourceMode;
+  }, [isSourceMode]);
+
+  useEffect(() => {
+    if (!initialCheckDone.current && value) {
+      const isSuper = detectSuperArticle(value);
+      setIsSuperArticle(isSuper);
+      if (isSuper) {
+        setIsSourceMode(true);
+        setHtmlSource(value);
+        isSourceModeRef.current = true;
+      }
+      initialCheckDone.current = true;
+    }
+  }, [value]);
+
+
+  useEffect(() => {
+    if (editor && !isSourceMode && value !== editor.getHTML()) {
       editor.commands.setContent(value);
     }
-  }, [value, editor]);
+  }, [value, editor, isSourceMode]);
+
+  const handleToggleSourceMode = useCallback(() => {
+    if (isSourceMode) {
+      if (isSuperArticle) {
+        setShowSwitchWarning(true);
+        return;
+      }
+      if (editor) {
+        editor.commands.setContent(htmlSource);
+      }
+      setIsSourceMode(false);
+    } else {
+      const currentHtml = editor ? editor.getHTML() : value;
+      setHtmlSource(currentHtml);
+      setIsSourceMode(true);
+    }
+  }, [isSourceMode, editor, htmlSource, isSuperArticle, value]);
+
+  const handleConfirmSwitchToWysiwyg = useCallback(() => {
+    if (editor) {
+      editor.commands.setContent(htmlSource);
+    }
+    setIsSourceMode(false);
+    setShowSwitchWarning(false);
+    toast({ title: "تم التبديل للمحرر المرئي - بعض التنسيقات المتقدمة قد تتأثر", variant: "destructive" });
+  }, [editor, htmlSource, toast]);
+
+  const handleSourceChange = useCallback((newHtml: string) => {
+    setHtmlSource(newHtml);
+    onChange(newHtml);
+  }, [onChange]);
 
   return (
     <div className="border rounded-md overflow-hidden bg-background" data-testid="rich-text-editor">
-      <MenuBar editor={editor} onImagePropertiesOpen={openImageProperties} />
-      <EditorContent editor={editor} />
+      <MenuBar 
+        editor={editor} 
+        onImagePropertiesOpen={openImageProperties}
+        isSourceMode={isSourceMode}
+        onToggleSourceMode={handleToggleSourceMode}
+      />
+
+      {isSuperArticle && isSourceMode && (
+        <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800" data-testid="super-article-warning">
+          <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+          <p className="text-xs text-amber-700 dark:text-amber-300">
+            هذه مقالة سوبر تحتوي على تنسيقات متقدمة (CSS مباشر). يُفضل التعديل في وضع HTML للحفاظ على التنسيق.
+          </p>
+        </div>
+      )}
+
+      {showSwitchWarning && (
+        <div className="px-4 py-3 bg-destructive/5 border-b border-destructive/20 space-y-2" data-testid="switch-warning">
+          <div className="flex items-center gap-2 text-destructive">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <p className="text-sm font-medium">تحذير: التبديل للمحرر المرئي سيفقد التنسيقات المتقدمة</p>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            المحرر المرئي لا يدعم التنسيقات المتقدمة مثل Flexbox وGradients وBox Shadow. التبديل سيزيل هذه التنسيقات نهائياً.
+          </p>
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              onClick={handleConfirmSwitchToWysiwyg}
+              data-testid="button-confirm-switch-wysiwyg"
+            >
+              متابعة وفقدان التنسيقات
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowSwitchWarning(false)}
+              data-testid="button-cancel-switch"
+            >
+              البقاء في وضع HTML
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {isSourceMode ? (
+        <textarea
+          value={htmlSource}
+          onChange={(e) => handleSourceChange(e.target.value)}
+          className="w-full min-h-[400px] p-4 font-mono text-sm bg-muted/20 text-foreground focus:outline-none resize-y"
+          dir="ltr"
+          spellCheck={false}
+          placeholder="اكتب كود HTML هنا..."
+          data-testid="textarea-html-source"
+        />
+      ) : (
+        <EditorContent editor={editor} />
+      )}
       <ImagePropertiesDialog
         open={imageDialogOpen}
         onOpenChange={setImageDialogOpen}
