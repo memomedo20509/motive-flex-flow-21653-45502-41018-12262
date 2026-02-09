@@ -51,6 +51,7 @@ import {
   Maximize2,
   Minimize2,
   Upload,
+  Globe,
   LinkIcon as LinkIconLucide,
   Trash2,
   AlertTriangle,
@@ -731,10 +732,15 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   const [showSwitchWarning, setShowSwitchWarning] = useState(false);
   const [sourceTab, setSourceTab] = useState<'edit' | 'preview'>('edit');
   const [previewHtml, setPreviewHtml] = useState('');
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
+  const [isUploadingSource, setIsUploadingSource] = useState(false);
   const initialCheckDone = useRef(false);
   const isSourceModeRef = useRef(false);
   const previewIframeRef = useRef<HTMLIFrameElement>(null);
   const previewDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const sourceTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const sourceFileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadImage = useCallback(async (file: File): Promise<string | null> => {
     if (!file.type.startsWith('image/')) {
@@ -1066,6 +1072,48 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
     toast({ title: "تم التبديل للمحرر المرئي - بعض التنسيقات المتقدمة قد تتأثر", variant: "destructive" });
   }, [editor, htmlSource, toast]);
 
+  const insertHtmlAtCursor = useCallback((tagHtml: string) => {
+    const textarea = sourceTextareaRef.current;
+    if (!textarea) {
+      setHtmlSource(prev => {
+        const newHtml = prev + tagHtml;
+        onChange(newHtml);
+        return newHtml;
+      });
+      return;
+    }
+    const currentValue = textarea.value;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const before = currentValue.substring(0, start);
+    const after = currentValue.substring(end);
+    const newHtml = before + tagHtml + after;
+    setHtmlSource(newHtml);
+    onChange(newHtml);
+    setTimeout(() => {
+      textarea.focus();
+      const newPos = start + tagHtml.length;
+      textarea.setSelectionRange(newPos, newPos);
+    }, 0);
+  }, [onChange]);
+
+  const handleSourceImageUpload = useCallback(async (file: File) => {
+    setIsUploadingSource(true);
+    const url = await uploadImage(file);
+    setIsUploadingSource(false);
+    if (url) {
+      insertHtmlAtCursor(`<img src="${url}" alt="" style="max-width: 100%; height: auto;" />`);
+    }
+  }, [uploadImage, insertHtmlAtCursor]);
+
+  const handleSourceImageUrl = useCallback(() => {
+    if (!imageUrl.trim()) return;
+    insertHtmlAtCursor(`<img src="${imageUrl.trim()}" alt="" style="max-width: 100%; height: auto;" />`);
+    setImageUrl('');
+    setShowUrlInput(false);
+    toast({ title: "تم إضافة الصورة من الرابط" });
+  }, [imageUrl, insertHtmlAtCursor, toast]);
+
   const handleSourceChange = useCallback((newHtml: string) => {
     setHtmlSource(newHtml);
     onChange(newHtml);
@@ -1143,7 +1191,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
 
       {isSourceMode ? (
         <div>
-          <div className="flex border-b" data-testid="source-mode-tabs">
+          <div className="flex items-center border-b gap-1 flex-wrap" data-testid="source-mode-tabs">
             <button
               type="button"
               onClick={() => setSourceTab('edit')}
@@ -1170,12 +1218,108 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
               <Eye className="h-3.5 w-3.5 inline-block ml-1.5" />
               معاينة
             </button>
+
+            <div className="mr-auto flex items-center gap-1 px-2">
+              <input
+                type="file"
+                ref={sourceFileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleSourceImageUpload(file);
+                  e.target.value = '';
+                }}
+                data-testid="input-source-image-upload"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => sourceFileInputRef.current?.click()}
+                disabled={isUploadingSource}
+                data-testid="button-source-upload-image"
+              >
+                <Upload className="h-3.5 w-3.5 ml-1.5" />
+                {isUploadingSource ? 'جاري الرفع...' : 'رفع صورة'}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowUrlInput(!showUrlInput)}
+                data-testid="button-source-url-image"
+              >
+                <Globe className="h-3.5 w-3.5 ml-1.5" />
+                صورة من رابط
+              </Button>
+            </div>
           </div>
+
+          {showUrlInput && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-muted/30 border-b" data-testid="source-url-input-container">
+              <Input
+                type="url"
+                placeholder="https://example.com/image.jpg"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSourceImageUrl(); } }}
+                className="flex-1"
+                dir="ltr"
+                data-testid="input-source-image-url"
+              />
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleSourceImageUrl}
+                disabled={!imageUrl.trim()}
+                data-testid="button-insert-url-image"
+              >
+                إدراج
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => { setShowUrlInput(false); setImageUrl(''); }}
+                data-testid="button-cancel-url-image"
+              >
+                إلغاء
+              </Button>
+            </div>
+          )}
 
           {sourceTab === 'edit' ? (
             <textarea
+              ref={sourceTextareaRef}
               value={htmlSource}
               onChange={(e) => handleSourceChange(e.target.value)}
+              onDrop={(e) => {
+                const file = e.dataTransfer?.files?.[0];
+                if (file && file.type.startsWith('image/')) {
+                  e.preventDefault();
+                  handleSourceImageUpload(file);
+                }
+              }}
+              onDragOver={(e) => {
+                if (e.dataTransfer?.types?.includes('Files')) {
+                  e.preventDefault();
+                }
+              }}
+              onPaste={(e) => {
+                const items = e.clipboardData?.items;
+                if (!items) return;
+                for (let i = 0; i < items.length; i++) {
+                  if (items[i].type.indexOf('image') !== -1) {
+                    const file = items[i].getAsFile();
+                    if (file) {
+                      e.preventDefault();
+                      handleSourceImageUpload(file);
+                      return;
+                    }
+                  }
+                }
+              }}
               className="w-full min-h-[400px] p-4 font-mono text-sm bg-muted/20 text-foreground focus:outline-none resize-y"
               dir="ltr"
               spellCheck={false}
