@@ -736,6 +736,9 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [isUploadingSource, setIsUploadingSource] = useState(false);
+  const [visualImageDialogOpen, setVisualImageDialogOpen] = useState(false);
+  const [visualSelectedImage, setVisualSelectedImage] = useState<HTMLImageElement | null>(null);
+  const [visualSelectedImageAttrs, setVisualSelectedImageAttrs] = useState<ImageAttributes>({ src: '' });
   const initialCheckDone = useRef(false);
   const isSourceModeRef = useRef(false);
   const previewIframeRef = useRef<HTMLIFrameElement>(null);
@@ -1235,6 +1238,36 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
       }
     };
 
+    const handleImageClick = (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'IMG') {
+        e.preventDefault();
+        e.stopPropagation();
+        const img = target as HTMLImageElement;
+        const parentFigure = img.closest('figure');
+        const figcaption = parentFigure?.querySelector('figcaption');
+        let alignment: 'left' | 'center' | 'right' = 'center';
+        if (parentFigure?.style.textAlign) {
+          alignment = parentFigure.style.textAlign as 'left' | 'center' | 'right';
+        } else if (img.style.display === 'block') {
+          if (img.style.marginLeft === 'auto' && img.style.marginRight === 'auto') alignment = 'center';
+          else if (img.style.marginLeft === 'auto') alignment = 'right';
+          else if (img.style.marginRight === 'auto') alignment = 'left';
+        }
+        const width = img.style.width || img.getAttribute('width') || '100%';
+        setVisualSelectedImage(img);
+        setVisualSelectedImageAttrs({
+          src: img.src,
+          alt: img.alt || '',
+          title: figcaption?.textContent || img.title || '',
+          width: width,
+          alignment: alignment,
+        });
+        setVisualImageDialogOpen(true);
+      }
+    };
+
+    doc.addEventListener('click', handleImageClick);
     doc.body.addEventListener('input', handleInput);
     doc.body.addEventListener('keyup', handleKeyup);
     doc.addEventListener('paste', handlePaste);
@@ -1269,6 +1302,82 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
       }
     }
   }, [uploadImage, onChange]);
+
+  const syncVisualToHtml = useCallback(() => {
+    const iframe = visualIframeRef.current;
+    if (iframe?.contentDocument?.body) {
+      const newHtml = iframe.contentDocument.body.innerHTML;
+      setHtmlSource(newHtml);
+      onChange(newHtml);
+    }
+  }, [onChange]);
+
+  const handleVisualImageSave = useCallback((attrs: ImageAttributes) => {
+    if (!visualSelectedImage) return;
+    const img = visualSelectedImage;
+    const iframe = visualIframeRef.current;
+    if (!iframe?.contentDocument) return;
+
+    img.src = attrs.src;
+    img.alt = attrs.alt || '';
+    img.style.width = attrs.width || '100%';
+    img.style.maxWidth = '100%';
+    img.style.height = 'auto';
+
+    let figure = img.closest('figure');
+    if (!figure && (attrs.title || attrs.alignment !== 'center')) {
+      figure = iframe.contentDocument.createElement('figure');
+      figure.className = 'image-container';
+      img.parentNode?.insertBefore(figure, img);
+      figure.appendChild(img);
+    }
+
+    if (figure) {
+      const align = attrs.alignment || 'center';
+      figure.style.textAlign = align;
+      if (align === 'center') {
+        figure.style.marginLeft = 'auto';
+        figure.style.marginRight = 'auto';
+      } else if (align === 'left') {
+        figure.style.marginLeft = '';
+        figure.style.marginRight = 'auto';
+      } else {
+        figure.style.marginLeft = 'auto';
+        figure.style.marginRight = '';
+      }
+
+      let figcaption = figure.querySelector('figcaption');
+      if (attrs.title) {
+        if (!figcaption) {
+          figcaption = iframe.contentDocument.createElement('figcaption');
+          figcaption.style.cssText = 'text-align: center; font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem; font-style: italic;';
+          figure.appendChild(figcaption);
+        }
+        figcaption.textContent = attrs.title;
+      } else if (figcaption) {
+        figcaption.remove();
+      }
+    }
+
+    setVisualSelectedImage(null);
+    setVisualImageDialogOpen(false);
+    syncVisualToHtml();
+    toast({ title: "تم حفظ خصائص الصورة" });
+  }, [visualSelectedImage, syncVisualToHtml, toast]);
+
+  const handleVisualImageDelete = useCallback(() => {
+    if (!visualSelectedImage) return;
+    const parentFigure = visualSelectedImage.closest('figure');
+    if (parentFigure) {
+      parentFigure.remove();
+    } else {
+      visualSelectedImage.remove();
+    }
+    setVisualSelectedImage(null);
+    setVisualImageDialogOpen(false);
+    syncVisualToHtml();
+    toast({ title: "تم حذف الصورة" });
+  }, [visualSelectedImage, syncVisualToHtml, toast]);
 
   useEffect(() => {
     return () => {
@@ -1539,8 +1648,8 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   }
   body:focus { outline: none; }
   [contenteditable]:focus { outline: none; }
-  img { max-width: 100%; height: auto; border-radius: 8px; cursor: pointer; }
-  img:hover { outline: 2px dashed #0d9488; outline-offset: 4px; }
+  img { max-width: 100%; height: auto; border-radius: 8px; cursor: pointer; transition: outline 0.15s, box-shadow 0.15s; }
+  img:hover { outline: 2px dashed #0d9488; outline-offset: 4px; box-shadow: 0 0 0 1px rgba(13,148,136,0.15); }
   h1, h2, h3, h4, h5, h6 { margin: 1em 0 0.5em; line-height: 1.4; }
   h1 { font-size: 1.8em; }
   h2 { font-size: 1.5em; }
@@ -1623,6 +1732,17 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
         imageAttrs={selectedImageAttrs}
         onSave={handleImagePropertiesSave}
         onDelete={handleImageDelete}
+        onReplace={uploadImage}
+      />
+      <ImagePropertiesDialog
+        open={visualImageDialogOpen}
+        onOpenChange={(open) => {
+          setVisualImageDialogOpen(open);
+          if (!open) setVisualSelectedImage(null);
+        }}
+        imageAttrs={visualSelectedImageAttrs}
+        onSave={handleVisualImageSave}
+        onDelete={handleVisualImageDelete}
         onReplace={uploadImage}
       />
       <style>{`
