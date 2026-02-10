@@ -36,7 +36,7 @@ const BlogPost = () => {
 
   const htmlContent = useMemo(() => {
     if (!article?.content) return "";
-    return article.content;
+    return article.content.replace(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, "");
   }, [article?.content]);
 
   const contentParts = useMemo(() => {

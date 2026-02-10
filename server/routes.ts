@@ -1025,7 +1025,7 @@ Sitemap: ${siteUrl}/sitemap.xml
       const article = await storage.createArticle({
         title,
         slug,
-        content: content || "",
+        content: (content || "").replace(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, ""),
         excerpt: excerpt || "",
         metaTitle: metaTitle || title,
         metaDescription: metaDescription || "",
@@ -1134,6 +1134,8 @@ Sitemap: ${siteUrl}/sitemap.xml
         if (req.body[field] !== undefined) {
           if (field === 'schemaMarkup' && req.body[field]) {
             try { JSON.parse(req.body[field]); updateData[field] = req.body[field]; } catch { updateData[field] = ""; }
+          } else if (field === 'content' && req.body[field]) {
+            updateData[field] = req.body[field].replace(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, "");
           } else {
             updateData[field] = req.body[field];
           }
