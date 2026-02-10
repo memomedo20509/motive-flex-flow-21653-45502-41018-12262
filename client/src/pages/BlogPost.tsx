@@ -197,22 +197,33 @@ const BlogPost = () => {
         noindex={article.robotsDirective?.includes("noindex") || (article as any).isPreview}
         nofollow={article.robotsDirective?.includes("nofollow") || (article as any).isPreview}
       />
-      {article.schemaMarkup ? (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: article.schemaMarkup }}
-        />
-      ) : (
-        <ArticleSchema
-          headline={article.title}
-          description={pageDescription}
-          image={ogImage.startsWith("http") ? ogImage : `${baseUrl}${ogImage}`}
-          datePublished={publishedDate}
-          dateModified={modifiedDate}
-          authorName={article.author || "فريق موتفلكس"}
-          url={pageUrl}
-        />
-      )}
+      {(() => {
+        let validSchemaMarkup: string | null = null;
+        if (article.schemaMarkup) {
+          try {
+            JSON.parse(article.schemaMarkup);
+            validSchemaMarkup = article.schemaMarkup;
+          } catch {
+            validSchemaMarkup = null;
+          }
+        }
+        return validSchemaMarkup ? (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: validSchemaMarkup }}
+          />
+        ) : (
+          <ArticleSchema
+            headline={article.title}
+            description={pageDescription}
+            image={ogImage.startsWith("http") ? ogImage : `${baseUrl}${ogImage}`}
+            datePublished={publishedDate}
+            dateModified={modifiedDate}
+            authorName={article.author || "فريق موتفلكس"}
+            url={pageUrl}
+          />
+        );
+      })()}
       <Navbar />
 
       {/* Preview Banner */}

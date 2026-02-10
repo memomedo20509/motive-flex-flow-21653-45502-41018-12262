@@ -1036,7 +1036,10 @@ Sitemap: ${siteUrl}/sitemap.xml
         ogDescription: ogDescription || "",
         ogImage: ogImage || "",
         robotsDirective: robotsDirective || "index, follow",
-        schemaMarkup: schemaMarkup || "",
+        schemaMarkup: (() => {
+          if (!schemaMarkup) return "";
+          try { JSON.parse(schemaMarkup); return schemaMarkup; } catch { return ""; }
+        })(),
         coverImage: coverImage || "",
         coverImageAlt: coverImageAlt || "",
         tags: tags || [],
@@ -1129,7 +1132,11 @@ Sitemap: ${siteUrl}/sitemap.xml
       
       for (const field of allowedFields) {
         if (req.body[field] !== undefined) {
-          updateData[field] = req.body[field];
+          if (field === 'schemaMarkup' && req.body[field]) {
+            try { JSON.parse(req.body[field]); updateData[field] = req.body[field]; } catch { updateData[field] = ""; }
+          } else {
+            updateData[field] = req.body[field];
+          }
         }
       }
       

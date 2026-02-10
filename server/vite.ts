@@ -216,9 +216,9 @@ export async function serveStatic(app: Express) {
         // Add helmet meta and link tags
         const headEnd = finalHtml.indexOf("</head>");
         if (headEnd !== -1) {
-          const metaTags = `${helmet.meta || ''}${helmet.link || ''}`;
-          if (metaTags) {
-            finalHtml = finalHtml.slice(0, headEnd) + metaTags + finalHtml.slice(headEnd);
+          const headTags = `${helmet.meta || ''}${helmet.link || ''}${helmet.script || ''}`;
+          if (headTags) {
+            finalHtml = finalHtml.slice(0, headEnd) + headTags + finalHtml.slice(headEnd);
           }
         }
         
