@@ -52,6 +52,7 @@ import {
   Minimize2,
   Upload,
   Globe,
+  Pencil,
   LinkIcon as LinkIconLucide,
   Trash2,
   AlertTriangle,
@@ -730,7 +731,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   const [htmlSource, setHtmlSource] = useState(value);
   const [isSuperArticle, setIsSuperArticle] = useState(false);
   const [showSwitchWarning, setShowSwitchWarning] = useState(false);
-  const [sourceTab, setSourceTab] = useState<'edit' | 'preview'>('edit');
+  const [sourceTab, setSourceTab] = useState<'edit' | 'preview' | 'visual'>('edit');
   const [previewHtml, setPreviewHtml] = useState('');
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
@@ -738,9 +739,14 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   const initialCheckDone = useRef(false);
   const isSourceModeRef = useRef(false);
   const previewIframeRef = useRef<HTMLIFrameElement>(null);
+  const visualIframeRef = useRef<HTMLIFrameElement>(null);
   const previewDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const visualSyncRef = useRef<NodeJS.Timeout | null>(null);
+  const visualListenersAttached = useRef(false);
+  const isVisualEditing = useRef(false);
   const sourceTextareaRef = useRef<HTMLTextAreaElement>(null);
   const sourceFileInputRef = useRef<HTMLInputElement>(null);
+  const visualFileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadImage = useCallback(async (file: File): Promise<string | null> => {
     if (!file.type.startsWith('image/')) {
@@ -1034,6 +1040,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
         setIsSourceMode(true);
         setHtmlSource(value);
         isSourceModeRef.current = true;
+        setSourceTab('visual');
       }
       initialCheckDone.current = true;
     }
@@ -1085,6 +1092,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
     const currentValue = textarea.value;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
+    const scrollTop = textarea.scrollTop;
     const before = currentValue.substring(0, start);
     const after = currentValue.substring(end);
     const newHtml = before + tagHtml + after;
@@ -1094,6 +1102,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
       textarea.focus();
       const newPos = start + tagHtml.length;
       textarea.setSelectionRange(newPos, newPos);
+      textarea.scrollTop = scrollTop;
     }, 0);
   }, [onChange]);
 
@@ -1126,16 +1135,151 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
   }, [onChange]);
 
   useEffect(() => {
-    if (sourceTab === 'preview') {
+    if (sourceTab === 'preview' || sourceTab === 'visual') {
       setPreviewHtml(htmlSource);
     }
+    if (sourceTab !== 'visual') {
+      visualListenersAttached.current = false;
+      isVisualEditing.current = false;
+    }
   }, [sourceTab]);
+
+  const handleVisualIframeLoad = useCallback(() => {
+    const iframe = visualIframeRef.current;
+    if (!iframe) return;
+    const doc = iframe.contentDocument;
+    if (!doc || !doc.body) return;
+
+    visualListenersAttached.current = true;
+
+    const syncFromVisual = () => {
+      isVisualEditing.current = true;
+      if (visualSyncRef.current) {
+        clearTimeout(visualSyncRef.current);
+      }
+      visualSyncRef.current = setTimeout(() => {
+        const body = iframe.contentDocument?.body;
+        if (body) {
+          const newHtml = body.innerHTML;
+          setHtmlSource(newHtml);
+          onChange(newHtml);
+        }
+        setTimeout(() => { isVisualEditing.current = false; }, 100);
+      }, 300);
+    };
+
+    const handleInput = () => syncFromVisual();
+    const handleKeyup = () => syncFromVisual();
+
+    const handlePaste = (e: Event) => {
+      const pasteEvent = e as ClipboardEvent;
+      const items = pasteEvent.clipboardData?.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const file = items[i].getAsFile();
+          if (file) {
+            pasteEvent.preventDefault();
+            setIsUploadingSource(true);
+            uploadImage(file).then(url => {
+              setIsUploadingSource(false);
+              if (url && iframe.contentDocument) {
+                const img = iframe.contentDocument.createElement('img');
+                img.src = url;
+                img.alt = '';
+                img.style.maxWidth = '100%';
+                img.style.height = 'auto';
+                const selection = iframe.contentDocument.getSelection();
+                if (selection && selection.rangeCount > 0) {
+                  const range = selection.getRangeAt(0);
+                  range.deleteContents();
+                  range.insertNode(img);
+                  range.collapse(false);
+                } else {
+                  iframe.contentDocument.body.appendChild(img);
+                }
+                syncFromVisual();
+              }
+            });
+            return;
+          }
+        }
+      }
+    };
+
+    const handleDrop = (e: Event) => {
+      const dropEvent = e as DragEvent;
+      const file = dropEvent.dataTransfer?.files?.[0];
+      if (file && file.type.startsWith('image/')) {
+        dropEvent.preventDefault();
+        setIsUploadingSource(true);
+        uploadImage(file).then(url => {
+          setIsUploadingSource(false);
+          if (url && iframe.contentDocument) {
+            const img = iframe.contentDocument.createElement('img');
+            img.src = url;
+            img.alt = '';
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+            iframe.contentDocument.body.appendChild(img);
+            syncFromVisual();
+          }
+        });
+      }
+    };
+
+    const handleDragover = (e: Event) => {
+      const dragEvent = e as DragEvent;
+      if (dragEvent.dataTransfer?.types?.includes('Files')) {
+        dragEvent.preventDefault();
+      }
+    };
+
+    doc.body.addEventListener('input', handleInput);
+    doc.body.addEventListener('keyup', handleKeyup);
+    doc.addEventListener('paste', handlePaste);
+    doc.addEventListener('drop', handleDrop);
+    doc.addEventListener('dragover', handleDragover);
+  }, [onChange, uploadImage]);
+
+  const handleVisualImageUpload = useCallback(async (file: File) => {
+    setIsUploadingSource(true);
+    const url = await uploadImage(file);
+    setIsUploadingSource(false);
+    if (url) {
+      const iframe = visualIframeRef.current;
+      if (iframe?.contentDocument) {
+        const img = iframe.contentDocument.createElement('img');
+        img.src = url;
+        img.alt = '';
+        img.style.maxWidth = '100%';
+        img.style.height = 'auto';
+        const selection = iframe.contentDocument.getSelection();
+        if (selection && selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          range.deleteContents();
+          range.insertNode(img);
+          range.collapse(false);
+        } else {
+          iframe.contentDocument.body.appendChild(img);
+        }
+        const newHtml = iframe.contentDocument.body.innerHTML;
+        setHtmlSource(newHtml);
+        onChange(newHtml);
+      }
+    }
+  }, [uploadImage, onChange]);
 
   useEffect(() => {
     return () => {
       if (previewDebounceRef.current) {
         clearTimeout(previewDebounceRef.current);
       }
+      if (visualSyncRef.current) {
+        clearTimeout(visualSyncRef.current);
+      }
+      visualListenersAttached.current = false;
+      isVisualEditing.current = false;
     };
   }, []);
 
@@ -1204,6 +1348,19 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
             >
               <FileCode className="h-3.5 w-3.5 inline-block ml-1.5" />
               تعديل HTML
+            </button>
+            <button
+              type="button"
+              onClick={() => setSourceTab('visual')}
+              className={`px-4 py-2 text-sm font-medium transition-colors ${
+                sourceTab === 'visual'
+                  ? 'border-b-2 border-primary text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              data-testid="tab-visual-edit"
+            >
+              <Pencil className="h-3.5 w-3.5 inline-block ml-1.5" />
+              تعديل مرئي
             </button>
             <button
               type="button"
@@ -1289,7 +1446,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
             </div>
           )}
 
-          {sourceTab === 'edit' ? (
+          {sourceTab === 'edit' && (
             <textarea
               ref={sourceTextareaRef}
               value={htmlSource}
@@ -1326,7 +1483,92 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
               placeholder="اكتب كود HTML هنا..."
               data-testid="textarea-html-source"
             />
-          ) : (
+          )}
+
+          {sourceTab === 'visual' && (
+            <div className="min-h-[400px]" data-testid="visual-edit-container">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/30 border-b border-emerald-200 dark:border-emerald-800">
+                <Pencil className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                  اضغط على أي نص لتعديله مباشرة. التنسيقات والتصميم محفوظة بالكامل.
+                </p>
+                <input
+                  type="file"
+                  ref={visualFileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleVisualImageUpload(file);
+                    e.target.value = '';
+                  }}
+                  data-testid="input-visual-image-upload"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="mr-auto"
+                  onClick={() => visualFileInputRef.current?.click()}
+                  disabled={isUploadingSource}
+                  data-testid="button-visual-upload-image"
+                >
+                  <Upload className="h-3.5 w-3.5 ml-1" />
+                  {isUploadingSource ? 'جاري الرفع...' : 'إضافة صورة'}
+                </Button>
+              </div>
+              <iframe
+                ref={visualIframeRef}
+                srcDoc={`<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { 
+    font-family: 'Tajawal', 'Segoe UI', sans-serif; 
+    line-height: 1.8; 
+    color: #333; 
+    padding: 24px;
+    direction: rtl;
+    font-size: 16px;
+    outline: none;
+    min-height: 300px;
+  }
+  body:focus { outline: none; }
+  [contenteditable]:focus { outline: none; }
+  img { max-width: 100%; height: auto; border-radius: 8px; cursor: pointer; }
+  img:hover { outline: 2px dashed #0d9488; outline-offset: 4px; }
+  h1, h2, h3, h4, h5, h6 { margin: 1em 0 0.5em; line-height: 1.4; }
+  h1 { font-size: 1.8em; }
+  h2 { font-size: 1.5em; }
+  h3 { font-size: 1.25em; }
+  p { margin: 0.75em 0; }
+  ul, ol { padding-right: 1.5em; margin: 0.75em 0; }
+  a { color: #0d9488; text-decoration: none; }
+  table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+  th, td { border: 1px solid #e5e7eb; padding: 8px 12px; text-align: right; }
+  th { background: #f9fafb; font-weight: 600; }
+  blockquote { border-right: 4px solid #0d9488; padding: 12px 16px; margin: 1em 0; background: #f0fdfa; }
+  strong { font-weight: 700; }
+  *:hover { cursor: text; }
+</style>
+</head>
+<body contenteditable="true">${previewHtml}</body>
+</html>`}
+                onLoad={handleVisualIframeLoad}
+                className="w-full min-h-[400px] border-0"
+                style={{ height: '600px' }}
+                title="تعديل مرئي للمقالة"
+                sandbox="allow-same-origin"
+                data-testid="visual-edit-iframe"
+              />
+            </div>
+          )}
+
+          {sourceTab === 'preview' && (
             <div className="min-h-[400px] bg-white" data-testid="preview-container">
               <iframe
                 ref={previewIframeRef}

@@ -25,7 +25,11 @@ Key UI/UX decisions include:
   - Server-Side Rendering (SSR) support for production builds to ensure search engines can crawl all pages.
   - `SEOHead` component using react-helmet-async for managing meta tags across all pages.
 - **Performance**: Images include `width`/`height` attributes and `loading="lazy"`. Font loading is optimized with preload hints and `font-display: swap`, and unused font weights/CDNs are removed. React.lazy and Suspense are used for code splitting on non-critical paths.
-- **RichTextEditor HTML Source Mode**: The TipTap-based editor includes a dual-mode system (WYSIWYG + HTML Source). Super Articles (content with rich inline CSS like flex, gradients, box-shadow) are auto-detected and open in HTML source mode to preserve formatting. A warning system prevents accidental switching to WYSIWYG mode which would strip inline styles. Toggle via FileCode/Eye button in toolbar.
+- **RichTextEditor HTML Source Mode**: The TipTap-based editor includes a multi-mode system (WYSIWYG + HTML Source + Visual Edit + Preview). Super Articles (content with rich inline CSS like flex, gradients, box-shadow) are auto-detected and open in Visual Edit mode by default to preserve formatting while allowing easy content editing. Three tabs in source mode:
+  - **تعديل HTML**: Raw HTML code editing with image upload, URL insert, drag-drop, and paste support.
+  - **تعديل مرئي**: Visual editing via contenteditable iframe - users click on text and edit directly while seeing the full design. Changes sync back to HTML automatically. Supports image paste/drop/upload.
+  - **معاينة**: Read-only preview of the article with full formatting.
+  A warning system prevents accidental switching to WYSIWYG mode which would strip inline styles. Toggle via FileCode/Eye button in toolbar.
 
 ### Backend Architecture
 
