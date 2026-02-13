@@ -4,6 +4,7 @@ import {
   contactSubmissions,
   settings,
   trialSubmissions,
+  shortUrls,
   type User,
   type UpsertUser,
   type Article,
@@ -13,6 +14,8 @@ import {
   type Setting,
   type TrialSubmission,
   type InsertTrial,
+  type ShortUrl,
+  type InsertShortUrl,
 } from "../shared/schema";
 import { db } from "./db";
 import { eq, desc, ilike, or, sql, and } from "drizzle-orm";
@@ -63,6 +66,11 @@ export interface IStorage {
   }): Promise<{ trials: TrialSubmission[]; total: number; unreadCount: number }>;
   markTrialAsRead(id: number): Promise<TrialSubmission | undefined>;
   deleteTrial(id: number): Promise<boolean>;
+
+  getShortUrlBySlug(slug: string): Promise<ShortUrl | undefined>;
+  getShortUrlByCode(code: string): Promise<ShortUrl | undefined>;
+  createShortUrl(code: string, slug: string): Promise<ShortUrl>;
+  incrementShortUrlClicks(code: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -391,6 +399,29 @@ export class DatabaseStorage implements IStorage {
   async deleteTrial(id: number): Promise<boolean> {
     await db.delete(trialSubmissions).where(eq(trialSubmissions.id, id));
     return true;
+  }
+
+  async getShortUrlBySlug(slug: string): Promise<ShortUrl | undefined> {
+    const [result] = await db.select().from(shortUrls).where(eq(shortUrls.slug, slug));
+    return result;
+  }
+
+  async getShortUrlByCode(code: string): Promise<ShortUrl | undefined> {
+    const [result] = await db.select().from(shortUrls).where(eq(shortUrls.code, code));
+    return result;
+  }
+
+  async createShortUrl(code: string, slug: string): Promise<ShortUrl> {
+    const data: InsertShortUrl = { code, slug };
+    const [result] = await db.insert(shortUrls).values(data).returning();
+    return result;
+  }
+
+  async incrementShortUrlClicks(code: string): Promise<void> {
+    await db
+      .update(shortUrls)
+      .set({ clicks: sql`${shortUrls.clicks} + 1` })
+      .where(eq(shortUrls.code, code));
   }
 }
 

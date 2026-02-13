@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import {
   index,
+  integer,
   jsonb,
   pgTable,
   timestamp,
@@ -151,3 +152,20 @@ export const insertTrialSchema = createInsertSchema(trialSubmissions).omit({
 
 export type InsertTrial = z.infer<typeof insertTrialSchema>;
 export type TrialSubmission = typeof trialSubmissions.$inferSelect;
+
+export const shortUrls = pgTable("short_urls", {
+  id: serial("id").primaryKey(),
+  code: varchar("code", { length: 10 }).notNull().unique(),
+  slug: varchar("slug", { length: 500 }).notNull(),
+  clicks: integer("clicks").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertShortUrlSchema = createInsertSchema(shortUrls).omit({
+  id: true,
+  clicks: true,
+  createdAt: true,
+});
+
+export type InsertShortUrl = z.infer<typeof insertShortUrlSchema>;
+export type ShortUrl = typeof shortUrls.$inferSelect;

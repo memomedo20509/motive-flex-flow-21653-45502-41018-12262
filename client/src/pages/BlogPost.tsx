@@ -117,20 +117,35 @@ const BlogPost = () => {
     });
   };
 
-  const shareUrl = typeof window !== "undefined" ? window.location.href : "";
+  const baseShareUrl = typeof window !== "undefined" ? window.location.origin : "https://mutflex.com";
   const shareTitle = article?.title || "";
+  const [shortCode, setShortCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!slug) return;
+    fetch("/api/short-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug }),
+    })
+      .then((r) => r.json())
+      .then((data) => { if (data.code) setShortCode(data.code); })
+      .catch(() => {});
+  }, [slug]);
+
+  const shortShareUrl = shortCode ? `${baseShareUrl}/s/${shortCode}` : `${baseShareUrl}/blog/${slug}`;
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(shareUrl);
+    navigator.clipboard.writeText(shortShareUrl);
     setCopied(true);
-    toast({ title: "تم نسخ الرابط" });
+    toast({ title: "تم نسخ الرابط المختصر" });
     setTimeout(() => setCopied(false), 2000);
   };
 
   const shareLinks = {
-    twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`,
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
-    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
+    twitter: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shortShareUrl)}&text=${encodeURIComponent(shareTitle)}`,
+    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shortShareUrl)}`,
+    linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shortShareUrl)}`,
   };
 
 

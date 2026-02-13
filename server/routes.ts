@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isAdmin, hashPassword } from "./auth";
-import { insertArticleSchema, insertContactSchema, insertUserSchema, insertTrialSchema } from "../shared/schema";
+import { insertArticleSchema, insertContactSchema, insertUserSchema, insertTrialSchema, insertShortUrlSchema } from "../shared/schema";
 import { sendContactNotificationEmail } from "./email";
 import { uploadToCloudinary, validateImage } from "./cloudinary";
 import path from "path";
@@ -1317,6 +1317,50 @@ Sitemap: ${siteUrl}/sitemap.xml
   setInterval(publishScheduledArticles, 60 * 1000);
   // Also run immediately on startup
   publishScheduledArticles();
+
+  // ============ Short URL Routes ============
+
+  app.post("/api/short-url", async (req, res) => {
+    try {
+      const { slug } = req.body;
+      if (!slug || typeof slug !== "string" || slug.length > 500 || slug.length < 1) {
+        return res.status(400).json({ message: "slug is required" });
+      }
+      const existing = await storage.getShortUrlBySlug(slug);
+      if (existing) {
+        return res.json({ code: existing.code });
+      }
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const code = Math.random().toString(36).substring(2, 8);
+        try {
+          const shortUrl = await storage.createShortUrl(code, slug);
+          return res.json({ code: shortUrl.code });
+        } catch (e: any) {
+          if (e?.code === "23505" && attempt < 4) continue;
+          throw e;
+        }
+      }
+      res.status(500).json({ message: "خطأ في إنشاء الرابط المختصر" });
+    } catch (error) {
+      console.error("Error creating short URL:", error);
+      res.status(500).json({ message: "خطأ في إنشاء الرابط المختصر" });
+    }
+  });
+
+  app.get("/s/:code", async (req, res) => {
+    try {
+      const { code } = req.params;
+      const shortUrl = await storage.getShortUrlByCode(code);
+      if (!shortUrl) {
+        return res.redirect(301, "/blog");
+      }
+      storage.incrementShortUrlClicks(code).catch(() => {});
+      res.redirect(301, `/blog/${shortUrl.slug}`);
+    } catch (error) {
+      console.error("Error resolving short URL:", error);
+      res.redirect(301, "/blog");
+    }
+  });
 
   // ============ SEO Routes ============
   

@@ -69,6 +69,16 @@ export async function runMigrations() {
       )
     `);
 
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS short_urls (
+        id SERIAL PRIMARY KEY,
+        code VARCHAR(10) NOT NULL UNIQUE,
+        slug VARCHAR(500) NOT NULL,
+        clicks INTEGER DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+
     console.log("Database migrations completed successfully!");
   } catch (error) {
     console.error("Migration error:", error);
