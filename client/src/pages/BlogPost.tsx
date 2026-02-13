@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { Link, useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
@@ -26,6 +26,8 @@ const BlogPost = () => {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
+  const [showStickyCta, setShowStickyCta] = useState(false);
+
   const { data, isLoading, error } = useQuery<ArticleResponse>({
     queryKey: [`/api/articles/${slug}`],
     enabled: !!slug,
@@ -34,9 +36,37 @@ const BlogPost = () => {
   const article = data?.article;
   const relatedArticles = data?.relatedArticles || [];
 
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      setShowStickyCta(scrollY > 600);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const handleTocClick = useCallback((e: { preventDefault: () => void }, id: string) => {
+    e.preventDefault();
+    const target = document.getElementById(id);
+    if (target) {
+      const navHeight = 80;
+      const targetPosition = target.getBoundingClientRect().top + window.scrollY - navHeight;
+      window.scrollTo({ top: targetPosition, behavior: "smooth" });
+    }
+  }, []);
+
   const htmlContent = useMemo(() => {
     if (!article?.content) return "";
-    return article.content.replace(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, "");
+    let content = article.content.replace(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, "");
+    if (typeof window === "undefined") return content;
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(content, 'text/html');
+    doc.querySelectorAll('h1, h2, h3').forEach((el) => {
+      const text = el.textContent || '';
+      const id = text.toLowerCase().replace(/\s+/g, "-").replace(/[^\u0621-\u064Aa-z0-9-]/g, "");
+      el.setAttribute('id', id);
+    });
+    return doc.body.innerHTML;
   }, [article?.content]);
 
   const contentParts = useMemo(() => {
@@ -314,6 +344,7 @@ const BlogPost = () => {
                           <a
                             key={index}
                             href={`#${heading.id}`}
+                            onClick={(e) => handleTocClick(e, heading.id)}
                             className={`block text-sm text-muted-foreground hover:text-secondary transition-colors py-1 border-r-2 border-transparent hover:border-secondary ${
                               heading.level === 2 ? "pr-3" : heading.level === 3 ? "pr-5" : "pr-2"
                             }`}
@@ -553,7 +584,7 @@ const BlogPost = () => {
               <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center items-center">
                 <Button
                   size="default"
-                  className="px-10 bg-white text-primary shadow-xl font-bold"
+                  className="px-10 bg-white text-[hsl(177,81%,30%)] shadow-xl font-bold border-white"
                   asChild
                   data-testid="button-end-cta-trial"
                 >
@@ -565,8 +596,7 @@ const BlogPost = () => {
                 
                 <Button
                   size="default"
-                  variant="outline"
-                  className="px-10 border-white/50 text-white backdrop-blur-md shadow-xl font-semibold"
+                  className="px-10 bg-white/15 text-white border-white/50 backdrop-blur-md shadow-xl font-semibold"
                   asChild
                   data-testid="button-end-cta-contact"
                 >
@@ -641,6 +671,26 @@ const BlogPost = () => {
             </div>
           </div>
         </section>
+      )}
+
+      {/* Sticky Floating CTA */}
+      {showStickyCta && (
+        <div
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300"
+          data-testid="sticky-cta-container"
+        >
+          <Button
+            size="lg"
+            className="px-8 shadow-2xl font-bold text-base"
+            asChild
+            data-testid="button-sticky-cta"
+          >
+            <Link href="/free-trial">
+              <Zap className="ml-2 w-5 h-5" />
+              جرّب موتفلكس مجاناً
+            </Link>
+          </Button>
+        </div>
       )}
 
       <Footer />
