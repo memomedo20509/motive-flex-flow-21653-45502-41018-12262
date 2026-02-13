@@ -7,6 +7,18 @@ const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
+if (process.env.NODE_ENV === "production") {
+  app.use((req, res, next) => {
+    const host = req.get("host") || "";
+    if (host.startsWith("www.")) {
+      const newHost = host.replace(/^www\./, "");
+      const protocol = req.protocol || "https";
+      return res.redirect(301, `${protocol}://${newHost}${req.originalUrl}`);
+    }
+    next();
+  });
+}
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
