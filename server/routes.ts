@@ -662,6 +662,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/admin/migrate-images", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const PRODUCTION_BASE = "https://mutflex.com";
+      
+      let allArticles: any[] = [];
+      let currentPage = 1;
+      const pageSize = 100;
+      while (true) {
+        const { articles: batch, total } = await storage.getArticles({ limit: pageSize, page: currentPage });
+        allArticles.push(...batch);
+        if (allArticles.length >= total || batch.length === 0) break;
+        currentPage++;
+      }
+      
+      const articlesWithLocalImages = allArticles.filter(a => 
+        (a.content && a.content.includes('/uploads/')) || 
+        (a.coverImage && a.coverImage?.startsWith('/uploads/'))
+      );
+      
+      if (articlesWithLocalImages.length === 0) {
+        return res.json({ message: "لا توجد صور محلية تحتاج نقل", migrated: 0, results: [] });
+      }
+      
+      const results: { articleId: number; title: string; imagesFound: number; imagesMigrated: number; errors: string[] }[] = [];
+      
+      for (const article of articlesWithLocalImages) {
+        const result = { articleId: article.id, title: article.title, imagesFound: 0, imagesMigrated: 0, errors: [] as string[] };
+        const updateData: any = {};
+        
+        if (article.coverImage && article.coverImage.startsWith('/uploads/')) {
+          result.imagesFound++;
+          try {
+            const imageUrl = `${PRODUCTION_BASE}${article.coverImage}`;
+            const uploadResult = await new Promise<any>((resolve, reject) => {
+              const timeout = setTimeout(() => reject(new Error("Upload timeout")), 30000);
+              cloudinary.uploader.upload(imageUrl, {
+                folder: 'mutflex/covers',
+                resource_type: 'image',
+                transformation: [{ quality: 'auto:good' }, { fetch_format: 'auto' }]
+              }, (error: any, r: any) => {
+                clearTimeout(timeout);
+                if (error) reject(error);
+                else resolve(r);
+              });
+            });
+            if (uploadResult?.secure_url) {
+              updateData.coverImage = uploadResult.secure_url;
+              result.imagesMigrated++;
+            }
+          } catch (err: any) {
+            result.errors.push(`Cover: ${err.message}`);
+          }
+        }
+        
+        if (article.content && article.content.includes('/uploads/')) {
+          const $ = cheerio.load(article.content, { decodeEntities: false });
+          const localImgs = $('img[src^="/uploads/"]');
+          result.imagesFound += localImgs.length;
+          
+          const promises: Promise<void>[] = [];
+          localImgs.each((_, img) => {
+            const src = $(img).attr('src');
+            if (!src) return;
+            
+            promises.push((async () => {
+              try {
+                const imageUrl = `${PRODUCTION_BASE}${src}`;
+                const uploadResult = await new Promise<any>((resolve, reject) => {
+                  const timeout = setTimeout(() => reject(new Error("Upload timeout")), 30000);
+                  cloudinary.uploader.upload(imageUrl, {
+                    folder: 'mutflex/images',
+                    resource_type: 'image',
+                    transformation: [{ quality: 'auto:good' }, { fetch_format: 'auto' }]
+                  }, (error: any, r: any) => {
+                    clearTimeout(timeout);
+                    if (error) reject(error);
+                    else resolve(r);
+                  });
+                });
+                if (uploadResult?.secure_url) {
+                  $(img).attr('src', uploadResult.secure_url);
+                  result.imagesMigrated++;
+                }
+              } catch (err: any) {
+                result.errors.push(`Content image ${src}: ${err.message}`);
+              }
+            })());
+          });
+          
+          await Promise.all(promises);
+          updateData.content = $('body').html() || article.content;
+        }
+        
+        if (Object.keys(updateData).length > 0) {
+          await storage.updateArticle(article.id, updateData);
+        }
+        
+        results.push(result);
+        console.log(`Migrated article ${article.id}: ${result.imagesMigrated}/${result.imagesFound} images`);
+      }
+      
+      const totalMigrated = results.reduce((sum, r) => sum + r.imagesMigrated, 0);
+      const totalFound = results.reduce((sum, r) => sum + r.imagesFound, 0);
+      
+      res.json({
+        message: `تم نقل ${totalMigrated} من ${totalFound} صورة في ${results.length} مقالة`,
+        migrated: totalMigrated,
+        total: totalFound,
+        results,
+      });
+    } catch (error: any) {
+      console.error("Error migrating images:", error);
+      res.status(500).json({ message: error.message || "فشل في نقل الصور" });
+    }
+  });
+
   app.post("/api/contact", async (req, res) => {
     try {
       const validatedData = insertContactSchema.parse(req.body);

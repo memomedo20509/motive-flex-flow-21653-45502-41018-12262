@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Search, Edit, Trash2, Eye, ExternalLink } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Eye, ExternalLink, ImageIcon, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Article } from "@shared/schema";
@@ -44,6 +44,20 @@ const ArticleList = () => {
 
   const { data, isLoading } = useQuery<ArticlesResponse>({
     queryKey: ["/api/admin/articles", { search, page, limit }],
+  });
+
+  const migrateMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("/api/admin/migrate-images", { method: "POST" });
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/articles"] });
+      toast({ title: data.message || "تم نقل الصور بنجاح" });
+    },
+    onError: () => {
+      toast({ title: "حدث خطأ أثناء نقل الصور", variant: "destructive" });
+    },
   });
 
   const deleteMutation = useMutation({
@@ -78,12 +92,27 @@ const ArticleList = () => {
             <h1 className="text-3xl font-bold" data-testid="text-articles-title">المقالات</h1>
             <p className="text-muted-foreground mt-1">إدارة مقالات المدونة</p>
           </div>
-          <Button asChild data-testid="button-new-article">
-            <Link href="/admin/articles/new">
-              <Plus className="h-4 w-4 ml-2" />
-              مقال جديد
-            </Link>
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => migrateMutation.mutate()}
+              disabled={migrateMutation.isPending}
+              data-testid="button-migrate-images"
+            >
+              {migrateMutation.isPending ? (
+                <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+              ) : (
+                <ImageIcon className="h-4 w-4 ml-2" />
+              )}
+              {migrateMutation.isPending ? "جاري النقل..." : "نقل الصور إلى Cloudinary"}
+            </Button>
+            <Button asChild data-testid="button-new-article">
+              <Link href="/admin/articles/new">
+                <Plus className="h-4 w-4 ml-2" />
+                مقال جديد
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <Card>
