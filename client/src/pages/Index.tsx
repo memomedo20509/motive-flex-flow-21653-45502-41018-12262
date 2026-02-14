@@ -104,17 +104,7 @@ const Index = () => {
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center text-white overflow-hidden">
-        {/* Video Background */}
         <div className="absolute inset-0">
-          <video 
-            autoPlay 
-            loop 
-            muted 
-            playsInline
-            className="w-full h-full object-cover opacity-30"
-          >
-            <source src="https://cdn.pixabay.com/video/2022/12/06/142634-778417027_large.mp4" type="video/mp4" />
-          </video>
           {/* Gradient overlay using exact brand colors */}
           <div className="absolute inset-0 bg-gradient-to-br from-[hsl(177,81%,30%)] from-0% via-[hsl(177,81%,35%)] via-35% to-[hsl(45,76%,51%)] to-100%"></div>
           
@@ -414,18 +404,7 @@ const Index = () => {
 
       {/* Industries Section */}
       <section className="py-20 px-4 relative overflow-hidden">
-        {/* Video Background */}
         <div className="absolute inset-0">
-          <video 
-            autoPlay 
-            loop 
-            muted 
-            playsInline
-            className="w-full h-full object-cover opacity-20"
-          >
-            <source src="https://cdn.pixabay.com/video/2023/05/07/160990-824838826_large.mp4" type="video/mp4" />
-          </video>
-          {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/90 to-background/95"></div>
         </div>
         

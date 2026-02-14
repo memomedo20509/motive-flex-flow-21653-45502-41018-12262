@@ -1,12 +1,7 @@
-import { hydrateRoot, createRoot } from "react-dom/client";
+import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
 const rootElement = document.getElementById("root")!;
-const hasSSRContent = rootElement.innerHTML.trim().length > 0;
-
-if (hasSSRContent) {
-  hydrateRoot(rootElement, <App />);
-} else {
-  createRoot(rootElement).render(<App />);
-}
+rootElement.innerHTML = "";
+createRoot(rootElement).render(<App />);
