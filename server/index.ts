@@ -67,6 +67,10 @@ app.use((req, res, next) => {
     await setupVite(app, server);
   }
 
+  server.timeout = 120000;
+  server.keepAliveTimeout = 65000;
+  server.headersTimeout = 70000;
+
   const PORT = 5000;
   server.listen(PORT, "0.0.0.0", () => {
     log(`Server running on port ${PORT}`);

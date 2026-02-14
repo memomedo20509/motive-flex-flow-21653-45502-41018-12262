@@ -864,13 +864,48 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
             const imgSrc = imgMatch[1];
             if (imgSrc.startsWith('data:image')) {
               event.preventDefault();
-              editor?.chain().focus().setImage({ 
-                src: imgSrc, 
-                alt: '',
-                width: '100%',
-                alignment: 'center',
-              } as any).run();
-              toast({ title: "تم إضافة الصورة" });
+              const base64ToFile = (dataUrl: string): File | null => {
+                try {
+                  const arr = dataUrl.split(',');
+                  const mimeMatch = arr[0].match(/:(.*?);/);
+                  if (!mimeMatch) return null;
+                  const mime = mimeMatch[1];
+                  const bstr = atob(arr[1]);
+                  let n = bstr.length;
+                  const u8arr = new Uint8Array(n);
+                  while(n--) { u8arr[n] = bstr.charCodeAt(n); }
+                  const ext = mime.split('/')[1] || 'png';
+                  return new File([u8arr], `pasted-image.${ext}`, { type: mime });
+                } catch { return null; }
+              };
+              const sizeEstimate = (imgSrc.length * 3) / 4;
+              if (sizeEstimate > 10 * 1024 * 1024) {
+                toast({ title: "حجم الصورة كبير جداً (الحد الأقصى 10MB)", variant: "destructive" });
+                return true;
+              }
+              const imgFile = base64ToFile(imgSrc);
+              if (imgFile) {
+                isUploadingRef.current = true;
+                toast({ title: "جاري رفع الصورة..." });
+                uploadImage(imgFile).then(url => {
+                  if (url && editor) {
+                    editor.chain().focus().setImage({ 
+                      src: url, 
+                      alt: '',
+                      width: '100%',
+                      alignment: 'center',
+                    } as any).run();
+                  } else {
+                    toast({ title: "فشل رفع الصورة، يرجى المحاولة مرة أخرى", variant: "destructive" });
+                  }
+                }).catch(() => {
+                  toast({ title: "حدث خطأ أثناء رفع الصورة", variant: "destructive" });
+                }).finally(() => {
+                  isUploadingRef.current = false;
+                });
+              } else {
+                toast({ title: "تعذر معالجة الصورة", variant: "destructive" });
+              }
               return true;
             } else if (imgSrc.startsWith('http')) {
               event.preventDefault();

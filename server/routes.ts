@@ -5,11 +5,65 @@ import { setupAuth, isAuthenticated, isAdmin, hashPassword } from "./auth";
 import { insertArticleSchema, insertContactSchema, insertUserSchema, insertTrialSchema, insertShortUrlSchema } from "../shared/schema";
 import { sendContactNotificationEmail } from "./email";
 import { uploadToCloudinary, validateImage } from "./cloudinary";
+import cloudinary from "./cloudinary";
 import path from "path";
 import fs from "fs";
 import multer from "multer";
 import express from "express";
 import * as cheerio from "cheerio";
+
+async function processBase64ImagesInContent(content: string): Promise<string> {
+  const $ = cheerio.load(content, { decodeEntities: false });
+  const imgElements = $('img[src^="data:image"]');
+  
+  if (imgElements.length === 0) return content;
+  
+  const uploadPromises: Promise<void>[] = [];
+  
+  imgElements.each((_, img) => {
+    const src = $(img).attr('src');
+    if (!src || !src.startsWith('data:image')) return;
+    
+    const sizeEstimate = (src.length * 3) / 4;
+    if (sizeEstimate > 10 * 1024 * 1024) {
+      console.warn("Skipping base64 image: too large (>10MB)");
+      $(img).remove();
+      return;
+    }
+    
+    const promise = (async () => {
+      try {
+        const uploadResult = await new Promise<any>((resolve, reject) => {
+          const timeout = setTimeout(() => reject(new Error("Upload timeout")), 30000);
+          cloudinary.uploader.upload(src, {
+            folder: 'mutflex/images',
+            resource_type: 'image',
+            transformation: [
+              { quality: 'auto:good' },
+              { fetch_format: 'auto' }
+            ]
+          }, (error: any, result: any) => {
+            clearTimeout(timeout);
+            if (error) reject(error);
+            else resolve(result);
+          });
+        });
+        if (uploadResult?.secure_url) {
+          $(img).attr('src', uploadResult.secure_url);
+        }
+      } catch (err) {
+        console.error("Failed to upload base64 image:", err);
+        $(img).remove();
+      }
+    })();
+    
+    uploadPromises.push(promise);
+  });
+  
+  await Promise.all(uploadPromises);
+  
+  return $('body').html() || content;
+}
 import { GoogleGenAI } from "@google/genai";
 
 const uploadDir = path.join(process.cwd(), "uploads");
@@ -463,8 +517,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         coverImageUrl = uploadResult.secure_url;
       }
       
+      let processedContent = body.content;
+      if (processedContent && processedContent.includes('data:image')) {
+        processedContent = await processBase64ImagesInContent(processedContent);
+      }
+
       const articleData = {
         ...body,
+        content: processedContent,
         slug,
         status: finalStatus,
         scheduledAt,
@@ -541,8 +601,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         scheduledAt = null;
       }
       
+      let processedContent = body.content;
+      if (processedContent && processedContent.includes('data:image')) {
+        processedContent = await processBase64ImagesInContent(processedContent);
+      }
+
       const articleData: any = {
         ...body,
+        content: processedContent,
         status: finalStatus,
         scheduledAt,
         publishedAt,

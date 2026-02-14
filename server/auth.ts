@@ -143,16 +143,15 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
 };
 
 export const isAdmin: RequestHandler = async (req, res, next) => {
-  if (!req.session.userId) {
+  const user = (req as any).user;
+  
+  if (!user) {
     return res.status(401).json({ message: "غير مصرح" });
   }
   
-  const user = await storage.getUser(req.session.userId);
-  
-  if (!user || user.isAdmin !== "true") {
+  if (user.isAdmin !== "true") {
     return res.status(403).json({ message: "صلاحيات الأدمن مطلوبة" });
   }
   
-  (req as any).user = user;
   next();
 };
