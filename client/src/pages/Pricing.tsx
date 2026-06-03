@@ -20,7 +20,7 @@ const Pricing = () => {
     name: "Mutflex Pro",
     price: "345",
     period: "شهريًا",
-    description: "باقة واحدة واضحة لإدارة المصنع بالكامل، تشمل جميع المميزات بدون تعقيد",
+    description: "باقة واحدة واضحة لإدارة الشركة بالكامل، تشمل جميع المميزات بدون تعقيد",
     features: [
       "عدد مستخدمين غير محدود",
       "إدارة العملاء والطلبات",
@@ -42,7 +42,7 @@ const Pricing = () => {
     name: "Mutflex Catalog",
     price: "575",
     period: "سنوياً",
-    description: "باقة سنوية للكتالوج وقوائم الأسعار، مناسبة لصالات العرض والفرق التي تحتاج عرض منتجاتها باحتراف",
+    description: "باقة سنوية للكتالوج وقوائم الأسعار، مناسبة لصالات العرض التي تحتاج عرض منتجاتها باحتراف",
     features: [
       "لوحة تحكم أساسية",
       "إنشاء الكتالوج",
@@ -57,8 +57,8 @@ const Pricing = () => {
     <PageScaffold>
       <SEOHead
         title="الأسعار والباقات"
-        description="تعرف على أسعار موتفلكس في السعودية. Mutflex Pro بسعر شهري واضح شامل المميزات، و Mutflex Catalog كباقة سنوية شاملة الضريبة."
-        keywords="أسعار موتفلكس, باقة شهرية, اشتراك شهري, تجربة مجانية, نظام إدارة المصانع, Mutflex Pro, Mutflex Catalog, السعودية"
+        description="تعرف على أسعار موتفلكس في السعودية. Mutflex Pro بسعر شهري واضح لإدارة الشركات، و Mutflex Catalog كباقة سنوية شاملة الضريبة."
+        keywords="أسعار موتفلكس, باقة شهرية, اشتراك شهري, تجربة مجانية, نظام إدارة الشركات, Mutflex Pro, Mutflex Catalog, السعودية"
         canonicalUrl="https://mutflex.com/pricing"
       />
       <BreadcrumbSchema items={[
@@ -80,7 +80,7 @@ const Pricing = () => {
           </AnimateOnScroll>
           <AnimateOnScroll>
             <p className="text-lg md:text-xl max-w-3xl mx-auto opacity-95 leading-relaxed" data-testid="text-pricing-description">
-              باقة شهرية واحدة لإدارة المصنع بالكامل، وباقة سنوية مخصصة للكتالوج وقوائم الأسعار
+              باقة شهرية واحدة لإدارة الشركة بالكامل، وباقة سنوية مخصصة للكتالوج وقوائم الأسعار
             </p>
           </AnimateOnScroll>
           <AnimateOnScroll>
@@ -97,7 +97,7 @@ const Pricing = () => {
         <div className="container mx-auto max-w-7xl">
           <SectionHeader
             title="Mutflex Pro"
-            description="النظام الشامل لإدارة المصانع - باقة شهرية واحدة تشمل جميع المميزات"
+            description="النظام الشامل لإدارة الشركات الصناعية - باقة شهرية واحدة تشمل جميع المميزات"
             badge="تجربة مجانية لمدة شهر"
           />
           
@@ -247,7 +247,7 @@ const Pricing = () => {
             {[
               {
                 q: "ما الفرق بين Mutflex Pro و Mutflex Catalog؟",
-                a: "Mutflex Pro هو النظام الشامل لإدارة المصنع والطلبات والعملاء والتصنيع والتركيب. Mutflex Catalog مخصص للكتالوج وقوائم الأسعار وصالات العرض.",
+                a: "Mutflex Pro هو النظام الشامل لإدارة الشركة والطلبات والعملاء والتصنيع والتركيب. Mutflex Catalog مخصص للكتالوج وقوائم الأسعار.",
               },
               {
                 q: "هل الأسعار شاملة الضريبة؟",

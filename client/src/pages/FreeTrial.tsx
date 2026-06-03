@@ -191,7 +191,7 @@ const FreeTrial = () => {
                       name="company"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>اسم الشركة / المصنع *</FormLabel>
+                          <FormLabel>اسم الشركة *</FormLabel>
                           <FormControl>
                             <Input
                               placeholder="اسم شركتك"
