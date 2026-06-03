@@ -71,7 +71,7 @@ app.use((req, res, next) => {
   server.keepAliveTimeout = 65000;
   server.headersTimeout = 70000;
 
-  const PORT = 5000;
+  const PORT = Number(process.env.PORT) || 5000;
   server.listen(PORT, "0.0.0.0", () => {
     log(`Server running on port ${PORT}`);
   });

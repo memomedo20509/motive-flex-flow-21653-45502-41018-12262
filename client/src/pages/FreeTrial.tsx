@@ -75,9 +75,9 @@ const FreeTrial = () => {
   return (
     <PageScaffold>
       <SEOHead
-        title="تجربة مجانية لمدة شهرين"
-        description="ابدأ تجربتك المجانية مع موتفلكس الآن. شهرين مجاناً بدون بطاقة ائتمان مع دعم فني متكامل وتدريب مجاني."
-        keywords="تجربة مجانية, موتفلكس, نظام إدارة المصانع, شهرين مجاناً"
+        title="تجربة مجانية لمدة شهر"
+        description="ابدأ تجربتك المجانية مع موتفلكس الآن. شهر مجاناً بدون بطاقة ائتمان مع دعم فني متكامل وتدريب مجاني."
+        keywords="تجربة مجانية, موتفلكس, نظام إدارة المصانع, شهر مجاناً"
         canonicalUrl="https://mutflex.com/free-trial"
       />
       <BreadcrumbSchema items={[
@@ -90,11 +90,11 @@ const FreeTrial = () => {
           <div className="flex items-center justify-center gap-3 mb-4">
             <Zap size={40} />
             <h1 className="text-4xl md:text-5xl font-bold" data-testid="heading-free-trial">
-              ابدأ تجربتك المجانية لمدة شهرين
+              ابدأ تجربتك المجانية لمدة شهر
             </h1>
           </div>
           <p className="text-lg md:text-xl max-w-2xl mx-auto opacity-95">
-            شهرين مجاناً - بدون بطاقة ائتمان - ابدأ في دقائق
+            شهر مجاناً - بدون بطاقة ائتمان - ابدأ في دقائق
           </p>
         </div>
       </section>
@@ -103,7 +103,7 @@ const FreeTrial = () => {
         <div className="container mx-auto">
           <div className="flex flex-wrap justify-center gap-8 text-center">
             {[
-              "تجربة مجانية شهرين",
+              "تجربة مجانية لمدة شهر",
               "لا حاجة لبطاقة ائتمان",
               "رسائل نصية مجانية باسم mutaba",
               "دعم فني متكامل",

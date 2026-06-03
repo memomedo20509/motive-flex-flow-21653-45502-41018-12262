@@ -93,7 +93,7 @@ const Index = () => {
     <div className="min-h-screen overflow-x-hidden" dir="rtl">
       <SEOHead
         title="نظام إدارة التصنيع والتركيب"
-        description="موتفلكس - نظام SaaS متكامل لإدارة عمليات التصنيع، التوريد، والتركيب. حوّل منشأتك من الفوضى إلى نظام رقمي متكامل. تجربة مجانية لمدة شهرين."
+        description="موتفلكس - نظام SaaS متكامل لإدارة عمليات التصنيع، التوريد، والتركيب. حوّل منشأتك من الفوضى إلى نظام رقمي متكامل. تجربة مجانية لمدة شهر."
         keywords="إدارة التصنيع, نظام تركيب, برنامج مصانع, إدارة العملاء, برنامج رخام, برنامج جرانيت, SaaS"
         canonicalUrl="https://mutflex.com/"
       />
@@ -175,7 +175,7 @@ const Index = () => {
             
             <AnimateOnScroll>
               <p className="text-xs md:text-sm mt-6 opacity-80" data-testid="text-trial-info">
-                تجربة مجانية لمدة شهرين - لا يتطلب بطاقة ائتمانية
+                تجربة مجانية لمدة شهر - لا يتطلب بطاقة ائتمانية
               </p>
             </AnimateOnScroll>
           </div>

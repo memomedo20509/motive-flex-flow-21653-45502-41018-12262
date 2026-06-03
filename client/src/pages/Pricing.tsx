@@ -10,67 +10,39 @@ import { BreadcrumbSchema } from "@/components/SchemaMarkup";
 import { Check, Zap } from "lucide-react";
 
 const Pricing = () => {
-  // Mutflex Pro Plans
+  // Mutflex Pro Plan
   const proSetupFee = {
-    price: "690",
-    description: "رسوم تأسيس لمرة واحدة شاملة الضريبة",
+    price: "230",
+    description: "رسوم تأسيس تدفع مرة واحدة فقط، شاملة ضريبة القيمة المضافة",
   };
 
-  const proPlans = [
-    {
-      name: "باقة 6 شهور",
-      name_en: "6 Months",
-      price: "6,000",
-      period: "6 أشهر",
-      description: "الباقة المثالية للمشاريع قصيرة ومتوسطة المدى",
-      features: [
-        "عدد مستخدمين غير محدود",
-        "إدارة العملاء والطلبات",
-        "متابعة مراحل التصنيع والتركيب",
-        "أرشفة الصور والمستندات",
-        "لوحة تحكم أساسية",
-        "الرسائل النصية المدعومة بالصور",
-        "تقارير متقدمة",
-        "إنشاء الكاتالوج",
-        "لوحة العميل (Client Portal)",
-        "تخزين غير محدود",
-        "قائمة أسعار للمنتجات ومواصفاتها",
-        "شاشة عرض خاصة لصالات العرض لقائمة الأسعار والكتالوج",
-      ],
-      popular: false,
-    },
-    {
-      name: "باقة سنة",
-      name_en: "1 Year",
-      price: "10,350",
-      period: "12 شهر",
-      description: "الأكثر شعبية - وفّر 14% على المدى الطويل",
-      features: [
-        "عدد مستخدمين غير محدود",
-        "إدارة العملاء والطلبات",
-        "متابعة مراحل التصنيع والتركيب",
-        "أرشفة الصور والمستندات",
-        "لوحة تحكم أساسية",
-        "الرسائل النصية المدعومة بالصور",
-        "تقارير متقدمة",
-        "إنشاء الكاتالوج",
-        "لوحة العميل (Client Portal)",
-        "تخزين غير محدود",
-        "قائمة أسعار للمنتجات ومواصفاتها",
-        "شاشة عرض خاصة لصالات العرض لقائمة الأسعار والكتالوج",
-      ],
-      popular: true,
-    },
-  ];
+  const proPlan = {
+    name: "Mutflex Pro",
+    price: "345",
+    period: "شهريًا",
+    description: "باقة واحدة واضحة لإدارة المصنع بالكامل، تشمل جميع المميزات بدون تعقيد",
+    features: [
+      "عدد مستخدمين غير محدود",
+      "إدارة العملاء والطلبات",
+      "متابعة مراحل التصنيع والتركيب",
+      "أرشفة الصور والمستندات",
+      "لوحة تحكم شاملة",
+      "الرسائل النصية المدعومة بالصور",
+      "تقارير متقدمة",
+      "إنشاء الكاتالوج",
+      "لوحة العميل (Client Portal)",
+      "تخزين غير محدود",
+      "قائمة أسعار للمنتجات ومواصفاتها",
+      "شاشة عرض خاصة لصالات العرض لقائمة الأسعار والكتالوج",
+    ],
+  };
 
   // Mutflex Catalog Plan
   const catalogPlan = {
     name: "Mutflex Catalog",
-    price: "999",
+    price: "575",
     period: "سنوياً",
-    setupFee: "115",
-    trialDays: 14,
-    description: "نظام الكتالوج وقوائم الأسعار - الحل الأمثل لصالات العرض",
+    description: "باقة سنوية للكتالوج وقوائم الأسعار، مناسبة لصالات العرض والفرق التي تحتاج عرض منتجاتها باحتراف",
     features: [
       "لوحة تحكم أساسية",
       "إنشاء الكتالوج",
@@ -85,8 +57,8 @@ const Pricing = () => {
     <PageScaffold>
       <SEOHead
         title="الأسعار والباقات"
-        description="تعرف على أسعار باقات موتفلكس المرنة. Mutflex Pro و Mutflex Catalog مع تجربة مجانية. جميع الباقات تشمل عدد مستخدمين غير محدود."
-        keywords="أسعار موتفلكس, باقات, اشتراك, تجربة مجانية, نظام إدارة المصانع, Mutflex Pro, Mutflex Catalog"
+        description="تعرف على أسعار موتفلكس في السعودية. Mutflex Pro بسعر شهري واضح شامل المميزات، و Mutflex Catalog كباقة سنوية شاملة الضريبة."
+        keywords="أسعار موتفلكس, باقة شهرية, اشتراك شهري, تجربة مجانية, نظام إدارة المصانع, Mutflex Pro, Mutflex Catalog, السعودية"
         canonicalUrl="https://mutflex.com/pricing"
       />
       <BreadcrumbSchema items={[
@@ -103,18 +75,18 @@ const Pricing = () => {
         <div className="container mx-auto text-center relative z-10 stagger-children">
           <AnimateOnScroll>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6" data-testid="heading-pricing-hero">
-              خطط أسعار واضحة ومرنة
+              أسعار واضحة تناسب السوق السعودي
             </h1>
           </AnimateOnScroll>
           <AnimateOnScroll>
             <p className="text-lg md:text-xl max-w-3xl mx-auto opacity-95 leading-relaxed" data-testid="text-pricing-description">
-              اختر الباقة المناسبة لحجم عملك - من صالات العرض الصغيرة إلى المصانع الكبيرة
+              باقة شهرية واحدة لإدارة المصنع بالكامل، وباقة سنوية مخصصة للكتالوج وقوائم الأسعار
             </p>
           </AnimateOnScroll>
           <AnimateOnScroll>
             <div className="mt-8 inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-6 py-3 rounded-full border border-white/20">
               <Check size={20} className="text-primary" />
-              <span className="text-sm font-medium">رسائل نصية مجانية باسم mutaba خلال فترة التجربة</span>
+              <span className="text-sm font-medium">تجربة مجانية لمدة شهر - بدون بطاقة ائتمانية</span>
             </div>
           </AnimateOnScroll>
         </div>
@@ -125,46 +97,39 @@ const Pricing = () => {
         <div className="container mx-auto max-w-7xl">
           <SectionHeader
             title="Mutflex Pro"
-            description="النظام الشامل لإدارة المصانع - جميع المميزات القوية"
-            badge="تجربة مجانية لمدة شهرين"
+            description="النظام الشامل لإدارة المصانع - باقة شهرية واحدة تشمل جميع المميزات"
+            badge="تجربة مجانية لمدة شهر"
           />
           
-          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto stagger-children">
-            {proPlans.map((plan, index) => (
-              <AnimateOnScroll key={index}>
+          <div className="max-w-xl mx-auto stagger-children">
+              <AnimateOnScroll>
                 <Card
-                  className={`relative ${
-                    plan.popular
-                      ? "border-primary border-2 shadow-xl scale-105"
-                      : "border-2"
-                  }`}
-                  data-testid={`card-pro-plan-${index}`}
+                  className="relative border-primary border-2 shadow-xl"
+                  data-testid="card-pro-plan"
                 >
-                {plan.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-bold">
-                    الأكثر شعبية
+                    باقة واحدة بكل المميزات
                   </div>
-                )}
                 <CardHeader className="text-center pb-8 pt-8">
-                  <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                  <h3 className="text-2xl font-bold mb-2">{proPlan.name}</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    {plan.description}
+                    {proPlan.description}
                   </p>
                   <div className="flex items-end justify-center gap-2">
                     <span className="text-4xl md:text-5xl font-bold">
-                      {plan.price}
+                      {proPlan.price}
                     </span>
                     <span className="text-lg text-muted-foreground mb-2">
-                      ريال
+                      ريال سعودي
                     </span>
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    {plan.period}
+                    {proPlan.period} - شامل ضريبة القيمة المضافة
                   </span>
                 </CardHeader>
                 <CardContent className="space-y-4 pb-8">
                   {/* Setup Fee - First Item */}
-                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-4" data-testid={`text-pro-setup-fee-${index}`}>
+                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-4" data-testid="text-pro-setup-fee">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
                         <Zap size={18} className="text-primary" />
@@ -172,13 +137,13 @@ const Pricing = () => {
                       </div>
                       <div className="flex items-baseline gap-1">
                         <span className="text-lg font-bold text-primary">{proSetupFee.price}</span>
-                        <span className="text-xs text-muted-foreground">ريال</span>
+                        <span className="text-xs text-muted-foreground">ريال سعودي</span>
                       </div>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2">(مرة واحدة فقط - شاملة الضريبة)</p>
+                    <p className="text-xs text-muted-foreground mt-2">{proSetupFee.description}</p>
                   </div>
                   <ul className="space-y-3 mb-6">
-                    {plan.features.map((feature, idx) => (
+                    {proPlan.features.map((feature, idx) => (
                       <li key={idx} className="flex items-start gap-3">
                         <Check
                           size={20}
@@ -189,11 +154,11 @@ const Pricing = () => {
                     ))}
                   </ul>
                   <Button
-                    variant={plan.popular ? "default" : "outline"}
+                    variant="default"
                     size="lg"
                     className="w-full text-lg"
                     asChild
-                    data-testid={`button-pro-plan-${index}`}
+                    data-testid="button-pro-plan"
                   >
                     <Link href="/free-trial">
                       ابدأ تجربتك المجانية
@@ -202,7 +167,6 @@ const Pricing = () => {
                 </CardContent>
               </Card>
             </AnimateOnScroll>
-            ))}
           </div>
         </div>
       </section>
@@ -212,8 +176,8 @@ const Pricing = () => {
         <div className="container mx-auto max-w-7xl">
           <SectionHeader
             title="Mutflex Catalog"
-            description="الحل الاقتصادي للكتالوج وقوائم الأسعار - مثالي لصالات العرض"
-            badge="تجربة مجانية 14 يوم"
+            description="باقة سنوية للكتالوج وقوائم الأسعار بدون رسوم تأسيس"
+            badge="575 ريال سنويًا شامل الضريبة"
           />
           
           <div className="max-w-xl mx-auto">
@@ -229,33 +193,17 @@ const Pricing = () => {
                       {catalogPlan.price}
                     </span>
                     <span className="text-lg text-muted-foreground mb-2">
-                      ريال
+                      ريال سعودي
                     </span>
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    {catalogPlan.period}
+                    {catalogPlan.period} - شامل ضريبة القيمة المضافة
                   </span>
                 </CardHeader>
                 <CardContent className="space-y-4 pb-8">
-                  {/* Setup Fee */}
-                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-4" data-testid="text-catalog-setup-fee">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <Zap size={18} className="text-primary" />
-                        <span className="font-medium text-sm">رسوم التأسيس</span>
-                      </div>
-                      <div className="flex items-baseline gap-1">
-                        <span className="text-lg font-bold text-primary">{catalogPlan.setupFee}</span>
-                        <span className="text-xs text-muted-foreground">ريال</span>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2">(مرة واحدة فقط)</p>
-                  </div>
-                  
-                  {/* Free Trial Badge */}
                   <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-4 text-center">
                     <span className="text-green-600 dark:text-green-400 font-medium text-sm">
-                      تجربة مجانية {catalogPlan.trialDays} يوم
+                      بدون رسوم تأسيس
                     </span>
                   </div>
 
@@ -299,19 +247,19 @@ const Pricing = () => {
             {[
               {
                 q: "ما الفرق بين Mutflex Pro و Mutflex Catalog؟",
-                a: "Mutflex Pro هو النظام الشامل لإدارة المصانع بكافة المميزات، بينما Mutflex Catalog مصمم خصيصاً للكتالوج وقوائم الأسعار - مثالي لصالات العرض.",
+                a: "Mutflex Pro هو النظام الشامل لإدارة المصنع والطلبات والعملاء والتصنيع والتركيب. Mutflex Catalog مخصص للكتالوج وقوائم الأسعار وصالات العرض.",
               },
               {
-                q: "هل هناك رسوم خفية؟",
-                a: "لا، جميع الأسعار شاملة ولا توجد أي رسوم خفية. ما تراه هو ما تدفعه.",
+                q: "هل الأسعار شاملة الضريبة؟",
+                a: "نعم، أسعار الباقات ورسوم التأسيس الموضحة شاملة ضريبة القيمة المضافة.",
               },
               {
-                q: "هل يمكنني تغيير الباقة لاحقاً؟",
-                a: "بالتأكيد! يمكنك الترقية من Catalog إلى Pro أو تغيير مدة الاشتراك في أي وقت حسب احتياجاتك.",
+                q: "هل توجد رسوم تأسيس؟",
+                a: "توجد رسوم تأسيس لمرة واحدة على Mutflex Pro بقيمة 230 ريال سعودي شاملة الضريبة. Mutflex Catalog بدون رسوم تأسيس.",
               },
               {
                 q: "ماذا يحدث بعد انتهاء التجربة المجانية؟",
-                a: "يمكنك اختيار الباقة المناسبة والاستمرار، أو إلغاء الاشتراك بدون أي التزامات.",
+                a: "بعد انتهاء الشهر المجاني يمكنك الاستمرار على الباقة الشهرية أو التوقف بدون أي التزام.",
               },
               {
                 q: "هل توفرون تدريب على النظام؟",
@@ -338,7 +286,7 @@ const Pricing = () => {
       {/* CTA Section */}
       <CTASection
         title="جاهز للبدء؟"
-        description="ابدأ تجربتك المجانية اليوم - بدون بطاقة ائتمان"
+        description="ابدأ تجربتك المجانية لمدة شهر - بدون بطاقة ائتمانية"
         primaryButtonText="ابدأ تجربتك المجانية"
         primaryButtonLink="/free-trial"
         primaryButtonIcon={Zap}
