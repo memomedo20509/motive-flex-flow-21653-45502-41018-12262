@@ -11,6 +11,7 @@ import fs from "fs";
 import multer from "multer";
 import express from "express";
 import * as cheerio from "cheerio";
+import { randomBytes, timingSafeEqual } from "crypto";
 
 async function processBase64ImagesInContent(content: string): Promise<string> {
   const $ = cheerio.load(content, { decodeEntities: false });
@@ -103,6 +104,63 @@ function generateSlug(title: string): string {
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
     .trim();
+}
+
+function sanitizeRobotsTxt(robotsTxt: string, siteUrl: string): string {
+  const cleanedLines = robotsTxt
+    .split(/\r?\n/)
+    .filter((line) => !/^\s*Disallow:\s*\/(?:assets|uploads)\/?\s*$/i.test(line));
+
+  const hasSitemap = cleanedLines.some((line) => /^\s*Sitemap:/i.test(line));
+  if (!hasSitemap) {
+    cleanedLines.push("", "# Sitemap", `Sitemap: ${siteUrl}/sitemap.xml`);
+  }
+
+  return cleanedLines.join("\n").trim() + "\n";
+}
+
+function generateExternalApiToken(): string {
+  return `sk_live_${randomBytes(32).toString("hex")}`;
+}
+
+function constantTimeEqual(a: string, b: string): boolean {
+  const aBuffer = Buffer.from(a);
+  const bBuffer = Buffer.from(b);
+  if (aBuffer.length !== bBuffer.length) return false;
+  return timingSafeEqual(aBuffer, bBuffer);
+}
+
+function cleanBaseUrl(url: string): string {
+  return url.replace(/\/+$/, "");
+}
+
+function formatExternalArticle(article: any, baseUrl: string) {
+  const publishedUrl = `${cleanBaseUrl(baseUrl)}/blog/${article.slug}`;
+  return {
+    id: article.id.toString(),
+    title: article.title,
+    slug: article.slug,
+    content: article.content,
+    excerpt: article.excerpt,
+    metaTitle: article.metaTitle,
+    metaDescription: article.metaDescription,
+    metaKeywords: article.metaKeywords,
+    focusKeyword: article.focusKeyword,
+    canonicalUrl: article.canonicalUrl || publishedUrl,
+    ogTitle: article.ogTitle,
+    ogDescription: article.ogDescription,
+    ogImage: article.ogImage,
+    robotsDirective: article.robotsDirective,
+    schemaMarkup: article.schemaMarkup,
+    coverImage: article.coverImage,
+    coverImageAlt: article.coverImageAlt,
+    tags: article.tags || [],
+    status: article.status,
+    url: article.status === "published" ? publishedUrl : null,
+    publishedAt: article.publishedAt?.toISOString() || null,
+    createdAt: article.createdAt?.toISOString() || new Date().toISOString(),
+    updatedAt: article.updatedAt?.toISOString() || new Date().toISOString(),
+  };
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -865,7 +923,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "gtm_id",
         "google_verification",
         "bing_verification",
-        "robots_txt"
+        "robots_txt",
+        "external_api_token"
       ];
       
       for (const key of settingsToSave) {
@@ -893,6 +952,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error saving settings:", error);
       res.status(500).json({ message: "Failed to save settings" });
+    }
+  });
+
+  app.post("/api/admin/settings/external-api-token", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const token = generateExternalApiToken();
+      await storage.setSetting("external_api_token", token);
+      res.json({ token, message: "تم توليد API Token جديد بنجاح" });
+    } catch (error) {
+      console.error("Error generating external API token:", error);
+      res.status(500).json({ message: "Failed to generate external API token" });
     }
   });
 
@@ -981,10 +1051,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let robotsTxt: string;
       
       if (customRobots) {
-        robotsTxt = customRobots;
+        robotsTxt = sanitizeRobotsTxt(customRobots, siteUrl);
       } else {
         // Default robots.txt
-        robotsTxt = `User-agent: *
+        robotsTxt = sanitizeRobotsTxt(`User-agent: *
 Allow: /
 
 # Disallow admin and API paths
@@ -995,7 +1065,7 @@ Disallow: /login
 
 # Sitemap
 Sitemap: ${siteUrl}/sitemap.xml
-`;
+`, siteUrl);
       }
       
       res.set("Content-Type", "text/plain");
@@ -1087,33 +1157,54 @@ Sitemap: ${siteUrl}/sitemap.xml
   // =============================================
   
   // External API Token Authentication Middleware
-  const validateExternalToken = (req: any, res: any, next: any) => {
-    const authHeader = req.headers.authorization;
-    const apiToken = process.env.EXTERNAL_API_TOKEN;
-    
-    if (!apiToken) {
-      return res.status(500).json({ 
-        success: false, 
-        message: "API token not configured on server" 
+  const getExternalBaseUrl = async (req: any) => {
+    const siteUrl = await storage.getSetting("site_url");
+    if (siteUrl) return cleanBaseUrl(siteUrl);
+    if (process.env.SITE_URL) return cleanBaseUrl(process.env.SITE_URL);
+    if (process.env.REPLIT_DEV_DOMAIN) return `https://${process.env.REPLIT_DEV_DOMAIN}`;
+    return `https://${req.get("host") || "mutflex.com"}`;
+  };
+
+  const validateExternalToken = async (req: any, res: any, next: any) => {
+    try {
+      const authHeader = req.headers.authorization;
+      const configuredToken = await storage.getSetting("external_api_token");
+      const apiToken = configuredToken || process.env.EXTERNAL_API_TOKEN;
+      
+      if (!apiToken) {
+        return res.status(500).json({ 
+          success: false, 
+          error: "API token not configured on server",
+          code: "TOKEN_NOT_CONFIGURED",
+        });
+      }
+      
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ 
+          success: false, 
+          error: "Missing or invalid authorization header",
+          code: "MISSING_TOKEN",
+        });
+      }
+      
+      const token = authHeader.substring(7);
+      if (!constantTimeEqual(token, apiToken)) {
+        return res.status(401).json({ 
+          success: false, 
+          error: "Invalid API token",
+          code: "INVALID_TOKEN",
+        });
+      }
+      
+      next();
+    } catch (error: any) {
+      console.error("External API - Token validation error:", error);
+      res.status(500).json({
+        success: false,
+        error: "Token validation failed",
+        code: "TOKEN_VALIDATION_FAILED",
       });
     }
-    
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "Missing or invalid authorization header" 
-      });
-    }
-    
-    const token = authHeader.substring(7);
-    if (token !== apiToken) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "Invalid API token" 
-      });
-    }
-    
-    next();
   };
 
   // Validate API Token
@@ -1135,35 +1226,8 @@ Sitemap: ${siteUrl}/sitemap.xml
         page: parseInt(page as string)
       });
       
-      const baseUrl = process.env.REPLIT_DEV_DOMAIN 
-        ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
-        : "https://mutflex.com";
-      
-      const formattedArticles = result.articles.map((article: any) => ({
-        id: article.id.toString(),
-        title: article.title,
-        slug: article.slug,
-        content: article.content,
-        excerpt: article.excerpt,
-        metaTitle: article.metaTitle,
-        metaDescription: article.metaDescription,
-        metaKeywords: article.metaKeywords,
-        focusKeyword: article.focusKeyword,
-        canonicalUrl: article.canonicalUrl,
-        ogTitle: article.ogTitle,
-        ogDescription: article.ogDescription,
-        ogImage: article.ogImage,
-        robotsDirective: article.robotsDirective,
-        schemaMarkup: article.schemaMarkup,
-        coverImage: article.coverImage,
-        coverImageAlt: article.coverImageAlt,
-        tags: article.tags,
-        status: article.status,
-        url: article.status === "published" ? `${baseUrl}/blog/${article.slug}` : null,
-        publishedAt: article.publishedAt?.toISOString() || null,
-        createdAt: article.createdAt?.toISOString() || new Date().toISOString(),
-        updatedAt: article.updatedAt?.toISOString() || new Date().toISOString(),
-      }));
+      const baseUrl = await getExternalBaseUrl(req);
+      const formattedArticles = result.articles.map((article: any) => formatExternalArticle(article, baseUrl));
       
       res.json({ 
         success: true, 
@@ -1195,14 +1259,23 @@ Sitemap: ${siteUrl}/sitemap.xml
         schemaMarkup,
         coverImage,
         coverImageAlt,
-        tags 
+        tags,
+        slug: requestedSlug,
+        author,
+        status,
       } = req.body;
       
       if (!title) {
         return res.status(400).json({ success: false, message: "Title is required" });
       }
       
-      const slug = generateSlug(title);
+      let slug = generateSlug(requestedSlug || title);
+      const existingArticle = await storage.getArticleBySlug(slug);
+      if (existingArticle) {
+        slug = `${slug}-${Date.now()}`;
+      }
+      const finalStatus = status === "published" ? "published" : "draft";
+      const baseUrl = await getExternalBaseUrl(req);
       
       const article = await storage.createArticle({
         title,
@@ -1213,7 +1286,7 @@ Sitemap: ${siteUrl}/sitemap.xml
         metaDescription: metaDescription || "",
         metaKeywords: metaKeywords || "",
         focusKeyword: focusKeyword || "",
-        canonicalUrl: canonicalUrl || "",
+        canonicalUrl: canonicalUrl || `${baseUrl}/blog/${slug}`,
         ogTitle: ogTitle || "",
         ogDescription: ogDescription || "",
         ogImage: ogImage || "",
@@ -1225,19 +1298,14 @@ Sitemap: ${siteUrl}/sitemap.xml
         coverImage: coverImage || "",
         coverImageAlt: coverImageAlt || "",
         tags: tags || [],
-        status: "draft",
-        author: "API Integration",
+        status: finalStatus,
+        publishedAt: finalStatus === "published" ? new Date() : null,
+        author: author || "API Integration",
       });
       
       res.status(201).json({ 
         success: true, 
-        article: {
-          id: article.id.toString(),
-          title: article.title,
-          slug: article.slug,
-          status: article.status,
-          createdAt: article.createdAt?.toISOString() || new Date().toISOString(),
-        },
+        article: formatExternalArticle(article, baseUrl),
         message: "Article created successfully"
       });
     } catch (error: any) {
@@ -1256,37 +1324,11 @@ Sitemap: ${siteUrl}/sitemap.xml
         return res.status(404).json({ success: false, message: "Article not found" });
       }
       
-      const baseUrl = process.env.REPLIT_DEV_DOMAIN 
-        ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
-        : "https://mutflex.com";
+      const baseUrl = await getExternalBaseUrl(req);
       
       res.json({ 
         success: true, 
-        article: {
-          id: article.id.toString(),
-          title: article.title,
-          slug: article.slug,
-          content: article.content,
-          excerpt: article.excerpt,
-          metaTitle: article.metaTitle,
-          metaDescription: article.metaDescription,
-          metaKeywords: article.metaKeywords,
-          focusKeyword: article.focusKeyword,
-          canonicalUrl: article.canonicalUrl,
-          ogTitle: article.ogTitle,
-          ogDescription: article.ogDescription,
-          ogImage: article.ogImage,
-          robotsDirective: article.robotsDirective,
-          schemaMarkup: article.schemaMarkup,
-          coverImage: article.coverImage,
-          coverImageAlt: article.coverImageAlt,
-          tags: article.tags,
-          status: article.status,
-          url: article.status === "published" ? `${baseUrl}/blog/${article.slug}` : null,
-          publishedAt: article.publishedAt?.toISOString() || null,
-          createdAt: article.createdAt?.toISOString() || new Date().toISOString(),
-          updatedAt: article.updatedAt?.toISOString() || new Date().toISOString(),
-        }
+        article: formatExternalArticle(article, baseUrl)
       });
     } catch (error: any) {
       console.error("External API - Error fetching article:", error);
@@ -1309,7 +1351,7 @@ Sitemap: ${siteUrl}/sitemap.xml
         'title', 'content', 'excerpt', 'metaTitle', 'metaDescription',
         'metaKeywords', 'focusKeyword', 'canonicalUrl', 'ogTitle',
         'ogDescription', 'ogImage', 'robotsDirective', 'schemaMarkup',
-        'coverImage', 'coverImageAlt', 'tags'
+        'coverImage', 'coverImageAlt', 'tags', 'slug', 'status'
       ];
       
       for (const field of allowedFields) {
@@ -1324,22 +1366,21 @@ Sitemap: ${siteUrl}/sitemap.xml
         }
       }
       
-      // Update slug if title changed
-      if (updateData.title) {
+      if (updateData.slug) {
+        updateData.slug = generateSlug(updateData.slug);
+      } else if (updateData.title) {
         updateData.slug = generateSlug(updateData.title);
+      }
+      if (updateData.status === "published" && existingArticle.status !== "published") {
+        updateData.publishedAt = new Date();
       }
       
       const article = await storage.updateArticle(id, updateData);
+      const baseUrl = await getExternalBaseUrl(req);
       
       res.json({ 
         success: true, 
-        article: {
-          id: article!.id.toString(),
-          title: article!.title,
-          slug: article!.slug,
-          status: article!.status,
-          updatedAt: article!.updatedAt?.toISOString() || new Date().toISOString(),
-        },
+        article: formatExternalArticle(article!, baseUrl),
         message: "Article updated successfully"
       });
     } catch (error: any) {
@@ -1363,20 +1404,11 @@ Sitemap: ${siteUrl}/sitemap.xml
         publishedAt: new Date()
       });
       
-      const baseUrl = process.env.REPLIT_DEV_DOMAIN 
-        ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
-        : "https://mutflex.com";
+      const baseUrl = await getExternalBaseUrl(req);
       
       res.json({ 
         success: true, 
-        article: {
-          id: article!.id.toString(),
-          title: article!.title,
-          slug: article!.slug,
-          status: article!.status,
-          url: `${baseUrl}/blog/${article!.slug}`,
-          publishedAt: article!.publishedAt?.toISOString() || new Date().toISOString(),
-        },
+        article: formatExternalArticle(article!, baseUrl),
         message: "Article published successfully"
       });
     } catch (error: any) {
@@ -1385,12 +1417,57 @@ Sitemap: ${siteUrl}/sitemap.xml
     }
   });
 
+  // Upload media (external)
+  app.post("/api/external/media", validateExternalToken, async (req, res) => {
+    try {
+      const { filename, data, contentType, alt } = req.body;
+      if (!data || !contentType) {
+        return res.status(400).json({
+          success: false,
+          error: "data and contentType are required",
+          code: "INVALID_MEDIA_PAYLOAD",
+        });
+      }
+
+      if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(contentType)) {
+        return res.status(400).json({
+          success: false,
+          error: "Unsupported media contentType",
+          code: "UNSUPPORTED_MEDIA_TYPE",
+        });
+      }
+
+      const dataUri = String(data).startsWith("data:")
+        ? String(data)
+        : `data:${contentType};base64,${data}`;
+      const uploadResult = await cloudinary.uploader.upload(dataUri, {
+        folder: "mutflex/seo-master",
+        resource_type: "image",
+        public_id: filename ? path.parse(filename).name.replace(/[^a-zA-Z0-9_-]/g, "-") : undefined,
+        transformation: [
+          { quality: "auto:good" },
+          { fetch_format: "auto" },
+        ],
+      });
+
+      res.status(201).json({
+        success: true,
+        media: {
+          id: uploadResult.public_id,
+          url: uploadResult.secure_url,
+          alt: alt || "",
+        },
+      });
+    } catch (error: any) {
+      console.error("External API - Error uploading media:", error);
+      res.status(500).json({ success: false, error: error.message, code: "MEDIA_UPLOAD_FAILED" });
+    }
+  });
+
   // Get all pages for internal linking (external)
   app.get("/api/external/pages", validateExternalToken, async (req, res) => {
     try {
-      const baseUrl = process.env.REPLIT_DEV_DOMAIN 
-        ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
-        : "https://mutflex.com";
+      const baseUrl = await getExternalBaseUrl(req);
       
       // Static pages
       const staticPages = [
@@ -1558,10 +1635,10 @@ Sitemap: ${siteUrl}/sitemap.xml
       
       if (customRobotsTxt && customRobotsTxt.trim()) {
         // Use custom content from settings
-        robotsTxt = customRobotsTxt;
+        robotsTxt = sanitizeRobotsTxt(customRobotsTxt, baseUrl);
       } else {
         // Default robots.txt
-        robotsTxt = `User-agent: *
+        robotsTxt = sanitizeRobotsTxt(`User-agent: *
 Allow: /
 
 # Disallow admin and API paths
@@ -1571,7 +1648,7 @@ Disallow: /api/
 Disallow: /login
 
 # Sitemap
-Sitemap: ${baseUrl}/sitemap.xml`;
+Sitemap: ${baseUrl}/sitemap.xml`, baseUrl);
       }
       
       res.set("Content-Type", "text/plain");

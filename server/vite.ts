@@ -26,6 +26,38 @@ function isSSRRoute(url: string): boolean {
   return false;
 }
 
+function applyHelmetToTemplate(
+  template: string,
+  appHtml: string,
+  helmet: { title?: string; meta?: string; link?: string; script?: string }
+): string {
+  let finalHtml = template;
+
+  if (helmet.title) {
+    finalHtml = finalHtml.replace(/<title\b[^>]*>[\s\S]*?<\/title>/i, helmet.title);
+  }
+
+  const headEnd = finalHtml.indexOf("</head>");
+  if (headEnd !== -1) {
+    const hasHelmetDescription = Boolean(helmet.meta?.includes('name="description"'));
+
+    if (hasHelmetDescription) {
+      finalHtml = finalHtml.replace(
+        /<meta\b(?=[^>]*\bname=["']description["'])[^>]*>/gi,
+        ""
+      );
+    }
+
+    const headTags = `${helmet.meta || ""}${helmet.link || ""}${helmet.script || ""}`;
+    if (headTags) {
+      const freshHeadEnd = finalHtml.indexOf("</head>");
+      finalHtml = finalHtml.slice(0, freshHeadEnd) + headTags + finalHtml.slice(freshHeadEnd);
+    }
+  }
+
+  return finalHtml.replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`);
+}
+
 export function log(message: string) {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
     hour: "2-digit",
@@ -60,27 +92,7 @@ export async function setupVite(app: Express, server: any) {
           const { render } = await vite.ssrLoadModule("/src/entry-server.tsx");
           const { html: appHtml, helmet } = render(url);
           
-          let finalHtml = template;
-          
-          if (helmet.title) {
-            finalHtml = finalHtml.replace(/<title>.*?<\/title>/s, helmet.title);
-          }
-          
-          // Remove template's default meta description to avoid duplicates (only if SEOHead provides one)
-          if (helmet.meta && helmet.meta.includes('name="description"')) {
-            finalHtml = finalHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, '');
-          }
-          
-          // Add helmet meta and link tags
-          const headEnd = finalHtml.indexOf("</head>");
-          if (headEnd !== -1) {
-            const metaTags = `${helmet.meta || ''}${helmet.link || ''}`;
-            if (metaTags) {
-              finalHtml = finalHtml.slice(0, headEnd) + metaTags + finalHtml.slice(headEnd);
-            }
-          }
-          
-          finalHtml = finalHtml.replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`);
+          const finalHtml = applyHelmetToTemplate(template, appHtml, helmet);
           
           res.status(200).set({ "Content-Type": "text/html" }).end(finalHtml);
         } catch (ssrError) {
@@ -201,29 +213,7 @@ export async function serveStatic(app: Express) {
         const { html: appHtml, helmet, dehydratedState } = ssrRender(url, initialData);
         log(`SSR rendered ${appHtml.length} chars for ${url}`);
         
-        let finalHtml = template;
-        
-        // Replace title
-        if (helmet.title) {
-          finalHtml = finalHtml.replace(/<title>.*?<\/title>/s, helmet.title);
-        }
-        
-        // Remove template's default meta description to avoid duplicates (only if SEOHead provides one)
-        if (helmet.meta && helmet.meta.includes('name="description"')) {
-          finalHtml = finalHtml.replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i, '');
-        }
-        
-        // Add helmet meta and link tags
-        const headEnd = finalHtml.indexOf("</head>");
-        if (headEnd !== -1) {
-          const headTags = `${helmet.meta || ''}${helmet.link || ''}${helmet.script || ''}`;
-          if (headTags) {
-            finalHtml = finalHtml.slice(0, headEnd) + headTags + finalHtml.slice(headEnd);
-          }
-        }
-        
-        // Inject SSR content
-        finalHtml = finalHtml.replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`);
+        let finalHtml = applyHelmetToTemplate(template, appHtml, helmet);
         
         // Inject dehydrated state for client hydration
         if (dehydratedState) {

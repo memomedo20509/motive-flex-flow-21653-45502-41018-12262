@@ -26,7 +26,9 @@ import {
   RefreshCw,
   ExternalLink,
   BarChart3,
-  CheckCircle2
+  CheckCircle2,
+  Copy,
+  KeyRound
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -44,6 +46,7 @@ const settingsFormSchema = z.object({
   google_verification: z.string().optional(),
   bing_verification: z.string().optional(),
   robots_txt: z.string().optional(),
+  external_api_token: z.string().optional(),
 });
 
 type SettingsForm = z.infer<typeof settingsFormSchema>;
@@ -64,6 +67,7 @@ export default function Settings() {
       google_verification: "",
       bing_verification: "",
       robots_txt: "",
+      external_api_token: "",
     },
   });
 
@@ -108,6 +112,24 @@ export default function Settings() {
     },
   });
 
+  const generateExternalTokenMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("/api/admin/settings/external-api-token", { method: "POST" });
+    },
+    onSuccess: (data) => {
+      form.setValue("external_api_token", data.token || "");
+      toast({ title: "تم توليد API Token جديد" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "فشل في توليد API Token",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   if (settings && form.getValues("notification_email") === "") {
     form.reset({
       notification_email: settings.notification_email || "",
@@ -120,6 +142,7 @@ export default function Settings() {
       google_verification: settings.google_verification || "",
       bing_verification: settings.bing_verification || "",
       robots_txt: settings.robots_txt || "",
+      external_api_token: settings.external_api_token || "",
     });
   }
 
@@ -138,6 +161,14 @@ Disallow: /login
 
 # Sitemap
 Sitemap: ${settings?.site_url || "https://mutflex.com"}/sitemap.xml`;
+
+  const externalApiToken = form.watch("external_api_token");
+  const siteUrl = settings?.site_url || "https://mutflex.com";
+  const copyExternalToken = async () => {
+    if (!externalApiToken) return;
+    await navigator.clipboard.writeText(externalApiToken);
+    toast({ title: "تم نسخ API Token" });
+  };
 
   return (
     <AdminLayout>
@@ -400,6 +431,75 @@ Sitemap: ${settings?.site_url || "https://mutflex.com"}/sitemap.xml`;
                         </FormItem>
                       )}
                     />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* SEO Master API */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <KeyRound className="h-5 w-5" />
+                    SEO Master API
+                  </CardTitle>
+                  <CardDescription>
+                    استخدم هذا التوكن لربط SEO Master ونشر المقالات مباشرة على الموقع
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="external_api_token"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>API Token</FormLabel>
+                        <div className="flex flex-col gap-3 md:flex-row">
+                          <FormControl>
+                            <Input
+                              dir="ltr"
+                              className="font-mono text-left"
+                              placeholder="اضغط توليد Token لإنشاء مفتاح الربط"
+                              data-testid="input-external-api-token"
+                              {...field}
+                            />
+                          </FormControl>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={copyExternalToken}
+                            disabled={!externalApiToken}
+                            data-testid="button-copy-external-api-token"
+                          >
+                            <Copy className="ml-2 h-4 w-4" />
+                            نسخ
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => generateExternalTokenMutation.mutate()}
+                            disabled={generateExternalTokenMutation.isPending}
+                            data-testid="button-generate-external-api-token"
+                          >
+                            {generateExternalTokenMutation.isPending ? (
+                              <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <RefreshCw className="ml-2 h-4 w-4" />
+                            )}
+                            توليد Token
+                          </Button>
+                        </div>
+                        <FormDescription>
+                          في SEO Master استخدم: Site URL = {siteUrl} و Base API = {siteUrl}/api/external
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="rounded-md border bg-muted/30 p-4 text-sm text-muted-foreground">
+                    <div className="font-medium text-foreground mb-2">اختبار الاتصال</div>
+                    <code className="block whitespace-pre-wrap break-all text-left" dir="ltr">
+                      {`POST ${siteUrl}/api/external/auth/validate\nAuthorization: Bearer ${externalApiToken || "YOUR_TOKEN"}`}
+                    </code>
                   </div>
                 </CardContent>
               </Card>

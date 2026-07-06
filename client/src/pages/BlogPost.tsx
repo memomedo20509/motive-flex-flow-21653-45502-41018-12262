@@ -156,7 +156,7 @@ const BlogPost = () => {
     return (
       <div className="min-h-screen bg-background" dir="rtl">
         <SEOHead 
-          title={`${slugTitle} | موتفلكس`}
+          title={slugTitle}
           description={`اقرأ مقال ${slugTitle} على مدونة موتفلكس`}
         />
         <Navbar />
@@ -190,7 +190,7 @@ const BlogPost = () => {
     return (
       <div className="min-h-screen bg-background" dir="rtl">
         <SEOHead 
-          title={`${slugTitle} | موتفلكس`}
+          title={slugTitle}
           description={`اقرأ مقال ${slugTitle} على مدونة موتفلكس`}
           noindex={true}
         />
