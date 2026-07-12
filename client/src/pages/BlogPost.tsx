@@ -498,7 +498,7 @@ const BlogPost = () => {
                   {contentParts.after ? (
                     <>
                       <div 
-                        className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-secondary prose-strong:text-foreground prose-ul:text-muted-foreground prose-ol:text-muted-foreground prose-blockquote:border-secondary prose-blockquote:text-muted-foreground"
+                        className="article-prose prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-secondary prose-strong:text-foreground prose-ul:text-muted-foreground prose-ol:text-muted-foreground prose-blockquote:border-secondary prose-blockquote:text-muted-foreground"
                         dangerouslySetInnerHTML={{ __html: contentParts.before }}
                         data-testid="article-content-before"
                       />
@@ -540,14 +540,14 @@ const BlogPost = () => {
                       </div>
 
                       <div 
-                        className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-secondary prose-strong:text-foreground prose-ul:text-muted-foreground prose-ol:text-muted-foreground prose-blockquote:border-secondary prose-blockquote:text-muted-foreground"
+                        className="article-prose prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-secondary prose-strong:text-foreground prose-ul:text-muted-foreground prose-ol:text-muted-foreground prose-blockquote:border-secondary prose-blockquote:text-muted-foreground"
                         dangerouslySetInnerHTML={{ __html: contentParts.after }}
                         data-testid="article-content-after"
                       />
                     </>
                   ) : (
                     <div 
-                      className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-secondary prose-strong:text-foreground prose-ul:text-muted-foreground prose-ol:text-muted-foreground prose-blockquote:border-secondary prose-blockquote:text-muted-foreground"
+                      className="article-prose prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-p:leading-relaxed prose-a:text-secondary prose-strong:text-foreground prose-ul:text-muted-foreground prose-ol:text-muted-foreground prose-blockquote:border-secondary prose-blockquote:text-muted-foreground"
                       dangerouslySetInnerHTML={{ __html: htmlContent }}
                       data-testid="article-content"
                     />

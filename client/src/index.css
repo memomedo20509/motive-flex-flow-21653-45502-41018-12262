@@ -267,6 +267,54 @@ All colors MUST be HSL.
   }
 }
 
+/* Public article rhythm. Keep this explicit so imported HTML stays readable. */
+.article-prose {
+  font-size: 1.125rem;
+  line-height: 2;
+}
+
+.article-prose p {
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+  line-height: 2;
+}
+
+.article-prose h2 {
+  margin-top: 2.25em;
+  margin-bottom: 0.85em;
+  font-size: 1.75rem;
+  line-height: 1.5;
+  font-weight: 700;
+}
+
+.article-prose h3 {
+  margin-top: 1.75em;
+  margin-bottom: 0.7em;
+  font-size: 1.375rem;
+  line-height: 1.6;
+  font-weight: 700;
+}
+
+.article-prose ul,
+.article-prose ol {
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+  padding-right: 1.5em;
+  padding-left: 0;
+}
+
+.article-prose li {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  line-height: 1.9;
+}
+
+.article-prose figure,
+.article-prose img {
+  margin-top: 2em;
+  margin-bottom: 2em;
+}
+
 /* Prose content styles for tables, blockquotes, and line breaks */
 .prose table {
   @apply w-full border-collapse my-6;
