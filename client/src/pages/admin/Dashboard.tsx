@@ -2,64 +2,47 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Eye, Tag, TrendingUp } from "lucide-react";
 import { AdminLayout } from "./AdminLayout";
-import type { Article } from "@shared/schema";
+import type { ArticleSummary, AdminDashboardData } from "@shared/schema";
 
-interface ArticlesResponse {
-  articles: Article[];
-  total: number;
-}
+type RecentArticle = ArticleSummary;
 
 const Dashboard = () => {
-  const { data: publishedData } = useQuery<ArticlesResponse>({
-    queryKey: ["/api/admin/articles", { status: "published", limit: 100 }],
+  const { data } = useQuery<AdminDashboardData>({
+    queryKey: ["/api/admin/dashboard"],
   });
-
-  const { data: draftData } = useQuery<ArticlesResponse>({
-    queryKey: ["/api/admin/articles", { status: "draft", limit: 100 }],
-  });
-
-  const { data: allData } = useQuery<ArticlesResponse>({
-    queryKey: ["/api/admin/articles", { limit: 100 }],
-  });
-
-  const { data: tags } = useQuery<string[]>({
-    queryKey: ["/api/articles/tags"],
-  });
-
-  const totalViews = allData?.articles.reduce((sum, article) => sum + (article.viewCount || 0), 0) || 0;
 
   const stats = [
     {
       title: "إجمالي المقالات",
-      value: allData?.total || 0,
+      value: data?.totalArticles || 0,
       icon: FileText,
       color: "text-blue-500",
       bgColor: "bg-blue-500/10",
     },
     {
       title: "المقالات المنشورة",
-      value: publishedData?.total || 0,
+      value: data?.publishedArticles || 0,
       icon: TrendingUp,
       color: "text-green-500",
       bgColor: "bg-green-500/10",
     },
     {
       title: "إجمالي المشاهدات",
-      value: totalViews,
+      value: data?.totalViews || 0,
       icon: Eye,
       color: "text-purple-500",
       bgColor: "bg-purple-500/10",
     },
     {
       title: "التصنيفات",
-      value: tags?.length || 0,
+      value: data?.tagCount || 0,
       icon: Tag,
       color: "text-orange-500",
       bgColor: "bg-orange-500/10",
     },
   ];
 
-  const recentArticles = allData?.articles.slice(0, 5) || [];
+  const recentArticles: RecentArticle[] = data?.recentArticles || [];
 
   return (
     <AdminLayout>

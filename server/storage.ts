@@ -8,6 +8,8 @@ import {
   type User,
   type UpsertUser,
   type Article,
+  type ArticleSummary,
+  type AdminDashboardData,
   type InsertArticle,
   type ContactSubmission,
   type InsertContact,
@@ -35,6 +37,13 @@ export interface IStorage {
     page?: number;
     limit?: number;
   }): Promise<{ articles: Article[]; total: number }>;
+  getArticleSummaries(options?: {
+    status?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ articles: ArticleSummary[]; total: number }>;
+  getAdminDashboardData(): Promise<AdminDashboardData>;
   getArticleBySlug(slug: string): Promise<Article | undefined>;
   getArticleById(id: number): Promise<Article | undefined>;
   createArticle(article: InsertArticle): Promise<Article>;
@@ -166,6 +175,100 @@ export class DatabaseStorage implements IStorage {
     return {
       articles: result,
       total: Number(countResult[0]?.count || 0),
+    };
+  }
+
+  async getArticleSummaries(options?: {
+    status?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ articles: ArticleSummary[]; total: number }> {
+    const page = options?.page || 1;
+    const limit = options?.limit || 20;
+    const offset = (page - 1) * limit;
+    const conditions = [];
+
+    if (options?.status) {
+      conditions.push(eq(articles.status, options.status));
+    }
+
+    if (options?.search) {
+      conditions.push(
+        or(
+          ilike(articles.title, `%${options.search}%`),
+          ilike(articles.excerpt, `%${options.search}%`),
+        ),
+      );
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const [result, countResult] = await Promise.all([
+      db
+        .select({
+          id: articles.id,
+          title: articles.title,
+          slug: articles.slug,
+          tags: articles.tags,
+          status: articles.status,
+          viewCount: articles.viewCount,
+          createdAt: articles.createdAt,
+        })
+        .from(articles)
+        .where(whereClause)
+        .orderBy(desc(articles.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db
+        .select({ count: sql<number>`count(*)` })
+        .from(articles)
+        .where(whereClause),
+    ]);
+
+    return {
+      articles: result,
+      total: Number(countResult[0]?.count || 0),
+    };
+  }
+
+  async getAdminDashboardData(): Promise<AdminDashboardData> {
+    const [statsResult, recentArticles] = await Promise.all([
+      db
+        .select({
+          totalArticles: sql<number>`count(*)`,
+          publishedArticles: sql<number>`count(*) filter (where ${articles.status} = 'published')`,
+          totalViews: sql<number>`coalesce(sum(${articles.viewCount}), 0)`,
+          tagCount: sql<number>`(
+            select count(distinct tag)
+            from articles as tagged_articles
+            cross join lateral unnest(coalesce(tagged_articles.tags, array[]::text[])) as article_tag(tag)
+            where tagged_articles.status = 'published'
+          )`,
+        })
+        .from(articles),
+      db
+        .select({
+          id: articles.id,
+          title: articles.title,
+          slug: articles.slug,
+          tags: articles.tags,
+          status: articles.status,
+          viewCount: articles.viewCount,
+          createdAt: articles.createdAt,
+        })
+        .from(articles)
+        .orderBy(desc(articles.createdAt))
+        .limit(5),
+    ]);
+
+    const stats = statsResult[0];
+    return {
+      totalArticles: Number(stats?.totalArticles || 0),
+      publishedArticles: Number(stats?.publishedArticles || 0),
+      totalViews: Number(stats?.totalViews || 0),
+      tagCount: Number(stats?.tagCount || 0),
+      recentArticles,
     };
   }
 

@@ -28,10 +28,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, Search, Edit, Trash2, Eye, ExternalLink, ImageIcon, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Article } from "@shared/schema";
+import type { ArticleSummary } from "@shared/schema";
 
 interface ArticlesResponse {
-  articles: Article[];
+  articles: ArticleSummary[];
   total: number;
 }
 

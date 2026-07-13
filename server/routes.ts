@@ -603,7 +603,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/articles", isAuthenticated, isAdmin, async (req, res) => {
     try {
       const { page, limit, status, search } = req.query;
-      const result = await storage.getArticles({
+      const result = await storage.getArticleSummaries({
         status: status as string,
         search: search as string,
         page: page ? parseInt(page as string) : 1,
@@ -613,6 +613,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching admin articles:", error);
       res.status(500).json({ message: "Failed to fetch articles" });
+    }
+  });
+
+  app.get("/api/admin/dashboard", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const dashboard = await storage.getAdminDashboardData();
+      res.json(dashboard);
+    } catch (error) {
+      console.error("Error fetching admin dashboard:", error);
+      res.status(500).json({ message: "Failed to fetch dashboard" });
     }
   });
 

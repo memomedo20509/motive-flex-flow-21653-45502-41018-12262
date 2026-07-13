@@ -90,6 +90,18 @@ export const insertArticleSchema = createInsertSchema(articles).omit({
 
 export type InsertArticle = z.infer<typeof insertArticleSchema>;
 export type Article = typeof articles.$inferSelect;
+export type ArticleSummary = Pick<
+  Article,
+  "id" | "title" | "slug" | "tags" | "status" | "viewCount" | "createdAt"
+>;
+
+export interface AdminDashboardData {
+  totalArticles: number;
+  publishedArticles: number;
+  totalViews: number;
+  tagCount: number;
+  recentArticles: ArticleSummary[];
+}
 
 // Article status enum
 export const ArticleStatus = {
