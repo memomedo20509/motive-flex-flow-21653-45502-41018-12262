@@ -103,6 +103,7 @@ function generateSlug(title: string): string {
     .replace(/[^\u0621-\u064Aa-z0-9\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
     .trim();
 }
 
@@ -132,6 +133,31 @@ function constantTimeEqual(a: string, b: string): boolean {
 
 function cleanBaseUrl(url: string): string {
   return url.replace(/\/+$/, "");
+}
+
+function normalizeLegacyBrandSlug(slug: string): string {
+  return slug
+    .trim()
+    .replace(/موتفليكس/g, "موتفلكس")
+    .replace(/موتوفليكس/g, "موتفلكس")
+    .replace(/motiflix/gi, "motflex")
+    .replace(/motoflex/gi, "motflex")
+    .replace(/mutflix/gi, "mutflex")
+    .replace(/^-+|-+$/g, "");
+}
+
+function getLegacyBrandSlugCandidates(slug: string): string[] {
+  return Array.from(new Set([
+    normalizeLegacyBrandSlug(slug),
+    slug
+      .trim()
+      .replace(/موتفليكس/g, "موتفلكس")
+      .replace(/موتوفليكس/g, "موتفلكس")
+      .replace(/motiflix/gi, "mutflex")
+      .replace(/motoflex/gi, "mutflex")
+      .replace(/mutflix/gi, "mutflex")
+      .replace(/^-+|-+$/g, ""),
+  ])).filter((candidate) => candidate !== slug);
 }
 
 function formatExternalArticle(article: any, baseUrl: string) {
@@ -165,6 +191,26 @@ function formatExternalArticle(article: any, baseUrl: string) {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
+
+  app.get("/blog/:slug", async (req, res, next) => {
+    try {
+      const slug = decodeURIComponent(req.params.slug);
+      const article = await storage.getArticleBySlug(slug);
+      if (article) return next();
+
+      const normalizedSlugs = getLegacyBrandSlugCandidates(slug);
+      for (const normalizedSlug of normalizedSlugs) {
+        const normalizedArticle = await storage.getArticleBySlug(normalizedSlug);
+        if (normalizedArticle?.status === "published") {
+          return res.redirect(301, `/blog/${encodeURIComponent(normalizedArticle.slug)}`);
+        }
+      }
+
+      return next();
+    } catch {
+      return next();
+    }
+  });
 
   app.use("/uploads", (req, res, next) => {
     res.setHeader("Cache-Control", "public, max-age=31536000");

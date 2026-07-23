@@ -26,6 +26,58 @@ function isSSRRoute(url: string): boolean {
   return false;
 }
 
+async function prepareSSRData(url: string): Promise<{
+  initialData: Record<string, unknown>;
+  statusCode: number;
+}> {
+  const pathname = url.split("?")[0];
+  const initialData: Record<string, unknown> = {};
+  let statusCode = 200;
+
+  if (pathname === "/blog") {
+    try {
+      const { articles, total } = await storage.getArticles({ status: "published", page: 1, limit: 100 });
+      initialData["/api/articles"] = { articles, total };
+      log(`SSR pre-fetched ${articles.length} articles for /blog`);
+    } catch (e) {
+      log(`SSR blog data fetch error: ${(e as Error).message}`);
+    }
+  }
+
+  if (pathname.startsWith("/blog/") && pathname !== "/blog") {
+    const slug = decodeURIComponent(pathname.replace("/blog/", ""));
+    try {
+      const article = await storage.getArticleBySlug(slug);
+
+      if (!article || article.status !== "published") {
+        initialData[`/api/articles/${slug}`] = { article: null, relatedArticles: [] };
+        statusCode = 404;
+        log(`SSR blog article not found: ${slug}`);
+      } else {
+        let relatedArticles: any[] = [];
+        try {
+          const { articles } = await storage.getArticles({
+            status: "published",
+            tag: article.tags?.[0] || undefined,
+            page: 1,
+            limit: 4,
+          });
+          relatedArticles = articles.filter((item) => item.id !== article.id).slice(0, 3);
+        } catch {}
+
+        initialData[`/api/articles/${slug}`] = { article, relatedArticles };
+        log(`SSR pre-fetched article: ${slug} (${article.content?.length || 0} chars content)`);
+      }
+    } catch (e) {
+      initialData[`/api/articles/${slug}`] = { article: null, relatedArticles: [] };
+      statusCode = 404;
+      log(`SSR article fetch error: ${(e as Error).message}`);
+    }
+  }
+
+  return { initialData, statusCode };
+}
+
 function applyHelmetToTemplate(
   template: string,
   appHtml: string,
@@ -90,11 +142,12 @@ export async function setupVite(app: Express, server: any) {
       if (isSSRRoute(url)) {
         try {
           const { render } = await vite.ssrLoadModule("/src/entry-server.tsx");
-          const { html: appHtml, helmet } = render(url);
+          const { initialData, statusCode } = await prepareSSRData(url);
+          const { html: appHtml, helmet } = render(url, initialData);
           
           const finalHtml = applyHelmetToTemplate(template, appHtml, helmet);
           
-          res.status(200).set({ "Content-Type": "text/html" }).end(finalHtml);
+          res.status(statusCode).set({ "Content-Type": "text/html" }).end(finalHtml);
         } catch (ssrError) {
           log(`SSR error for ${url}: ${(ssrError as Error).message}`);
           vite.ssrFixStacktrace(ssrError as Error);
@@ -168,47 +221,7 @@ export async function serveStatic(app: Express) {
       try {
         log(`SSR rendering: ${url}`);
         
-        // Fetch initial data for specific routes
-        let initialData: Record<string, unknown> = {};
-        
-        // For /blog page, fetch published articles
-        if (pathname === "/blog") {
-          try {
-            const { articles, total } = await storage.getArticles({ status: "published", page: 1, limit: 100 });
-            initialData["/api/articles"] = { articles, total };
-            log(`SSR pre-fetched ${articles.length} articles for /blog`);
-          } catch (e) {
-            log(`SSR data fetch error: ${(e as Error).message}`);
-          }
-        }
-        
-        // For individual blog posts, fetch the article with related articles
-        if (pathname.startsWith("/blog/") && pathname !== "/blog") {
-          // Decode the slug to match what useParams returns on client
-          const slug = decodeURIComponent(pathname.replace("/blog/", ""));
-          try {
-            const article = await storage.getArticleBySlug(slug);
-            if (article) {
-              // Fetch related articles (same tags, excluding current)
-              let relatedArticles: any[] = [];
-              try {
-                const { articles } = await storage.getArticles({ 
-                  status: "published", 
-                  tag: article.tags?.[0] || undefined, 
-                  page: 1, 
-                  limit: 4 
-                });
-                relatedArticles = articles.filter(a => a.id !== article.id).slice(0, 3);
-              } catch {}
-              
-              // Match the exact queryKey format used in BlogPost.tsx
-              initialData[`/api/articles/${slug}`] = { article, relatedArticles };
-              log(`SSR pre-fetched article: ${slug} (${article.content?.length || 0} chars content)`);
-            }
-          } catch (e) {
-            log(`SSR article fetch error: ${(e as Error).message}`);
-          }
-        }
+        const { initialData, statusCode } = await prepareSSRData(url);
         
         const { html: appHtml, helmet, dehydratedState } = ssrRender(url, initialData);
         log(`SSR rendered ${appHtml.length} chars for ${url}`);
@@ -221,7 +234,7 @@ export async function serveStatic(app: Express) {
           finalHtml = finalHtml.replace('</body>', `${stateScript}</body>`);
         }
         
-        res.status(200).set({ "Content-Type": "text/html", "Cache-Control": "no-cache" }).end(finalHtml);
+        res.status(statusCode).set({ "Content-Type": "text/html", "Cache-Control": "no-cache" }).end(finalHtml);
         return;
       } catch (ssrError) {
         log(`Production SSR error for ${url}: ${(ssrError as Error).message}`);
@@ -229,6 +242,14 @@ export async function serveStatic(app: Express) {
       }
     }
     
+    if (pathname.startsWith("/blog/") && pathname !== "/blog") {
+      const slug = decodeURIComponent(pathname.replace("/blog/", ""));
+      const article = await storage.getArticleBySlug(slug).catch(() => undefined);
+      if (!article || article.status !== "published") {
+        res.status(404);
+      }
+    }
+
     // Fallback to CSR
     res.sendFile(templatePath);
   });
