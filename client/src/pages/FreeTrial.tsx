@@ -20,6 +20,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { trackFreeTrialLead } from "@/lib/x-pixel";
 
 const trialFormSchema = insertTrialSchema.extend({
   fullName: z.string().min(2, "الاسم مطلوب"),
@@ -52,7 +53,8 @@ const FreeTrial = () => {
         body: JSON.stringify(data),
       });
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
+      trackFreeTrialLead(response?.trial?.id);
       toast({
         title: "تم التسجيل بنجاح",
         description: "شكراً لاهتمامك، سنتواصل معك قريباً لبدء تجربتك المجانية",
