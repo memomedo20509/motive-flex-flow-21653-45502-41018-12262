@@ -40,7 +40,9 @@ export async function seedBlogTaxonomy(database: SqlDatabase): Promise<void> {
         ${entry.slug},
         ${entry.label},
         ${entry.description},
-        ${entry.aliases}::text[],
+        ARRAY(
+          SELECT jsonb_array_elements_text(${JSON.stringify(entry.aliases)}::jsonb)
+        ),
         ${entry.sortOrder},
         true,
         NOW()
