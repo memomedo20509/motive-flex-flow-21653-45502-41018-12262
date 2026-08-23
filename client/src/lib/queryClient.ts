@@ -31,7 +31,7 @@ export async function apiRequest(
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: async ({ queryKey }) => {
+      queryFn: async ({ queryKey, signal }) => {
         let url = queryKey[0] as string;
         if (queryKey.length > 1 && typeof queryKey[1] === "object" && queryKey[1] !== null) {
           const params = new URLSearchParams();
@@ -45,7 +45,7 @@ export const queryClient = new QueryClient({
             url += `?${paramString}`;
           }
         }
-        const response = await fetch(url);
+        const response = await fetch(url, { signal });
         return handleResponse(response);
       },
       staleTime: 1000 * 60 * 5,

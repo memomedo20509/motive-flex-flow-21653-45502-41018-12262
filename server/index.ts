@@ -4,16 +4,22 @@ import { setupVite, serveStatic, log } from "./vite";
 import { runMigrations } from "./migrate";
 
 const app = express();
+app.set("trust proxy", true);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 if (process.env.NODE_ENV === "production") {
   app.use((req, res, next) => {
-    const host = req.get("host") || "";
-    if (host.startsWith("www.")) {
-      const newHost = host.replace(/^www\./, "");
-      const protocol = req.protocol || "https";
-      return res.redirect(301, `${protocol}://${newHost}${req.originalUrl}`);
+    const canonicalHost = "mutflex.com";
+    const host = (req.get("host") || "").toLowerCase();
+    const forwardedProto = (req.get("x-forwarded-proto") || "")
+      .split(",")[0]
+      .trim()
+      .toLowerCase();
+    const isHttps = req.secure || forwardedProto === "https";
+
+    if (host && (host !== canonicalHost || !isHttps)) {
+      return res.redirect(301, `https://${canonicalHost}${req.originalUrl}`);
     }
     next();
   });

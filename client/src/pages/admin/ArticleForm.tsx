@@ -23,6 +23,15 @@ import { queryClient } from "@/lib/queryClient";
 import { Link } from "wouter";
 import type { Article } from "@shared/schema";
 
+interface TaxonomyOption {
+  kind: "topic" | "industry" | "content_type";
+  slug: string;
+  label: string;
+  description: string | null;
+}
+
+type ArticleWithTaxonomy = Article & { taxonomySlugs?: string[] };
+
 const ArticleForm = () => {
   const params = useParams<{ id?: string }>();
   const [, navigate] = useLocation();
@@ -50,6 +59,7 @@ const ArticleForm = () => {
     robotsDirective: "index, follow",
     readingTime: "",
     tags: [] as string[],
+    taxonomySlugs: [] as string[],
     scheduledAt: "" as string,
   });
   const [tagInput, setTagInput] = useState("");
@@ -58,9 +68,13 @@ const ArticleForm = () => {
   const [isImporting, setIsImporting] = useState(false);
   const [isGeneratingSEO, setIsGeneratingSEO] = useState(false);
 
-  const { data: article, isLoading } = useQuery<Article>({
+  const { data: article, isLoading } = useQuery<ArticleWithTaxonomy>({
     queryKey: [`/api/admin/articles/${articleId}`],
     enabled: isEditing,
+  });
+
+  const { data: taxonomy = [] } = useQuery<TaxonomyOption[]>({
+    queryKey: ["/api/articles/taxonomy"],
   });
 
   useEffect(() => {
@@ -85,6 +99,7 @@ const ArticleForm = () => {
         robotsDirective: article.robotsDirective || "index, follow",
         readingTime: article.readingTime || "",
         tags: article.tags || [],
+        taxonomySlugs: article.taxonomySlugs || [],
         scheduledAt: (article as any).scheduledAt ? new Date((article as any).scheduledAt).toISOString().slice(0, 16) : "",
       });
       if (article.coverImage) {
@@ -230,6 +245,7 @@ const ArticleForm = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/articles"] });
       queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/articles/taxonomy"] });
       toast({ title: "تم إنشاء المقال بنجاح" });
       navigate("/admin/articles");
     },
@@ -254,6 +270,7 @@ const ArticleForm = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/articles"] });
       queryClient.invalidateQueries({ queryKey: ["/api/articles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/articles/taxonomy"] });
       queryClient.invalidateQueries({ queryKey: [`/api/admin/articles/${articleId}`] });
       toast({ title: "تم تحديث المقال بنجاح" });
       navigate("/admin/articles");
@@ -284,6 +301,15 @@ const ArticleForm = () => {
       ...formData,
       tags: formData.tags.filter((tag) => tag !== tagToRemove),
     });
+  };
+
+  const toggleTaxonomy = (slug: string) => {
+    setFormData((current) => ({
+      ...current,
+      taxonomySlugs: current.taxonomySlugs.includes(slug)
+        ? current.taxonomySlugs.filter((item) => item !== slug)
+        : [...current.taxonomySlugs, slug],
+    }));
   };
 
   const handleSaveWithStatus = (targetStatus: "draft" | "published" | "scheduled") => {
@@ -852,9 +878,39 @@ const ArticleForm = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>التصنيفات</CardTitle>
+                <CardTitle>موضوعات المقال والقطاع</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {([
+                  ["topic", "الموضوعات الرئيسية"],
+                  ["industry", "القطاعات"],
+                  ["content_type", "نوع المحتوى"],
+                ] as const).map(([kind, title]) => (
+                  <div key={kind} className="space-y-2">
+                    <Label>{title}</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {taxonomy.filter((item) => item.kind === kind).map((item) => (
+                        <Button
+                          key={item.slug}
+                          type="button"
+                          size="sm"
+                          variant={formData.taxonomySlugs.includes(item.slug) ? "default" : "outline"}
+                          onClick={() => toggleTaxonomy(item.slug)}
+                          title={item.description || undefined}
+                          data-testid={`button-taxonomy-${item.slug}`}
+                        >
+                          {item.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                <p className="text-xs text-muted-foreground">
+                  النظام يقترح التصنيفات تلقائياً من المحتوى، واختيارك هنا يثبتها يدوياً ويزيد دقة البحث.
+                </p>
+
+                <div className="border-t pt-4 space-y-3">
+                  <Label>وسوم SEO الإضافية</Label>
                 <div className="flex gap-2">
                   <Input
                     value={tagInput}
@@ -898,6 +954,7 @@ const ArticleForm = () => {
                     ))}
                   </div>
                 )}
+                </div>
               </CardContent>
             </Card>
           </div>

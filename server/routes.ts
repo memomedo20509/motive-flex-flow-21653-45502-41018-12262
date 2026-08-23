@@ -12,6 +12,7 @@ import multer from "multer";
 import express from "express";
 import * as cheerio from "cheerio";
 import { randomBytes, timingSafeEqual } from "crypto";
+import { normalizeArabicSearch } from "../shared/blogTaxonomy";
 
 async function processBase64ImagesInContent(content: string): Promise<string> {
   const $ = cheerio.load(content, { decodeEntities: false });
@@ -71,6 +72,8 @@ const uploadDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
+
+const CANONICAL_SITE_URL = "https://mutflex.com";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -135,6 +138,14 @@ function cleanBaseUrl(url: string): string {
   return url.replace(/\/+$/, "");
 }
 
+function getCanonicalSiteUrl(url?: string | null): string {
+  const baseUrl = cleanBaseUrl(url?.trim() || CANONICAL_SITE_URL);
+  if (/^https?:\/\/(?:www\.)?mutflex\.com$/i.test(baseUrl)) {
+    return CANONICAL_SITE_URL;
+  }
+  return baseUrl;
+}
+
 function normalizeLegacyBrandSlug(slug: string): string {
   return slug
     .trim()
@@ -159,6 +170,16 @@ function getLegacyBrandSlugCandidates(slug: string): string[] {
       .replace(/^-+|-+$/g, ""),
   ])).filter((candidate) => candidate !== slug);
 }
+
+const legacyBlogRedirects: Record<string, string> = {
+  "article-1783379378839-mr9u1biv": "/blog",
+  "article-1783380334605-mr9ulszx": "/blog",
+  "article-1783380351380-mr9um5xw": "/blog",
+  "supply-chain-optimization-saudi-arabia": "/blog/production-management-software-saudi-factories-mutflex-mrh7sm93",
+  "saudi-market-trends-customer-expectations": "/blog/best-factory-management-software-saudi-arabia-mutflex",
+  "mizat-barnamaj-idarat-alfanniyin-your-guide-to-motiflix-for-your-factory-mr9ul7e9": "/blog/mizat-barnamaj-idarat-alfanniyin-your-guide-to-motflex-for-your-factory",
+  "project-management-software-pricing": "/pricing",
+};
 
 function formatExternalArticle(article: any, baseUrl: string) {
   const publishedUrl = `${cleanBaseUrl(baseUrl)}/blog/${article.slug}`;
@@ -195,6 +216,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/blog/:slug", async (req, res, next) => {
     try {
       const slug = decodeURIComponent(req.params.slug);
+      const legacyRedirect = legacyBlogRedirects[slug];
+      if (legacyRedirect) {
+        return res.redirect(301, legacyRedirect);
+      }
+
       const article = await storage.getArticleBySlug(slug);
       if (article) return next();
 
@@ -313,7 +339,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/articles", async (req, res) => {
     try {
-      const { status, tag, search, page, limit, admin } = req.query;
+      const { status, tag, search, topic, industry, contentType, page, limit, admin } = req.query;
       const user = (req.session as any)?.user;
       const isUserAdmin = user?.isAdmin === "true";
       
@@ -327,8 +353,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: effectiveStatus,
         tag: tag as string,
         search: search as string,
+        topic: topic as string,
+        industry: industry as string,
+        contentType: contentType as string,
         page: page ? parseInt(page as string) : 1,
-        limit: limit ? parseInt(limit as string) : 9,
+        limit: limit ? Math.min(parseInt(limit as string), 100) : 9,
       });
       res.json(result);
     } catch (error) {
@@ -344,6 +373,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching tags:", error);
       res.status(500).json({ message: "Failed to fetch tags" });
+    }
+  });
+
+  app.get("/api/articles/taxonomy", async (req, res) => {
+    try {
+      const kind = req.query.kind as "topic" | "industry" | "content_type" | undefined;
+      const taxonomy = await storage.getBlogTaxonomy(kind);
+      res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
+      res.json(taxonomy);
+    } catch (error) {
+      console.error("Error fetching blog taxonomy:", error);
+      res.status(500).json({ message: "Failed to fetch blog taxonomy" });
+    }
+  });
+
+  app.get("/api/articles/search/suggestions", async (req, res) => {
+    try {
+      const query = String(req.query.q || "").trim();
+      if (query.length < 2) return res.json({ taxonomy: [], articles: [] });
+
+      const normalizedQuery = normalizeArabicSearch(query);
+      const taxonomy = (await storage.getBlogTaxonomy())
+        .filter((entry) => normalizeArabicSearch([entry.label, ...entry.aliases].join(" ")).includes(normalizedQuery))
+        .slice(0, 5);
+      const { articles } = await storage.getArticles({ status: "published", search: query, page: 1, limit: 5 });
+      res.json({
+        taxonomy,
+        articles: articles.map((article) => ({ id: article.id, title: article.title, slug: article.slug })),
+      });
+    } catch (error) {
+      console.error("Error fetching search suggestions:", error);
+      res.status(500).json({ message: "Failed to fetch search suggestions" });
     }
   });
 
@@ -393,7 +454,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         3
       );
       
-      res.json({ article, relatedArticles });
+      const taxonomySlugs = await storage.getArticleTaxonomy(article.id);
+      res.json({ article: { ...article, taxonomySlugs }, relatedArticles });
     } catch (error) {
       console.error("Error fetching article:", error);
       res.status(500).json({ message: "Failed to fetch article" });
@@ -585,6 +647,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/articles", isAuthenticated, isAdmin, upload.single("coverImage"), async (req, res) => {
     try {
       const body = JSON.parse(req.body.data || "{}");
+      const taxonomySlugs = Array.isArray(body.taxonomySlugs) ? body.taxonomySlugs : undefined;
+      const { taxonomySlugs: _taxonomySlugs, ...articleBody } = body;
       
       let slug = body.slug || generateSlug(body.title);
       
@@ -627,7 +691,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const articleData = {
-        ...body,
+        ...articleBody,
         content: processedContent,
         slug,
         status: finalStatus,
@@ -639,7 +703,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const validatedData = insertArticleSchema.parse(articleData);
       const article = await storage.createArticle(validatedData);
-      res.status(201).json(article);
+      if (taxonomySlugs) await storage.setArticleTaxonomy(article.id, taxonomySlugs);
+      res.status(201).json({ ...article, taxonomySlugs: await storage.getArticleTaxonomy(article.id) });
     } catch (error: any) {
       console.error("Error creating article:", error);
       res.status(400).json({ message: error.message || "Failed to create article" });
@@ -678,7 +743,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!article) {
         return res.status(404).json({ message: "Article not found" });
       }
-      res.json(article);
+      const taxonomySlugs = await storage.getArticleTaxonomy(article.id);
+      res.json({ ...article, taxonomySlugs });
     } catch (error) {
       console.error("Error fetching article:", error);
       res.status(500).json({ message: "Failed to fetch article" });
@@ -689,6 +755,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const body = JSON.parse(req.body.data || "{}");
+      const taxonomySlugs = Array.isArray(body.taxonomySlugs) ? body.taxonomySlugs : undefined;
+      const { taxonomySlugs: _taxonomySlugs, ...articleBody } = body;
       
       const existingArticle = await storage.getArticleById(id);
       if (!existingArticle) {
@@ -721,7 +789,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const articleData: any = {
-        ...body,
+        ...articleBody,
         content: processedContent,
         status: finalStatus,
         scheduledAt,
@@ -739,7 +807,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const article = await storage.updateArticle(id, articleData);
-      res.json(article);
+      if (article && taxonomySlugs) await storage.setArticleTaxonomy(id, taxonomySlugs);
+      res.json(article ? { ...article, taxonomySlugs: await storage.getArticleTaxonomy(id) } : article);
     } catch (error: any) {
       console.error("Error updating article:", error);
       res.status(400).json({ message: error.message || "Failed to update article" });
@@ -1036,11 +1105,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/sitemap.xml", async (req, res) => {
     try {
       const storedSiteUrl = await storage.getSetting("site_url");
-      // Default to a safe fallback domain
-      const siteUrl = storedSiteUrl || `https://${process.env.REPLIT_DEV_DOMAIN || "mutflex.com"}`;
+      const siteUrl = getCanonicalSiteUrl(storedSiteUrl);
       
       // Get ALL published articles (no limit)
       const { articles: publishedArticles } = await storage.getArticles({ status: "published", limit: 10000 });
+      const topicPages = (await storage.getBlogTaxonomy("topic")).filter((topic) => topic.count > 0);
       
       // Static pages
       const staticPages = [
@@ -1083,6 +1152,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   </url>
 `;
       }
+
+      // Only curated topic hubs with real content are indexable.
+      for (const topic of topicPages) {
+        xml += `  <url>
+    <loc>${escapeXml(siteUrl)}/blog/topics/${escapeXml(topic.slug)}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+`;
+      }
       
       xml += `</urlset>`;
       
@@ -1102,7 +1182,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/robots.txt", async (req, res) => {
     try {
       const customRobots = await storage.getSetting("robots_txt");
-      const siteUrl = await storage.getSetting("site_url") || `https://${process.env.REPLIT_DEV_DOMAIN || "mutflex.com"}`;
+      const siteUrl = getCanonicalSiteUrl(await storage.getSetting("site_url"));
       
       let robotsTxt: string;
       
@@ -1123,7 +1203,7 @@ Disallow: /login
 Sitemap: ${siteUrl}/sitemap.xml
 `, siteUrl);
       }
-      
+
       res.set("Content-Type", "text/plain");
       res.send(robotsTxt);
     } catch (error) {
@@ -1685,7 +1765,7 @@ Sitemap: ${siteUrl}/sitemap.xml
       // Get robots.txt content from settings (customized by admin)
       const customRobotsTxt = await storage.getSetting("robots_txt");
       const siteUrl = await storage.getSetting("site_url");
-      const baseUrl = siteUrl || process.env.SITE_URL || `https://${req.get('host')}`;
+      const baseUrl = getCanonicalSiteUrl(siteUrl || process.env.SITE_URL);
       
       let robotsTxt: string;
       
@@ -1722,7 +1802,7 @@ Sitemap: ${baseUrl}/sitemap.xml`, baseUrl);
     try {
       // Get site URL from settings (customized by admin)
       const siteUrl = await storage.getSetting("site_url");
-      const baseUrl = siteUrl || process.env.SITE_URL || `https://${req.get('host')}`;
+      const baseUrl = getCanonicalSiteUrl(siteUrl || process.env.SITE_URL);
       
       // Static pages
       const staticPages = [

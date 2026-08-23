@@ -1,9 +1,11 @@
 import { sql } from 'drizzle-orm';
 import {
+  boolean,
   index,
   integer,
   jsonb,
   pgTable,
+  primaryKey,
   timestamp,
   varchar,
   text,
@@ -112,6 +114,39 @@ export const ArticleStatus = {
 } as const;
 
 export type ArticleStatusType = typeof ArticleStatus[keyof typeof ArticleStatus];
+
+// Controlled, canonical taxonomy used by the public blog search and filters.
+export const blogTaxonomy = pgTable("blog_taxonomy", {
+  id: serial("id").primaryKey(),
+  kind: varchar("kind", { length: 30 }).notNull(),
+  slug: varchar("slug", { length: 120 }).notNull().unique(),
+  label: varchar("label", { length: 255 }).notNull(),
+  description: text("description"),
+  aliases: text("aliases").array().default([]).notNull(),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const articleTaxonomy = pgTable(
+  "article_taxonomy",
+  {
+    articleId: integer("article_id")
+      .notNull()
+      .references(() => articles.id, { onDelete: "cascade" }),
+    taxonomyId: integer("taxonomy_id")
+      .notNull()
+      .references(() => blogTaxonomy.id, { onDelete: "cascade" }),
+    score: integer("score").default(0).notNull(),
+    source: varchar("source", { length: 20 }).default("automatic").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.articleId, table.taxonomyId] })],
+);
+
+export type BlogTaxonomy = typeof blogTaxonomy.$inferSelect;
+export type ArticleTaxonomy = typeof articleTaxonomy.$inferSelect;
 
 // Contact submissions table
 export const contactSubmissions = pgTable("contact_submissions", {

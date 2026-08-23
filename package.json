@@ -11,6 +11,7 @@
     "build:server": "esbuild server/index.ts --bundle --platform=node --packages=external --format=esm --outfile=dist/index.js",
     "start": "NODE_ENV=production node dist/index.js",
     "lint": "eslint .",
+    "test": "tsx --test shared/blogTaxonomy.test.ts",
     "db:push": "drizzle-kit push",
     "migrate": "tsx scripts/migrate.ts"
   },

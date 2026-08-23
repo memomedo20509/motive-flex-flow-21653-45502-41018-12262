@@ -20,7 +20,20 @@ import {
   type InsertShortUrl,
 } from "../shared/schema";
 import { db } from "./db";
-import { eq, desc, ilike, or, sql, and } from "drizzle-orm";
+import { eq, desc, ilike, or, sql, and, inArray } from "drizzle-orm";
+import { normalizeArabicSearch, type BlogTaxonomyKind } from "../shared/blogTaxonomy";
+import { getArticleTaxonomySlugs, syncArticleSearchRecord } from "./blogSearch";
+
+export interface BlogTaxonomyFacet {
+  id: number;
+  kind: BlogTaxonomyKind;
+  slug: string;
+  label: string;
+  description: string | null;
+  aliases: string[];
+  sortOrder: number;
+  count: number;
+}
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -34,6 +47,9 @@ export interface IStorage {
     status?: string;
     tag?: string;
     search?: string;
+    topic?: string;
+    industry?: string;
+    contentType?: string;
     page?: number;
     limit?: number;
   }): Promise<{ articles: Article[]; total: number }>;
@@ -52,6 +68,10 @@ export interface IStorage {
   incrementViewCount(id: number): Promise<void>;
   getRelatedArticles(articleId: number, tags: string[], limit?: number): Promise<Article[]>;
   getAllTags(): Promise<string[]>;
+  getBlogTaxonomy(kind?: BlogTaxonomyKind): Promise<BlogTaxonomyFacet[]>;
+  getBlogTaxonomyBySlug(slug: string): Promise<BlogTaxonomyFacet | undefined>;
+  getArticleTaxonomy(articleId: number): Promise<string[]>;
+  setArticleTaxonomy(articleId: number, slugs: string[]): Promise<string[]>;
   getScheduledArticlesDue(): Promise<Article[]>;
   
   createContactSubmission(contact: InsertContact): Promise<ContactSubmission>;
@@ -130,12 +150,87 @@ export class DatabaseStorage implements IStorage {
     status?: string;
     tag?: string;
     search?: string;
+    topic?: string;
+    industry?: string;
+    contentType?: string;
     page?: number;
     limit?: number;
   }): Promise<{ articles: Article[]; total: number }> {
     const page = options?.page || 1;
     const limit = options?.limit || 9;
     const offset = (page - 1) * limit;
+
+    const hasContextualFilters = Boolean(
+      options?.search?.trim() ||
+      options?.topic ||
+      options?.industry ||
+      options?.contentType
+    );
+
+    if (hasContextualFilters) {
+      const filters: any[] = [];
+      if (options?.status) filters.push(sql`a.status = ${options.status}`);
+      if (options?.tag) filters.push(sql`${options.tag} = ANY(a.tags)`);
+
+      const taxonomyFilters: Array<[BlogTaxonomyKind, string | undefined]> = [
+        ["topic", options?.topic],
+        ["industry", options?.industry],
+        ["content_type", options?.contentType],
+      ];
+      for (const [kind, slug] of taxonomyFilters) {
+        if (!slug) continue;
+        filters.push(sql`EXISTS (
+          SELECT 1
+          FROM article_taxonomy at_filter
+          INNER JOIN blog_taxonomy bt_filter ON bt_filter.id = at_filter.taxonomy_id
+          WHERE at_filter.article_id = a.id
+            AND bt_filter.kind = ${kind}
+            AND bt_filter.slug = ${slug}
+            AND bt_filter.is_active = true
+        )`);
+      }
+
+      const normalizedSearch = normalizeArabicSearch(options?.search || "");
+      let rankExpression = sql`0::real`;
+      if (normalizedSearch) {
+        const searchPattern = `%${normalizedSearch}%`;
+        filters.push(sql`(
+          s.search_vector @@ websearch_to_tsquery('simple', ${normalizedSearch})
+          OR s.normalized_text ILIKE ${searchPattern}
+          OR s.normalized_text % ${normalizedSearch}
+        )`);
+        rankExpression = sql`(
+          ts_rank_cd(s.search_vector, websearch_to_tsquery('simple', ${normalizedSearch}), 32)
+          + CASE WHEN s.title_text ILIKE ${searchPattern} THEN 2.0 ELSE 0.0 END
+          + CASE WHEN s.keyword_text ILIKE ${searchPattern} THEN 1.0 ELSE 0.0 END
+          + similarity(s.normalized_text, ${normalizedSearch})
+        )`;
+      }
+
+      const whereClause = filters.length ? sql`WHERE ${sql.join(filters, sql` AND `)}` : sql``;
+      const matchResult: any = await db.execute(sql`
+        SELECT a.id, ${rankExpression} AS rank, COUNT(*) OVER() AS total_count
+        FROM articles a
+        INNER JOIN article_search s ON s.article_id = a.id
+        ${whereClause}
+        ORDER BY rank DESC, COALESCE(a.published_at, a.created_at) DESC
+        LIMIT ${limit}
+        OFFSET ${offset}
+      `);
+      const matches = (matchResult?.rows || matchResult || []) as Array<{
+        id: number;
+        total_count: string | number;
+      }>;
+      const ids = matches.map((row) => Number(row.id));
+      if (ids.length === 0) return { articles: [], total: 0 };
+
+      const matchedArticles = await db.select().from(articles).where(inArray(articles.id, ids));
+      const byId = new Map(matchedArticles.map((article) => [article.id, article]));
+      return {
+        articles: ids.map((id) => byId.get(id)).filter(Boolean) as Article[],
+        total: Number(matches[0]?.total_count || 0),
+      };
+    }
 
     let conditions = [];
 
@@ -284,6 +379,7 @@ export class DatabaseStorage implements IStorage {
 
   async createArticle(article: InsertArticle): Promise<Article> {
     const [newArticle] = await db.insert(articles).values(article as any).returning();
+    await syncArticleSearchRecord(db, newArticle);
     return newArticle;
   }
 
@@ -294,6 +390,7 @@ export class DatabaseStorage implements IStorage {
       .set(updateData)
       .where(eq(articles.id, id))
       .returning();
+    if (updated) await syncArticleSearchRecord(db, updated);
     return updated;
   }
 
@@ -310,6 +407,26 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRelatedArticles(articleId: number, tags: string[], limit: number = 3): Promise<Article[]> {
+    const contextualResult: any = await db.execute(sql`
+      SELECT candidate.id, COUNT(shared.taxonomy_id) AS shared_count
+      FROM articles candidate
+      INNER JOIN article_taxonomy candidate_taxonomy ON candidate_taxonomy.article_id = candidate.id
+      INNER JOIN article_taxonomy shared
+        ON shared.taxonomy_id = candidate_taxonomy.taxonomy_id
+       AND shared.article_id = ${articleId}
+      WHERE candidate.status = 'published' AND candidate.id != ${articleId}
+      GROUP BY candidate.id
+      ORDER BY shared_count DESC, MAX(candidate.created_at) DESC
+      LIMIT ${limit}
+    `);
+    const contextualIds = ((contextualResult?.rows || contextualResult || []) as Array<{ id: number }>)
+      .map((row) => Number(row.id));
+    if (contextualIds.length > 0) {
+      const contextualArticles = await db.select().from(articles).where(inArray(articles.id, contextualIds));
+      const byId = new Map(contextualArticles.map((article) => [article.id, article]));
+      return contextualIds.map((id) => byId.get(id)).filter(Boolean) as Article[];
+    }
+
     if (!tags || tags.length === 0) {
       return db
         .select()
@@ -348,6 +465,53 @@ export class DatabaseStorage implements IStorage {
     });
 
     return Array.from(allTags).sort();
+  }
+
+  async getBlogTaxonomy(kind?: BlogTaxonomyKind): Promise<BlogTaxonomyFacet[]> {
+    const kindFilter = kind ? sql`AND bt.kind = ${kind}` : sql``;
+    const result: any = await db.execute(sql`
+      SELECT
+        bt.id,
+        bt.kind,
+        bt.slug,
+        bt.label,
+        bt.description,
+        bt.aliases,
+        bt.sort_order,
+        COUNT(DISTINCT a.id) FILTER (WHERE a.status = 'published') AS article_count
+      FROM blog_taxonomy bt
+      LEFT JOIN article_taxonomy article_map ON article_map.taxonomy_id = bt.id
+      LEFT JOIN articles a ON a.id = article_map.article_id
+      WHERE bt.is_active = true ${kindFilter}
+      GROUP BY bt.id
+      ORDER BY bt.kind, bt.sort_order, bt.label
+    `);
+    return ((result?.rows || result || []) as any[]).map((row) => ({
+      id: Number(row.id),
+      kind: row.kind as BlogTaxonomyKind,
+      slug: row.slug,
+      label: row.label,
+      description: row.description,
+      aliases: row.aliases || [],
+      sortOrder: Number(row.sort_order || 0),
+      count: Number(row.article_count || 0),
+    }));
+  }
+
+  async getBlogTaxonomyBySlug(slug: string): Promise<BlogTaxonomyFacet | undefined> {
+    const entries = await this.getBlogTaxonomy();
+    return entries.find((entry) => entry.slug === slug);
+  }
+
+  async getArticleTaxonomy(articleId: number): Promise<string[]> {
+    return getArticleTaxonomySlugs(db, articleId);
+  }
+
+  async setArticleTaxonomy(articleId: number, slugs: string[]): Promise<string[]> {
+    const article = await this.getArticleById(articleId);
+    if (!article) return [];
+    await syncArticleSearchRecord(db, article, slugs);
+    return this.getArticleTaxonomy(articleId);
   }
 
   async getScheduledArticlesDue(): Promise<Article[]> {

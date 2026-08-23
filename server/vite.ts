@@ -36,15 +36,36 @@ async function prepareSSRData(url: string): Promise<{
 
   if (pathname === "/blog") {
     try {
-      const { articles, total } = await storage.getArticles({ status: "published", page: 1, limit: 100 });
-      initialData["/api/articles"] = { articles, total };
+      const params = { status: "published", search: "", topic: null, industry: null, contentType: null, page: 1, limit: 9 };
+      const { articles, total } = await storage.getArticles({ status: "published", page: 1, limit: 9 });
+      initialData["__blog_articles"] = { data: { articles, total }, params };
+      initialData["/api/articles/taxonomy"] = await storage.getBlogTaxonomy();
       log(`SSR pre-fetched ${articles.length} articles for /blog`);
     } catch (e) {
       log(`SSR blog data fetch error: ${(e as Error).message}`);
     }
   }
 
-  if (pathname.startsWith("/blog/") && pathname !== "/blog") {
+  if (pathname.startsWith("/blog/topics/")) {
+    const topicSlug = decodeURIComponent(pathname.replace("/blog/topics/", ""));
+    try {
+      const topic = await storage.getBlogTaxonomyBySlug(topicSlug);
+      if (!topic || topic.kind !== "topic") {
+        statusCode = 404;
+      } else {
+        const params = { status: "published", search: "", topic: topicSlug, industry: null, contentType: null, page: 1, limit: 9 };
+        const data = await storage.getArticles({ status: "published", topic: topicSlug, page: 1, limit: 9 });
+        initialData["__blog_articles"] = { data, params };
+        initialData["/api/articles/taxonomy"] = await storage.getBlogTaxonomy();
+        log(`SSR pre-fetched ${data.articles.length} articles for topic ${topicSlug}`);
+      }
+    } catch (e) {
+      statusCode = 404;
+      log(`SSR blog topic fetch error: ${(e as Error).message}`);
+    }
+  }
+
+  if (pathname.startsWith("/blog/") && pathname !== "/blog" && !pathname.startsWith("/blog/topics/")) {
     const slug = decodeURIComponent(pathname.replace("/blog/", ""));
     try {
       const article = await storage.getArticleBySlug(slug);
@@ -56,13 +77,7 @@ async function prepareSSRData(url: string): Promise<{
       } else {
         let relatedArticles: any[] = [];
         try {
-          const { articles } = await storage.getArticles({
-            status: "published",
-            tag: article.tags?.[0] || undefined,
-            page: 1,
-            limit: 4,
-          });
-          relatedArticles = articles.filter((item) => item.id !== article.id).slice(0, 3);
+          relatedArticles = await storage.getRelatedArticles(article.id, article.tags || [], 3);
         } catch {}
 
         initialData[`/api/articles/${slug}`] = { article, relatedArticles };

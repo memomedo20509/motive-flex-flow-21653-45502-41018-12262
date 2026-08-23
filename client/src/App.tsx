@@ -29,6 +29,7 @@ const About = lazy(() => import("./pages/About"));
 const FreeTrial = lazy(() => import("./pages/FreeTrial"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const Blog = lazy(() => import("./pages/Blog"));
+const BlogTopic = lazy(() => import("./pages/BlogTopic"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Login = lazy(() => import("./pages/Login"));
 
@@ -98,6 +99,7 @@ function Router() {
       <Route path="/free-trial" component={FreeTrial} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/blog" component={Blog} />
+      <Route path="/blog/topics/:slug" component={BlogTopic} />
       <Route path="/blog/:slug" component={BlogPost} />
       <Route path="/login" component={Login} />
       <Route path="/admin" component={AdminDashboard} />

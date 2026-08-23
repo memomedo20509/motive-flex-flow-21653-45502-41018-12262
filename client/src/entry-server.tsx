@@ -13,6 +13,7 @@ import About from "./pages/About";
 import FreeTrial from "./pages/FreeTrial";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Blog from "./pages/Blog";
+import BlogTopic from "./pages/BlogTopic";
 import BlogPost from "./pages/BlogPost";
 import NotFound from "./pages/NotFound";
 
@@ -46,6 +47,7 @@ function AppRoutes() {
       <Route path="/free-trial" component={FreeTrial} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/blog" component={Blog} />
+      <Route path="/blog/topics/:slug" component={BlogTopic} />
       <Route path="/blog/:slug" component={BlogPost} />
       <Route component={NotFound} />
     </Switch>
@@ -70,9 +72,9 @@ export function render(url: string, initialData?: Record<string, unknown>): SSRR
   // Hydrate QueryClient with initial data from server
   if (initialData) {
     Object.entries(initialData).forEach(([key, data]) => {
-      // For /api/articles, set with query params to match Blog.tsx query
-      if (key === "/api/articles") {
-        queryClient.setQueryData(["/api/articles", { status: "published", tag: null, search: "", page: 1, limit: 9 }], data);
+      if (key === "__blog_articles") {
+        const payload = data as { data: unknown; params: Record<string, unknown> };
+        queryClient.setQueryData(["/api/articles", payload.params], payload.data);
       } else {
         queryClient.setQueryData([key], data);
       }

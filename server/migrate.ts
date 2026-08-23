@@ -1,6 +1,7 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import { sql } from "drizzle-orm";
+import { BLOG_SEARCH_INDEX_VERSION, backfillBlogSearch, seedBlogTaxonomy } from "./blogSearch";
 
 const { Pool } = pg;
 
@@ -140,9 +141,81 @@ export async function runMigrations() {
       )
     `);
 
-    console.log("Database migrations completed successfully!");
+    await db.execute(sql`CREATE EXTENSION IF NOT EXISTS pg_trgm`);
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS blog_taxonomy (
+        id SERIAL PRIMARY KEY,
+        kind VARCHAR(30) NOT NULL,
+        slug VARCHAR(120) NOT NULL UNIQUE,
+        label VARCHAR(255) NOT NULL,
+        description TEXT,
+        aliases TEXT[] NOT NULL DEFAULT '{}',
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS blog_taxonomy_kind_sort_idx
+      ON blog_taxonomy (kind, is_active, sort_order)
+    `);
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS article_taxonomy (
+        article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+        taxonomy_id INTEGER NOT NULL REFERENCES blog_taxonomy(id) ON DELETE CASCADE,
+        score INTEGER NOT NULL DEFAULT 0,
+        source VARCHAR(20) NOT NULL DEFAULT 'automatic',
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (article_id, taxonomy_id)
+      )
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS article_taxonomy_lookup_idx
+      ON article_taxonomy (taxonomy_id, article_id)
+    `);
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS article_search (
+        article_id INTEGER PRIMARY KEY REFERENCES articles(id) ON DELETE CASCADE,
+        title_text TEXT NOT NULL DEFAULT '',
+        keyword_text TEXT NOT NULL DEFAULT '',
+        body_text TEXT NOT NULL DEFAULT '',
+        normalized_text TEXT NOT NULL DEFAULT '',
+        search_vector TSVECTOR GENERATED ALWAYS AS (
+          setweight(to_tsvector('simple', coalesce(title_text, '')), 'A') ||
+          setweight(to_tsvector('simple', coalesce(keyword_text, '')), 'B') ||
+          setweight(to_tsvector('simple', coalesce(body_text, '')), 'C')
+        ) STORED,
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS article_search_vector_idx
+      ON article_search USING GIN (search_vector)
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS article_search_trgm_idx
+      ON article_search USING GIN (normalized_text gin_trgm_ops)
+    `);
+
+    await seedBlogTaxonomy(db);
+    const versionResult: any = await db.execute(sql`
+      SELECT value FROM settings WHERE key = 'blog_search_index_version' LIMIT 1
+    `);
+    const currentVersion = versionResult?.rows?.[0]?.value;
+    const indexedArticles = await backfillBlogSearch(db, currentVersion !== BLOG_SEARCH_INDEX_VERSION);
+    await db.execute(sql`
+      INSERT INTO settings (key, value, updated_at)
+      VALUES ('blog_search_index_version', ${BLOG_SEARCH_INDEX_VERSION}, NOW())
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()
+    `);
+    await db.execute(sql`ANALYZE article_search`);
+    await db.execute(sql`ANALYZE article_taxonomy`);
+
+    console.log(`Database migrations completed successfully! Indexed ${indexedArticles} blog articles.`);
   } catch (error) {
     console.error("Migration error:", error);
+    throw error;
   } finally {
     await pool.end();
   }
