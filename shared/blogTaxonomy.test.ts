@@ -31,3 +31,16 @@ test("search fields include canonical taxonomy aliases", () => {
   assert.match(fields.keywordText, /تشطيبات/);
   assert.ok(fields.normalizedText.length > fields.titleText.length);
 });
+
+test("classification keeps filters focused instead of assigning every taxonomy", () => {
+  const matches = classifyBlogArticle({
+    title: "دليل إدارة مشاريع التشطيبات خطوة بخطوة",
+    excerpt: "تنظيم المشروع والفرق ومراحل التنفيذ لشركة تشطيبات.",
+    content: "<p>قد يتضمن العمل عملاء وفواتير وتقارير ومخزونًا، لكن موضوع المقال هو إدارة المشروع.</p>",
+  });
+
+  assert.ok(matches.filter((match) => match.kind === "topic").length <= 3);
+  assert.ok(matches.filter((match) => match.kind === "industry").length <= 2);
+  assert.ok(matches.filter((match) => match.kind === "content_type").length <= 1);
+  assert.ok(matches.some((match) => match.slug === "projects"));
+});

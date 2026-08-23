@@ -274,9 +274,7 @@ export function stripHtml(value: string): string {
 function aliasMatches(haystack: string, alias: string): boolean {
   const normalizedAlias = normalizeArabicSearch(alias);
   if (!normalizedAlias) return false;
-  if (haystack.includes(normalizedAlias)) return true;
-  const aliasTokens = normalizedAlias.split(" ").filter((token) => token.length >= 2);
-  return aliasTokens.length > 1 && aliasTokens.every((token) => haystack.includes(token));
+  return haystack.includes(normalizedAlias);
 }
 
 export function classifyBlogArticle(article: BlogSearchableArticle): BlogTaxonomyMatch[] {
@@ -288,20 +286,30 @@ export function classifyBlogArticle(article: BlogSearchableArticle): BlogTaxonom
     { value: article.metaKeywords || "", weight: 8 },
     { value: article.excerpt || "", weight: 5 },
     { value: article.metaDescription || "", weight: 4 },
-    { value: stripHtml(article.content).slice(0, 500_000), weight: 2 },
-  ].map((field) => ({ ...field, value: normalizeArabicSearch(field.value) }));
+    { value: stripHtml(article.content).slice(0, 6_000), weight: 3, body: true },
+  ].map((field) => ({ ...field, body: "body" in field && field.body, value: normalizeArabicSearch(field.value) }));
 
-  return BLOG_TAXONOMY.map((entry) => {
+  const candidates = BLOG_TAXONOMY.map((entry) => {
     let score = 0;
     for (const field of fields) {
       if (!field.value) continue;
+      if (entry.kind === "content_type" && field.body) continue;
       const matchedAliases = entry.aliases.filter((alias) => aliasMatches(field.value, alias));
       score += matchedAliases.length * field.weight;
     }
     return { slug: entry.slug, kind: entry.kind, score };
-  })
-    .filter((match) => match.score >= (match.kind === "content_type" ? 4 : 6))
-    .sort((a, b) => b.score - a.score);
+  });
+
+  const strongest = (kind: BlogTaxonomyKind, minimumScore: number, limit: number) => candidates
+    .filter((match) => match.kind === kind && match.score >= minimumScore)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+
+  return [
+    ...strongest("topic", 8, 3),
+    ...strongest("industry", 8, 2),
+    ...strongest("content_type", 5, 1),
+  ];
 }
 
 export function buildArticleSearchFields(article: BlogSearchableArticle, taxonomySlugs: string[] = []) {

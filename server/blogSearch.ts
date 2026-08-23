@@ -6,7 +6,7 @@ import {
   type BlogSearchableArticle,
 } from "../shared/blogTaxonomy";
 
-export const BLOG_SEARCH_INDEX_VERSION = "2026-08-23-1";
+export const BLOG_SEARCH_INDEX_VERSION = "2026-08-23-2";
 
 type SqlDatabase = any;
 
