@@ -13,6 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { saudiPhoneSchema } from "./saudiPhone";
 
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
@@ -195,6 +196,8 @@ export const insertTrialSchema = createInsertSchema(trialSubmissions).omit({
   id: true,
   isRead: true,
   createdAt: true,
+}).extend({
+  phone: saudiPhoneSchema,
 });
 
 export type InsertTrial = z.infer<typeof insertTrialSchema>;

@@ -11,10 +11,11 @@ import {
 import { PageScaffold } from "@/components/PageScaffold";
 import { SEOHead } from "@/components/SEOHead";
 import { BreadcrumbSchema } from "@/components/SchemaMarkup";
-import { CheckCircle, Zap, Loader2 } from "lucide-react";
+import { CheckCircle, Zap, Loader2, MapPin } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertTrialSchema } from "@shared/schema";
+import { saudiPhoneSchema } from "@shared/saudiPhone";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -25,7 +26,7 @@ import { trackFreeTrialLead } from "@/lib/x-pixel";
 const trialFormSchema = insertTrialSchema.extend({
   fullName: z.string().min(2, "الاسم مطلوب"),
   email: z.string().email("البريد الإلكتروني غير صالح"),
-  phone: z.string().min(5, "رقم الجوال مطلوب"),
+  phone: saudiPhoneSchema,
   company: z.string().min(2, "اسم الشركة مطلوب"),
   industry: z.string().min(1, "القطاع الصناعي مطلوب"),
 });
@@ -129,6 +130,12 @@ const FreeTrial = () => {
                 <h2 className="text-2xl font-bold mb-6">
                   املأ البيانات للبدء
                 </h2>
+                <div className="mb-6 flex items-start gap-3 rounded-lg border border-primary/25 bg-primary/5 p-4 text-sm">
+                  <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <p>
+                    الخدمة والتجربة المجانية متاحتان حاليًا للمنشآت العاملة داخل المملكة العربية السعودية فقط.
+                  </p>
+                </div>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" data-testid="form-free-trial">
                     <FormField
@@ -177,12 +184,17 @@ const FreeTrial = () => {
                           <FormControl>
                             <Input
                               type="tel"
-                              placeholder="05XXXXXXXX"
+                              inputMode="tel"
+                              autoComplete="tel"
+                              placeholder="05XXXXXXXX أو +9665XXXXXXXX"
                               dir="ltr"
                               data-testid="input-phone"
                               {...field}
                             />
                           </FormControl>
+                          <p className="text-xs text-muted-foreground">
+                            نقبل أرقام الجوال السعودي فقط.
+                          </p>
                           <FormMessage />
                         </FormItem>
                       )}
