@@ -4,11 +4,14 @@ import {
   detectAssistantIntent,
   detectAssistantSector,
   buildAssistantContext,
+  shouldOpenTrialForm,
+  shouldShowTrialCta,
   splitForStreaming,
   streamAssistantReply,
   type AssistantContext,
   type AssistantIntent,
 } from "./assistantService";
+import { assistantLeadSchema } from "../shared/schema";
 
 const sectorPrompts = [
   ["marble", "مصنع رخام"],
@@ -144,6 +147,7 @@ test("assistant streams GLM 5.3 Flash through OpenRouter with privacy and cost c
     const sentMessages = requestBody.messages as Array<{ role: string; content: string }>;
     assert.match(sentMessages[0].content, /ولا تستخدم التعبيرات المصرية/);
     assert.match(sentMessages[0].content, /معلومة واحدة فقط/);
+    assert.match(sentMessages[0].content, /هدفك التجاري النهائي.*تجربة مجانية/);
     assert.equal(sentMessages.at(-1)?.role, "user");
     assert.equal(sentMessages.at(-1)?.content, "عندي مصنع مطابخ");
     assert.equal(streamed.join(""), "حياك الله، خلني أوضح لك.");
@@ -203,4 +207,28 @@ test("assistant retries once when a provider returns reasoning without an answer
     if (originalKey === undefined) delete process.env.OPENROUTER_API_KEY;
     else process.env.OPENROUTER_API_KEY = originalKey;
   }
+});
+
+test("assistant opens the free-trial form only after an explicit request or agreement", () => {
+  const offeredHistory = [
+    { role: "assistant" as const, content: "إذا يناسبك، أقدر أسجل لك تجربة مجانية." },
+  ];
+  assert.equal(shouldOpenTrialForm("تمام موافق", offeredHistory), true);
+  assert.equal(shouldOpenTrialForm("أبغى أجرب التجربة المجانية", []), true);
+  assert.equal(shouldOpenTrialForm("تمام", [{ role: "assistant", content: "تمام، أشرح لك دورة العمل." }]), false);
+  assert.equal(shouldShowTrialCta("وش الخطوة التالية؟", [], "إذا يناسبك، أقدر أسجل لك تجربة مجانية."), true);
+});
+
+test("assistant trial lead accepts an optional normalized Saudi alternate phone", () => {
+  const parsed = assistantLeadSchema.parse({
+    sessionId: "session123",
+    name: "محمد علي",
+    phone: "0501234567",
+    alternatePhone: "966551234567",
+    company: "مصنع النور",
+    consent: true,
+  });
+  assert.equal(parsed.phone, "+966501234567");
+  assert.equal(parsed.alternatePhone, "+966551234567");
+  assert.equal(assistantLeadSchema.safeParse({ ...parsed, alternatePhone: "0123" }).success, false);
 });

@@ -14,6 +14,7 @@ import {
   Settings,
   Zap,
   Bot,
+  Sparkles,
 } from "lucide-react";
 import { useState } from "react";
 import type { User } from "@shared/schema";
@@ -64,6 +65,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     { href: "/admin", label: "لوحة التحكم", icon: LayoutDashboard },
     { href: "/admin/contacts", label: "رسائل التواصل", icon: MessageSquare },
     { href: "/admin/trials", label: "طلبات التجربة", icon: Zap },
+    { href: "/admin/assistant-trials", label: "طلبات تجربة المستشار", icon: Sparkles },
     { href: "/admin/users", label: "المستخدمين", icon: Users },
     { href: "/admin/articles", label: "المقالات", icon: FileText },
     { href: "/admin/articles/new", label: "مقال جديد", icon: Plus },
@@ -73,6 +75,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   const isActive = (href: string) => {
     if (href === "/admin") return location === "/admin";
+    if (href === "/admin/assistant") return location === "/admin/assistant";
     return location.startsWith(href);
   };
 

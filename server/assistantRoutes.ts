@@ -14,7 +14,13 @@ import {
 } from "../shared/assistantKnowledge";
 import { isAdmin, isAuthenticated } from "./auth";
 import { assistantStorage } from "./assistantStorage";
-import { buildAssistantContext, streamAssistantReply, type AssistantHistoryMessage } from "./assistantService";
+import {
+  buildAssistantContext,
+  shouldOpenTrialForm,
+  shouldShowTrialCta,
+  streamAssistantReply,
+  type AssistantHistoryMessage,
+} from "./assistantService";
 import { sendContactNotificationEmail } from "./email";
 import { storage } from "./storage";
 
@@ -81,6 +87,7 @@ export function registerAssistantRoutes(app: Express) {
         console.warn("Assistant persistence unavailable; continuing without history:", persistenceError);
       }
       const context = await buildAssistantContext(message, history);
+      const openTrialForm = shouldOpenTrialForm(message, history);
 
       if (persistenceAvailable) {
         try {
@@ -140,6 +147,8 @@ export function registerAssistantRoutes(app: Express) {
         suggestions: context.suggestions,
         sources: context.sources,
         usedFallback: generated.usedFallback,
+        showTrialCta: shouldShowTrialCta(message, history, generated.text),
+        openTrialForm,
       });
       res.end();
     } catch (error) {
@@ -168,7 +177,7 @@ export function registerAssistantRoutes(app: Express) {
   app.post("/api/assistant/lead", assistantRateLimit, async (req, res) => {
     const parsed = assistantLeadSchema.safeParse(req.body);
     if (!parsed.success || parsed.data.consent !== true) {
-      return res.status(400).json({ message: "تأكد من الاسم ورقم الجوال السعودي والموافقة على التواصل." });
+      return res.status(400).json({ message: "تأكد من الاسم واسم النشاط وأرقام الجوال والموافقة على بدء التجربة." });
     }
     try {
       await assistantStorage.ensureSession(parsed.data.sessionId);
@@ -179,9 +188,9 @@ export function registerAssistantRoutes(app: Express) {
         email: "assistant-lead@mutflex.com",
         phone: parsed.data.phone,
         company: parsed.data.company,
-        message: `طلب تواصل من المستشار الذكي\nالقطاع: ${parsed.data.sector || "غير محدد"}\nالدور: ${parsed.data.customerRole || "غير محدد"}\nالاحتياج: ${parsed.data.painPoint || "غير محدد"}`,
+        message: `طلب تجربة مجانية من المستشار الذكي\nالرقم البديل: ${parsed.data.alternatePhone || "غير موجود"}\nالقطاع: ${parsed.data.sector || "غير محدد"}\nالاحتياج من المحادثة: ${parsed.data.painPoint || "غير محدد"}`,
       });
-      res.status(201).json({ message: "تم تسجيل طلبك، وبيتواصل معك فريق موتفلكس.", leadId: lead.id });
+      res.status(201).json({ message: "تم تسجيل طلب تجربتك المجانية، وبيتواصل معك فريق موتفلكس.", leadId: lead.id });
     } catch (error) {
       console.error("Assistant lead error:", error);
       res.status(500).json({ message: "تعذر تسجيل الطلب حاليًا. تقدر تكمل معنا على واتساب." });
@@ -204,6 +213,41 @@ export function registerAssistantRoutes(app: Express) {
     } catch (error) {
       console.error("Assistant leads list error:", error);
       res.status(500).json({ message: "تعذر تحميل طلبات التواصل." });
+    }
+  });
+
+  app.get("/api/admin/assistant/trials", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      res.json(await assistantStorage.getLeadSubmissions());
+    } catch (error) {
+      console.error("Assistant trial requests list error:", error);
+      res.status(500).json({ message: "تعذر تحميل طلبات تجربة المستشار." });
+    }
+  });
+
+  app.patch("/api/admin/assistant/trials/:id/read", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id < 1) return res.status(400).json({ message: "رقم الطلب غير صحيح." });
+      const lead = await assistantStorage.markLeadAsRead(id);
+      if (!lead) return res.status(404).json({ message: "الطلب غير موجود." });
+      res.json(lead);
+    } catch (error) {
+      console.error("Assistant trial mark-read error:", error);
+      res.status(500).json({ message: "تعذر تحديث الطلب." });
+    }
+  });
+
+  app.delete("/api/admin/assistant/trials/:id", isAuthenticated, isAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id < 1) return res.status(400).json({ message: "رقم الطلب غير صحيح." });
+      const deleted = await assistantStorage.deleteLead(id);
+      if (!deleted) return res.status(404).json({ message: "الطلب غير موجود." });
+      res.json({ message: "تم حذف الطلب." });
+    } catch (error) {
+      console.error("Assistant trial delete error:", error);
+      res.status(500).json({ message: "تعذر حذف الطلب." });
     }
   });
 

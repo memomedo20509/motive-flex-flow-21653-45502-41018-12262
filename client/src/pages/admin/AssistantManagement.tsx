@@ -204,7 +204,7 @@ export default function AssistantManagement() {
             {([
               ["المحادثات", analytics?.sessions || 0, Users],
               ["ردود الذكاء", analytics?.aiResponses || 0, MessageSquare],
-              ["طلبات التواصل", analytics?.leads || 0, Phone],
+              ["طلبات التجربة", analytics?.leads || 0, Phone],
               ["نسبة الرد المفيد", `${helpfulRate}%`, CheckCircle2],
               ["التكلفة الإجمالية", `$${(analytics?.totalCostUsd || 0).toFixed(4)}`, Coins],
               ["متوسط زمن الرد", `${((analytics?.averageLatencyMs || 0) / 1000).toFixed(1)} ث`, Clock3],
@@ -301,7 +301,7 @@ export default function AssistantManagement() {
             </Card>
 
             <Card>
-              <CardHeader><CardTitle className="text-lg">أحدث طلبات التواصل</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-lg">أحدث طلبات تجربة المستشار</CardTitle></CardHeader>
               <CardContent className="p-0">
                 {leadsQuery.isLoading ? <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div> : (
                   <Table>

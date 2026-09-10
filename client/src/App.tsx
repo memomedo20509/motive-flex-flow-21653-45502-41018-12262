@@ -43,6 +43,7 @@ const AdminTrialsList = lazy(() => import("./pages/admin/TrialsList"));
 const AdminUsersList = lazy(() => import("./pages/admin/UsersList"));
 const AdminSettings = lazy(() => import("./pages/admin/Settings"));
 const AdminAssistant = lazy(() => import("./pages/admin/AssistantManagement"));
+const AdminAssistantTrials = lazy(() => import("./pages/admin/AssistantTrialsList"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -114,6 +115,7 @@ function Router() {
       <Route path="/admin/articles/:id/edit" component={AdminArticleForm} />
       <Route path="/admin/settings" component={AdminSettings} />
       <Route path="/admin/assistant" component={AdminAssistant} />
+      <Route path="/admin/assistant-trials" component={AdminAssistantTrials} />
       <Route component={NotFound} />
     </Switch>
   );

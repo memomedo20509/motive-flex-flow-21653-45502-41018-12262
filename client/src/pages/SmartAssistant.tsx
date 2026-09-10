@@ -24,8 +24,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { trackFreeTrialLead } from "@/lib/x-pixel";
 
 interface AssistantSource {
   slug: string;
@@ -63,6 +63,8 @@ interface StreamEvent {
   suggestions?: string[];
   message?: string;
   usedFallback?: boolean;
+  showTrialCta?: boolean;
+  openTrialForm?: boolean;
 }
 
 const WELCOME_MESSAGE: ChatMessage = {
@@ -127,7 +129,8 @@ export default function SmartAssistant() {
   const [showLeadForm, setShowLeadForm] = useState(false);
   const [leadSubmitting, setLeadSubmitting] = useState(false);
   const [leadSent, setLeadSent] = useState(false);
-  const [lead, setLead] = useState({ name: "", phone: "", company: "", sector: "", customerRole: "", painPoint: "", consent: false });
+  const [showTrialCta, setShowTrialCta] = useState(false);
+  const [lead, setLead] = useState({ name: "", phone: "", alternatePhone: "", company: "", consent: false });
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -216,6 +219,8 @@ export default function SmartAssistant() {
               ? { ...item, serverId: event.messageId, sources: event.sources, pending: false, usedFallback: event.usedFallback }
               : item));
             setSuggestions(event.suggestions || []);
+            if (event.showTrialCta) setShowTrialCta(true);
+            if (event.openTrialForm) setShowLeadForm(true);
           }
           if (event.type === "error") throw new Error(event.message || "تعذر إكمال الرد.");
         }
@@ -247,20 +252,28 @@ export default function SmartAssistant() {
 
   const submitLead = async (event: FormEvent) => {
     event.preventDefault();
+    const activeSessionId = sessionId || crypto.randomUUID().replace(/-/g, "");
     if (!sessionId) {
-      toast({ title: "ابدأ المحادثة أولًا عشان نربط طلبك باحتياجك.", variant: "destructive" });
-      return;
+      setSessionId(activeSessionId);
+      window.localStorage.setItem(STORAGE_KEY, activeSessionId);
     }
+    const painPoint = messages
+      .filter((item) => item.role === "user" && item.content.trim())
+      .slice(-3)
+      .map((item) => item.content.trim())
+      .join(" | ")
+      .slice(0, 2000);
     setLeadSubmitting(true);
     try {
       const response = await fetch("/api/assistant/lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...lead, sessionId, sector: lead.sector || detectedSector }),
+        body: JSON.stringify({ ...lead, sessionId: activeSessionId, sector: detectedSector, painPoint }),
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.message || "تعذر تسجيل الطلب.");
       setLeadSent(true);
+      trackFreeTrialLead(payload.leadId);
       toast({ title: payload.message });
     } catch (error) {
       toast({ title: error instanceof Error ? error.message : "تعذر تسجيل الطلب.", variant: "destructive" });
@@ -384,6 +397,11 @@ export default function SmartAssistant() {
                     ))}
                   </div>
                 ) : null}
+                {showTrialCta && !showLeadForm && !leadSent ? (
+                  <Button type="button" className="mb-3 w-full bg-secondary hover:bg-secondary/90" onClick={() => setShowLeadForm(true)}>
+                    ابدأ تجربتك المجانية
+                  </Button>
+                ) : null}
                 <form onSubmit={(event) => { event.preventDefault(); void sendMessage(); }} className="flex items-end gap-2">
                   <Textarea
                     value={input}
@@ -425,51 +443,36 @@ export default function SmartAssistant() {
             </Card>
 
             <Card className="overflow-hidden border-2">
-              <CardHeader className="bg-gradient-to-l from-secondary/10 to-primary/10"><CardTitle className="flex items-center gap-2 text-lg"><Building2 className="h-5 w-5 text-secondary" /> كمل مع الفريق</CardTitle></CardHeader>
+              <CardHeader className="bg-gradient-to-l from-secondary/10 to-primary/10"><CardTitle className="flex items-center gap-2 text-lg"><Building2 className="h-5 w-5 text-secondary" /> جرّب موتفلكس على شغلك</CardTitle></CardHeader>
               <CardContent className="space-y-3 pt-5">
-                <p className="text-sm leading-6 text-muted-foreground">إذا وضحت الصورة، سجل بياناتك وبيوصل للفريق ملخص احتياجك من المحادثة.</p>
-                <Button className="w-full bg-secondary hover:bg-secondary/90" onClick={() => setShowLeadForm((current) => !current)}>{leadSent ? "تم تسجيل طلبك" : "اطلب تواصل من الفريق"}</Button>
+                <p className="text-sm leading-6 text-muted-foreground">إذا وضحت لك الفكرة، سجل طلب تجربة قصيرة وبيوصل للفريق ملخص احتياجك من المحادثة.</p>
+                <Button className="w-full bg-secondary hover:bg-secondary/90" onClick={() => setShowLeadForm((current) => !current)}>{leadSent ? "تم تسجيل طلب التجربة" : "اطلب تجربة مجانية"}</Button>
                 <Button variant="outline" className="w-full border-[#25D366] text-[#128C4A] hover:bg-[#25D366]/10" asChild>
                   <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappText}`} target="_blank" rel="noreferrer"><MessageCircle className="ml-2 h-4 w-4" /> كمل على واتساب</a>
                 </Button>
-                <Button variant="ghost" className="w-full" asChild><Link href="/free-trial">ابدأ تجربة مجانية <ArrowLeft className="mr-2 h-4 w-4" /></Link></Button>
               </CardContent>
             </Card>
 
             {showLeadForm && !leadSent ? (
               <Card className="border-2 border-secondary/30">
-                <CardHeader><CardTitle className="text-lg">بيانات التواصل</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-lg">بيانات التجربة المجانية</CardTitle></CardHeader>
                 <CardContent>
                   <form onSubmit={submitLead} className="space-y-4">
-                    <div className="space-y-2"><Label htmlFor="lead-name">الاسم</Label><Input id="lead-name" required minLength={2} value={lead.name} onChange={(event) => setLead((current) => ({ ...current, name: event.target.value }))} /></div>
-                    <div className="space-y-2"><Label htmlFor="lead-phone">رقم الجوال السعودي</Label><Input id="lead-phone" required dir="ltr" placeholder="05XXXXXXXX" value={lead.phone} onChange={(event) => setLead((current) => ({ ...current, phone: event.target.value }))} /></div>
-                    <div className="space-y-2"><Label htmlFor="lead-company">اسم المنشأة</Label><Input id="lead-company" value={lead.company} onChange={(event) => setLead((current) => ({ ...current, company: event.target.value }))} /></div>
-                    <div className="space-y-2">
-                      <Label>القطاع</Label>
-                      <Select value={lead.sector || detectedSector} onValueChange={(value) => setLead((current) => ({ ...current, sector: value }))}>
-                        <SelectTrigger><SelectValue placeholder="اختر القطاع" /></SelectTrigger>
-                        <SelectContent>{bootstrap?.sectors.map((sector) => <SelectItem key={sector.slug} value={sector.slug}>{sector.title}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>دورك</Label>
-                      <Select value={lead.customerRole} onValueChange={(value) => setLead((current) => ({ ...current, customerRole: value }))}>
-                        <SelectTrigger><SelectValue placeholder="اختر دورك" /></SelectTrigger>
-                        <SelectContent>{bootstrap?.roles.map((role) => <SelectItem key={role} value={role}>{role}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2"><Label htmlFor="lead-pain">أكبر مشكلة عندكم</Label><Textarea id="lead-pain" rows={3} value={lead.painPoint} onChange={(event) => setLead((current) => ({ ...current, painPoint: event.target.value }))} /></div>
+                    <div className="space-y-2"><Label htmlFor="lead-name">الاسم *</Label><Input id="lead-name" required minLength={2} autoComplete="name" value={lead.name} onChange={(event) => setLead((current) => ({ ...current, name: event.target.value }))} /></div>
+                    <div className="space-y-2"><Label htmlFor="lead-phone">رقم الجوال السعودي *</Label><Input id="lead-phone" required type="tel" inputMode="tel" autoComplete="tel" dir="ltr" placeholder="05XXXXXXXX" value={lead.phone} onChange={(event) => setLead((current) => ({ ...current, phone: event.target.value }))} /></div>
+                    <div className="space-y-2"><Label htmlFor="lead-company">اسم النشاط أو المنشأة *</Label><Input id="lead-company" required minLength={2} autoComplete="organization" value={lead.company} onChange={(event) => setLead((current) => ({ ...current, company: event.target.value }))} /></div>
+                    <div className="space-y-2"><Label htmlFor="lead-alternate-phone">رقم بديل (اختياري)</Label><Input id="lead-alternate-phone" type="tel" inputMode="tel" dir="ltr" placeholder="05XXXXXXXX" value={lead.alternatePhone} onChange={(event) => setLead((current) => ({ ...current, alternatePhone: event.target.value }))} /></div>
                     <label className="flex cursor-pointer items-start gap-2 text-xs leading-5 text-muted-foreground">
                       <input type="checkbox" required checked={lead.consent} onChange={(event) => setLead((current) => ({ ...current, consent: event.target.checked }))} className="mt-1" />
-                      أوافق على استخدام هذه البيانات للتواصل معي بخصوص موتفلكس.
+                      أوافق على استخدام هذه البيانات للتواصل معي وبدء التجربة المجانية.
                     </label>
-                    <Button type="submit" className="w-full" disabled={leadSubmitting}>{leadSubmitting ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : null} إرسال الطلب</Button>
+                    <Button type="submit" className="w-full" disabled={leadSubmitting}>{leadSubmitting ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : null} إرسال طلب التجربة</Button>
                   </form>
                 </CardContent>
               </Card>
             ) : null}
 
-            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 text-emerald-600" /> بياناتك لا تُطلب إلا عند رغبتك بالتواصل</div>
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 text-emerald-600" /> بياناتك لا تُطلب إلا بعد موافقتك على التجربة</div>
           </div>
         </div>
       </section>
@@ -489,7 +492,7 @@ export default function SmartAssistant() {
               ["فهم الاحتياج", "يبدأ بسؤالك عن القطاع وحجم التشغيل ونقطة التعطيل، حتى يكون الشرح مرتبطًا بواقع منشأتك بدل الكلام العام."],
               ["تصور دورة العمل", "يرسم لك سيناريو عملي من دخول العميل وحتى إغلاق المشروع، ويوضح أين تنتقل البيانات ومن المسؤول عن كل مرحلة."],
               ["شرح حسب القطاع", "يتعامل مع اختلاف احتياج مصانع الرخام والمطابخ والألمنيوم وشركات التشطيبات والمقاولات والقطاعات التي تعتمد على القياس والتركيب."],
-              ["خطوة تالية واضحة", "بعد ما تتضح الصورة، يساعدك تحدد المميزات والباقات التي تحتاجها، أو يسجل طلب تواصل ليكمل معك فريق موتفلكس."],
+              ["خطوة تالية واضحة", "بعد ما تتضح الصورة، يساعدك تحدد المميزات التي تحتاجها، ثم يسجل لك طلب تجربة مجانية ليكمل معك فريق موتفلكس."],
             ].map(([title, description]) => (
               <Card key={title} className="border-secondary/15 bg-background/80">
                 <CardContent className="p-6">
@@ -542,7 +545,7 @@ export default function SmartAssistant() {
             <div className="mt-8 border-t pt-7">
               <h3 className="flex items-center gap-2 font-bold text-foreground"><ShieldCheck className="h-5 w-5 text-emerald-600" /> الدقة والخصوصية</h3>
               <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                يعتمد المستشار على معلومات موتفلكس المعتمدة، ويصرّح بوضوح عندما تحتاج المعلومة إلى تأكيد من الفريق. لا تشارك كلمات مرور أو بيانات مالية أو أسرار عمل داخل المحادثة. لن نطلب رقم جوالك إلا إذا قررت تسجيل طلب تواصل، وتُستخدم البيانات التي ترسلها لخدمتك ومتابعة احتياجك وفق سياسة الخصوصية.
+                يعتمد المستشار على معلومات موتفلكس المعتمدة، ويصرّح بوضوح عندما تحتاج المعلومة إلى تأكيد من الفريق. لا تشارك كلمات مرور أو بيانات مالية أو أسرار عمل داخل المحادثة. لن نطلب رقم جوالك إلا بعد موافقتك على طلب التجربة، وتُستخدم البيانات التي ترسلها لخدمتك ومتابعة احتياجك وفق سياسة الخصوصية.
               </p>
               <Link href="/privacy-policy" className="mt-4 inline-flex items-center font-semibold text-secondary hover:underline">اقرأ سياسة الخصوصية <ArrowLeft className="mr-2 h-4 w-4" /></Link>
             </div>
