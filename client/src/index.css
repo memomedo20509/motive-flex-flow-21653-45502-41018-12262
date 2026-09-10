@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+.assistant-message {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 96px;
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */

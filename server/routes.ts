@@ -13,6 +13,7 @@ import express from "express";
 import * as cheerio from "cheerio";
 import { randomBytes, timingSafeEqual } from "crypto";
 import { normalizeArabicSearch } from "../shared/blogTaxonomy";
+import { registerAssistantRoutes } from "./assistantRoutes";
 
 async function processBase64ImagesInContent(content: string): Promise<string> {
   const $ = cheerio.load(content, { decodeEntities: false });
@@ -212,6 +213,7 @@ function formatExternalArticle(article: any, baseUrl: string) {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
+  registerAssistantRoutes(app);
 
   app.get("/blog/:slug", async (req, res, next) => {
     try {
@@ -1120,6 +1122,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { url: "/about", priority: "0.7", changefreq: "monthly" },
         { url: "/contact", priority: "0.7", changefreq: "monthly" },
         { url: "/free-trial", priority: "0.9", changefreq: "weekly" },
+        { url: "/smart-assistant", priority: "0.9", changefreq: "weekly" },
         { url: "/blog", priority: "0.8", changefreq: "daily" },
         { url: "/privacy-policy", priority: "0.3", changefreq: "yearly" },
       ];
@@ -1615,6 +1618,7 @@ Sitemap: ${siteUrl}/sitemap.xml
         { id: "contact", title: "تواصل معنا", slug: "contact", url: `${baseUrl}/contact`, type: "static" },
         { id: "blog", title: "المدونة", slug: "blog", url: `${baseUrl}/blog`, type: "static" },
         { id: "free-trial", title: "تجربة مجانية", slug: "free-trial", url: `${baseUrl}/free-trial`, type: "static" },
+        { id: "smart-assistant", title: "المستشار الذكي", slug: "smart-assistant", url: `${baseUrl}/smart-assistant`, type: "static" },
         { id: "privacy-policy", title: "سياسة الخصوصية", slug: "privacy-policy", url: `${baseUrl}/privacy-policy`, type: "static" },
       ];
       
@@ -1813,6 +1817,7 @@ Sitemap: ${baseUrl}/sitemap.xml`, baseUrl);
         { url: "/contact", priority: "0.8", changefreq: "monthly" },
         { url: "/about", priority: "0.8", changefreq: "monthly" },
         { url: "/free-trial", priority: "0.9", changefreq: "weekly" },
+        { url: "/smart-assistant", priority: "0.9", changefreq: "weekly" },
         { url: "/privacy-policy", priority: "0.3", changefreq: "yearly" },
         { url: "/blog", priority: "0.9", changefreq: "daily" },
       ];

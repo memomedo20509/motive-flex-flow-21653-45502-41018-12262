@@ -152,6 +152,40 @@ export function SoftwareApplicationSchema({
   );
 }
 
+interface WebApplicationSchemaProps {
+  name: string;
+  description: string;
+  url: string;
+  featureList: string[];
+}
+
+export function WebApplicationSchema({ name, description, url, featureList }: WebApplicationSchemaProps) {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name,
+    description,
+    url,
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Any",
+    browserRequirements: "Requires JavaScript and a modern web browser",
+    inLanguage: "ar-SA",
+    isAccessibleForFree: true,
+    featureList,
+    provider: {
+      "@type": "Organization",
+      name: "موتفلكس - Mutflex",
+      url: "https://mutflex.com",
+    },
+  };
+
+  return (
+    <Helmet>
+      <script type="application/ld+json">{JSON.stringify(schema)}</script>
+    </Helmet>
+  );
+}
+
 interface WebSiteSchemaProps {
   name?: string;
   url?: string;
@@ -192,5 +226,6 @@ export default {
   ArticleSchema,
   BreadcrumbSchema,
   SoftwareApplicationSchema,
+  WebApplicationSchema,
   WebSiteSchema,
 };

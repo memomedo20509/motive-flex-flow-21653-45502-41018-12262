@@ -15,6 +15,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Blog from "./pages/Blog";
 import BlogTopic from "./pages/BlogTopic";
 import BlogPost from "./pages/BlogPost";
+import SmartAssistant from "./pages/SmartAssistant";
 import NotFound from "./pages/NotFound";
 
 interface HelmetData {
@@ -49,6 +50,7 @@ function AppRoutes() {
       <Route path="/blog" component={Blog} />
       <Route path="/blog/topics/:slug" component={BlogTopic} />
       <Route path="/blog/:slug" component={BlogPost} />
+      <Route path="/smart-assistant" component={SmartAssistant} />
       <Route component={NotFound} />
     </Switch>
   );

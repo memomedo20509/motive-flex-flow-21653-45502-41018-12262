@@ -60,6 +60,16 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Smart assistant setup
+
+The public assistant is available at `/smart-assistant`, and its admin dashboard is at `/admin/assistant`.
+
+1. Configure the existing PostgreSQL connection with `DATABASE_URL`.
+2. Add `OPENROUTER_API_KEY` to the server environment. This is the only assistant-specific environment variable.
+3. Run `npm run migrate` to create and seed the assistant knowledge, conversation, feedback, lead, and AI usage fields.
+
+The assistant uses `z-ai/glm-5.3-flash` through OpenRouter with low reasoning, price-aware provider routing, provider fallback, and data-collection denial. If OpenRouter is temporarily unavailable or the key is missing, the assistant returns a grounded response from the local knowledge base. Knowledge can be edited and published from the admin dashboard without a deployment.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/3d075349-aa20-4f9d-9f00-5f41d529bc9d) and click on Share -> Publish.

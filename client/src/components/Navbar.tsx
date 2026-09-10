@@ -20,6 +20,7 @@ const Navbar = () => {
     { name: "الرئيسية", name_en: "Home", href: "/" },
     { name: "المميزات", name_en: "Features", href: "/features" },
     { name: "القطاعات", name_en: "Industries", href: "/industries" },
+    { name: "المستشار الذكي", name_en: "Smart Assistant", href: "/smart-assistant" },
     { name: "الأسعار", name_en: "Pricing", href: "/pricing" },
     { name: "مقالات", name_en: "Blog", href: "/blog" },
     { name: "من نحن", name_en: "About", href: "/about" },

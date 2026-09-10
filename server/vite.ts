@@ -16,6 +16,7 @@ const SSR_ROUTES = [
   "/about",
   "/free-trial",
   "/privacy-policy",
+  "/smart-assistant",
   "/blog",
 ];
 

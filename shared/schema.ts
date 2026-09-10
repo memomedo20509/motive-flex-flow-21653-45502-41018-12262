@@ -219,3 +219,129 @@ export const insertShortUrlSchema = createInsertSchema(shortUrls).omit({
 
 export type InsertShortUrl = z.infer<typeof insertShortUrlSchema>;
 export type ShortUrl = typeof shortUrls.$inferSelect;
+
+// Smart sales assistant knowledge, conversations, feedback, and qualified leads.
+export const assistantKnowledge = pgTable("assistant_knowledge", {
+  id: serial("id").primaryKey(),
+  slug: varchar("slug", { length: 160 }).notNull().unique(),
+  type: varchar("type", { length: 30 }).notNull(),
+  sector: varchar("sector", { length: 100 }),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  tags: text("tags").array().default([]).notNull(),
+  sourceUrl: varchar("source_url", { length: 500 }),
+  priority: integer("priority").default(50).notNull(),
+  status: varchar("status", { length: 20 }).default("published").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const assistantSessions = pgTable("assistant_sessions", {
+  id: varchar("id", { length: 64 }).primaryKey(),
+  status: varchar("status", { length: 20 }).default("active").notNull(),
+  sector: varchar("sector", { length: 100 }),
+  customerRole: varchar("customer_role", { length: 100 }),
+  companyName: varchar("company_name", { length: 255 }),
+  summary: text("summary"),
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const assistantMessages = pgTable("assistant_messages", {
+  id: serial("id").primaryKey(),
+  sessionId: varchar("session_id", { length: 64 })
+    .notNull()
+    .references(() => assistantSessions.id, { onDelete: "cascade" }),
+  role: varchar("role", { length: 20 }).notNull(),
+  content: text("content").notNull(),
+  intent: varchar("intent", { length: 50 }),
+  sources: jsonb("sources"),
+  aiProvider: varchar("ai_provider", { length: 40 }),
+  aiModel: varchar("ai_model", { length: 160 }),
+  promptTokens: integer("prompt_tokens"),
+  completionTokens: integer("completion_tokens"),
+  totalTokens: integer("total_tokens"),
+  costUsdMicros: integer("cost_usd_micros"),
+  latencyMs: integer("latency_ms"),
+  usedFallback: boolean("used_fallback").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => [index("assistant_messages_session_idx").on(table.sessionId)]);
+
+export const assistantFeedback = pgTable("assistant_feedback", {
+  id: serial("id").primaryKey(),
+  sessionId: varchar("session_id", { length: 64 })
+    .notNull()
+    .references(() => assistantSessions.id, { onDelete: "cascade" }),
+  messageId: integer("message_id")
+    .notNull()
+    .unique()
+    .references(() => assistantMessages.id, { onDelete: "cascade" }),
+  rating: varchar("rating", { length: 20 }).notNull(),
+  comment: text("comment"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const assistantLeads = pgTable("assistant_leads", {
+  id: serial("id").primaryKey(),
+  sessionId: varchar("session_id", { length: 64 })
+    .notNull()
+    .references(() => assistantSessions.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 50 }).notNull(),
+  company: varchar("company", { length: 255 }),
+  sector: varchar("sector", { length: 100 }),
+  customerRole: varchar("customer_role", { length: 100 }),
+  painPoint: text("pain_point"),
+  consent: boolean("consent").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertAssistantKnowledgeSchema = createInsertSchema(assistantKnowledge, {
+  slug: z.string().trim().min(2).max(160).regex(/^[a-z0-9-]+$/),
+  type: z.enum(["product", "feature", "sector", "pricing", "faq", "policy", "sales"]),
+  sector: z.string().trim().max(100).nullable().optional(),
+  title: z.string().trim().min(2).max(255),
+  content: z.string().trim().min(20).max(30000),
+  tags: z.array(z.string().trim().min(1).max(80)).max(30),
+  sourceUrl: z.string().trim().max(500).nullable().optional(),
+  priority: z.number().int().min(0).max(100).optional(),
+  status: z.enum(["published", "draft"]).optional(),
+}).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type AssistantKnowledge = typeof assistantKnowledge.$inferSelect;
+export type InsertAssistantKnowledge = z.infer<typeof insertAssistantKnowledgeSchema>;
+export type AssistantSession = typeof assistantSessions.$inferSelect;
+export type AssistantMessage = typeof assistantMessages.$inferSelect;
+export type AssistantFeedback = typeof assistantFeedback.$inferSelect;
+export type AssistantLead = typeof assistantLeads.$inferSelect;
+
+export const assistantChatSchema = z.object({
+  sessionId: z.string().regex(/^[a-zA-Z0-9_-]{8,64}$/).optional(),
+  message: z.string().trim().min(1).max(2000),
+  history: z.array(z.object({
+    role: z.enum(["user", "assistant"]),
+    content: z.string().trim().min(1).max(4000),
+  })).max(6).optional().default([]),
+});
+
+export const assistantLeadSchema = z.object({
+  sessionId: z.string().regex(/^[a-zA-Z0-9_-]{8,64}$/),
+  name: z.string().trim().min(2).max(255),
+  phone: saudiPhoneSchema,
+  company: z.string().trim().max(255).optional().default(""),
+  sector: z.string().trim().max(100).optional().default(""),
+  customerRole: z.string().trim().max(100).optional().default(""),
+  painPoint: z.string().trim().max(2000).optional().default(""),
+  consent: z.literal(true),
+});
+
+export const assistantFeedbackSchema = z.object({
+  sessionId: z.string().regex(/^[a-zA-Z0-9_-]{8,64}$/),
+  messageId: z.number().int().positive(),
+  rating: z.enum(["positive", "negative"]),
+  comment: z.string().trim().max(1000).optional(),
+});

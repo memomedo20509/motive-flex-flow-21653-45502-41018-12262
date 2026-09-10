@@ -2,6 +2,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import { sql } from "drizzle-orm";
 import { BLOG_SEARCH_INDEX_VERSION, backfillBlogSearch, seedBlogTaxonomy } from "./blogSearch";
+import { ASSISTANT_KNOWLEDGE_SEED } from "../shared/assistantKnowledge";
 
 const { Pool } = pg;
 
@@ -140,6 +141,119 @@ export async function runMigrations() {
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
+
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS assistant_knowledge (
+        id SERIAL PRIMARY KEY,
+        slug VARCHAR(160) NOT NULL UNIQUE,
+        type VARCHAR(30) NOT NULL,
+        sector VARCHAR(100),
+        title VARCHAR(255) NOT NULL,
+        content TEXT NOT NULL,
+        tags TEXT[] NOT NULL DEFAULT '{}',
+        source_url VARCHAR(500),
+        priority INTEGER NOT NULL DEFAULT 50,
+        status VARCHAR(20) NOT NULL DEFAULT 'published',
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS assistant_knowledge_lookup_idx
+      ON assistant_knowledge (status, type, sector, priority DESC)
+    `);
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS assistant_sessions (
+        id VARCHAR(64) PRIMARY KEY,
+        status VARCHAR(20) NOT NULL DEFAULT 'active',
+        sector VARCHAR(100),
+        customer_role VARCHAR(100),
+        company_name VARCHAR(255),
+        summary TEXT,
+        started_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS assistant_messages (
+        id SERIAL PRIMARY KEY,
+        session_id VARCHAR(64) NOT NULL REFERENCES assistant_sessions(id) ON DELETE CASCADE,
+        role VARCHAR(20) NOT NULL,
+        content TEXT NOT NULL,
+        intent VARCHAR(50),
+        sources JSONB,
+        ai_provider VARCHAR(40),
+        ai_model VARCHAR(160),
+        prompt_tokens INTEGER,
+        completion_tokens INTEGER,
+        total_tokens INTEGER,
+        cost_usd_micros INTEGER,
+        latency_ms INTEGER,
+        used_fallback BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await db.execute(sql`
+      ALTER TABLE assistant_messages
+        ADD COLUMN IF NOT EXISTS ai_provider VARCHAR(40),
+        ADD COLUMN IF NOT EXISTS ai_model VARCHAR(160),
+        ADD COLUMN IF NOT EXISTS prompt_tokens INTEGER,
+        ADD COLUMN IF NOT EXISTS completion_tokens INTEGER,
+        ADD COLUMN IF NOT EXISTS total_tokens INTEGER,
+        ADD COLUMN IF NOT EXISTS cost_usd_micros INTEGER,
+        ADD COLUMN IF NOT EXISTS latency_ms INTEGER,
+        ADD COLUMN IF NOT EXISTS used_fallback BOOLEAN NOT NULL DEFAULT FALSE
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS assistant_messages_session_idx
+      ON assistant_messages (session_id, created_at)
+    `);
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS assistant_feedback (
+        id SERIAL PRIMARY KEY,
+        session_id VARCHAR(64) NOT NULL REFERENCES assistant_sessions(id) ON DELETE CASCADE,
+        message_id INTEGER NOT NULL REFERENCES assistant_messages(id) ON DELETE CASCADE,
+        rating VARCHAR(20) NOT NULL,
+        comment TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        UNIQUE (message_id)
+      )
+    `);
+    await db.execute(sql`
+      CREATE UNIQUE INDEX IF NOT EXISTS assistant_feedback_message_unique_idx
+      ON assistant_feedback (message_id)
+    `);
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS assistant_leads (
+        id SERIAL PRIMARY KEY,
+        session_id VARCHAR(64) NOT NULL REFERENCES assistant_sessions(id) ON DELETE CASCADE,
+        name VARCHAR(255) NOT NULL,
+        phone VARCHAR(50) NOT NULL,
+        company VARCHAR(255),
+        sector VARCHAR(100),
+        customer_role VARCHAR(100),
+        pain_point TEXT,
+        consent BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await db.execute(sql`
+      CREATE INDEX IF NOT EXISTS assistant_leads_created_idx
+      ON assistant_leads (created_at DESC)
+    `);
+
+    for (const entry of ASSISTANT_KNOWLEDGE_SEED) {
+      await db.execute(sql`
+        INSERT INTO assistant_knowledge (
+          slug, type, sector, title, content, tags, source_url, priority, status, updated_at
+        ) VALUES (
+          ${entry.slug}, ${entry.type}, ${entry.sector || null}, ${entry.title}, ${entry.content},
+          ARRAY(SELECT jsonb_array_elements_text(${JSON.stringify(entry.tags)}::jsonb)),
+          ${entry.sourceUrl || null}, ${entry.priority}, 'published', NOW()
+        )
+        ON CONFLICT (slug) DO NOTHING
+      `);
+    }
 
     await db.execute(sql`CREATE EXTENSION IF NOT EXISTS pg_trgm`);
     await db.execute(sql`

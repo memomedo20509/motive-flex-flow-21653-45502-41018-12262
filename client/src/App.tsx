@@ -32,6 +32,7 @@ const Blog = lazy(() => import("./pages/Blog"));
 const BlogTopic = lazy(() => import("./pages/BlogTopic"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Login = lazy(() => import("./pages/Login"));
+const SmartAssistant = lazy(() => import("./pages/SmartAssistant"));
 
 // Admin pages - lazy loaded
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
@@ -41,6 +42,7 @@ const AdminContactsList = lazy(() => import("./pages/admin/ContactsList"));
 const AdminTrialsList = lazy(() => import("./pages/admin/TrialsList"));
 const AdminUsersList = lazy(() => import("./pages/admin/UsersList"));
 const AdminSettings = lazy(() => import("./pages/admin/Settings"));
+const AdminAssistant = lazy(() => import("./pages/admin/AssistantManagement"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -102,6 +104,7 @@ function Router() {
       <Route path="/blog/topics/:slug" component={BlogTopic} />
       <Route path="/blog/:slug" component={BlogPost} />
       <Route path="/login" component={Login} />
+      <Route path="/smart-assistant" component={SmartAssistant} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/contacts" component={AdminContactsList} />
       <Route path="/admin/trials" component={AdminTrialsList} />
@@ -110,6 +113,7 @@ function Router() {
       <Route path="/admin/articles/new" component={AdminArticleForm} />
       <Route path="/admin/articles/:id/edit" component={AdminArticleForm} />
       <Route path="/admin/settings" component={AdminSettings} />
+      <Route path="/admin/assistant" component={AdminAssistant} />
       <Route component={NotFound} />
     </Switch>
   );

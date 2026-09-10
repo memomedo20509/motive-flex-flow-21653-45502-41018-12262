@@ -122,6 +122,14 @@ const Footer = () => {
                   من نحن
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/smart-assistant"
+                  className="text-sm hover:text-primary transition-all duration-300 hover:translate-x-2 inline-block"
+                >
+                  المستشار الذكي
+                </Link>
+              </li>
             </ul>
           </div>
 
