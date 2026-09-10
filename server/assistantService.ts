@@ -65,6 +65,12 @@ const OPENROUTER_SITE_URL = "https://mutflex.com";
 const OPENROUTER_APP_NAME = "Mutflex Smart Assistant";
 const OPENROUTER_TIMEOUT_MS = 55_000;
 
+function completionTokenLimit(message: string, retry = false): number {
+  const detailed = responseLengthInstruction(message).includes("180 كلمة");
+  if (retry) return detailed ? 2_200 : 1_600;
+  return detailed ? 1_800 : 1_200;
+}
+
 const ARABIC_STOP_WORDS = new Set([
   "انا", "احنا", "نحن", "هذا", "هذه", "عندي", "عندنا", "كيف", "وش", "ايش", "ممكن", "ابغى", "ابي", "عايز", "اريد",
   "في", "من", "على", "الى", "عن", "هو", "هي", "مع", "كل", "لي", "لنا", "موتفلكس", "النظام", "برنامج",
@@ -395,7 +401,7 @@ export async function streamAssistantReply(
         messages: openRouterMessages(message, history, context),
         stream: true,
         temperature: 0.35,
-        max_tokens: responseLengthInstruction(message).includes("180 كلمة") ? 900 : 420,
+        max_tokens: completionTokenLimit(message),
         reasoning: { effort: "low", exclude: true },
         provider: {
           data_collection: "deny",
@@ -453,7 +459,7 @@ export async function streamAssistantReply(
           messages: openRouterMessages(message, history, context),
           stream: false,
           temperature: 0.35,
-          max_tokens: responseLengthInstruction(message).includes("180 كلمة") ? 1_000 : 700,
+          max_tokens: completionTokenLimit(message, true),
           reasoning: { effort: "low", exclude: true },
           provider: {
             data_collection: "deny",

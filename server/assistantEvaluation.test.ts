@@ -140,7 +140,7 @@ test("assistant streams GLM 5.3 Flash through OpenRouter with privacy and cost c
     assert.equal(requestBody.model, "z-ai/glm-5.3-flash");
     assert.deepEqual(requestBody.reasoning, { effort: "low", exclude: true });
     assert.deepEqual(requestBody.provider, { data_collection: "deny", allow_fallbacks: true, sort: "price" });
-    assert.equal(requestBody.max_tokens, 420);
+    assert.equal(requestBody.max_tokens, 1200);
     const sentMessages = requestBody.messages as Array<{ role: string; content: string }>;
     assert.match(sentMessages[0].content, /ولا تستخدم التعبيرات المصرية/);
     assert.match(sentMessages[0].content, /معلومة واحدة فقط/);
@@ -194,7 +194,7 @@ test("assistant retries once when a provider returns reasoning without an answer
     assert.equal(requestBodies.length, 2);
     assert.equal(requestBodies[0].stream, true);
     assert.equal(requestBodies[1].stream, false);
-    assert.equal(requestBodies[1].max_tokens, 700);
+    assert.equal(requestBodies[1].max_tokens, 1600);
     assert.equal(result.usedFallback, false);
     assert.equal(result.provider, "openrouter");
     assert.equal(streamed.join(""), "أكيد، خلنا نبدأ من دورة الطلب.");
