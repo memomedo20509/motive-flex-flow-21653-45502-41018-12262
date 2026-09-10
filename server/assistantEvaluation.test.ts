@@ -142,6 +142,8 @@ test("assistant streams GLM 5.3 Flash through OpenRouter with privacy and cost c
     assert.deepEqual(requestBody.provider, { data_collection: "deny", allow_fallbacks: true, sort: "price" });
     assert.equal(requestBody.max_tokens, 420);
     const sentMessages = requestBody.messages as Array<{ role: string; content: string }>;
+    assert.match(sentMessages[0].content, /ولا تستخدم التعبيرات المصرية/);
+    assert.match(sentMessages[0].content, /معلومة واحدة فقط/);
     assert.equal(sentMessages.at(-1)?.role, "user");
     assert.equal(sentMessages.at(-1)?.content, "عندي مصنع مطابخ");
     assert.equal(streamed.join(""), "حياك الله، خلني أوضح لك.");
