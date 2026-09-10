@@ -47,6 +47,9 @@ interface OpenRouterChoice {
   delta?: {
     content?: string | Array<{ type?: string; text?: string }>;
   };
+  message?: {
+    content?: string | Array<{ type?: string; text?: string }>;
+  };
 }
 
 interface OpenRouterChunk {
@@ -309,7 +312,7 @@ function fallbackReply(message: string, history: AssistantHistoryMessage[], cont
     const fitAnswer = sector.slug === "advertising-production"
       ? "غالبًا يفيدكم إذا الطلب عندكم يمر من تصوير أو تصميم إلى اعتماد العميل، ثم تنفيذ عند مصنع أو مورد، وبعدها تركيب أو تسليم."
       : "غالبًا يفيدكم إذا شغلكم يعتمد على طلبات عملاء تمر بمراحل واضحة من التسجيل إلى التنفيذ والتسليم.";
-    return `إيه، قريت سؤالك وفهمت طبيعة شغلك. ${fitAnswer} أكثر شيء بيفيدكم هو ${featureTitles.join(" و")} بحيث تعرفون حالة الطلب وملفاته بدون تشتت. هل المصنع الخارجي يحتاج يدخل النظام، ولا المتابعة معه عندكم داخلية؟`;
+    return `أكيد، قريت سؤالك وفهمت طبيعة شغلك. ${fitAnswer} أكثر شيء بيفيدكم هو ${featureTitles.join(" و")} بحيث تعرفون حالة الطلب وملفاته بدون تشتت. هل المصنع الخارجي يحتاج يدخل النظام، ولا المتابعة معه عندكم داخلية؟`;
   }
 
   return `ممكن يفيدكم إذا شغلكم فيه طلبات تنتقل بين أكثر من شخص أو مرحلة، لكن ما أبغى أفترض. وش يصير للطلب عندكم من لحظة دخوله إلى أن يتسلم العميل؟`;
@@ -317,6 +320,13 @@ function fallbackReply(message: string, history: AssistantHistoryMessage[], cont
 
 function chunkText(value?: OpenRouterChoice): string {
   const content = value?.delta?.content;
+  if (typeof content === "string") return content;
+  if (!Array.isArray(content)) return "";
+  return content.map((part) => part.text || "").join("");
+}
+
+function messageText(value?: OpenRouterChoice): string {
+  const content = value?.message?.content;
   if (typeof content === "string") return content;
   if (!Array.isArray(content)) return "";
   return content.map((part) => part.text || "").join("");
@@ -427,8 +437,40 @@ export async function streamAssistantReply(
       if (done) break;
     }
 
-    const text = streamedText.trim();
-    if (!text) throw new Error("OpenRouter returned an empty assistant response");
+    let text = streamedText.trim();
+    if (!text) {
+      const retryResponse = await fetch(OPENROUTER_URL, {
+        method: "POST",
+        signal: timeoutController.signal,
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+          "HTTP-Referer": OPENROUTER_SITE_URL,
+          "X-OpenRouter-Title": OPENROUTER_APP_NAME,
+        },
+        body: JSON.stringify({
+          model: OPENROUTER_MODEL,
+          messages: openRouterMessages(message, history, context),
+          stream: false,
+          temperature: 0.35,
+          max_tokens: responseLengthInstruction(message).includes("180 كلمة") ? 1_000 : 700,
+          reasoning: { effort: "low", exclude: true },
+          provider: {
+            data_collection: "deny",
+            allow_fallbacks: true,
+            sort: "price",
+          },
+        }),
+      });
+      if (!retryResponse.ok) throw new Error(await readOpenRouterError(retryResponse));
+      const retryBody = await retryResponse.json() as OpenRouterChunk;
+      if (retryBody.error) throw new Error(`OpenRouter retry failed${retryBody.error.code ? ` (${retryBody.error.code})` : ""}`);
+      if (retryBody.model) resolvedModel = retryBody.model;
+      usage = normalizeUsage(retryBody.usage) || usage;
+      text = messageText(retryBody.choices?.[0]).trim();
+      if (!text) throw new Error("OpenRouter returned an empty assistant response after retry");
+      splitForStreaming(text).forEach(onChunk);
+    }
     return {
       text,
       usedFallback: false,

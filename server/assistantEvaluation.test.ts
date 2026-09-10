@@ -156,3 +156,51 @@ test("assistant streams GLM 5.3 Flash through OpenRouter with privacy and cost c
     else process.env.OPENROUTER_API_KEY = originalKey;
   }
 });
+
+test("assistant retries once when a provider returns reasoning without an answer", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalKey = process.env.OPENROUTER_API_KEY;
+  const streamed: string[] = [];
+  const requestBodies: Array<Record<string, unknown>> = [];
+  try {
+    process.env.OPENROUTER_API_KEY = "test-key";
+    globalThis.fetch = (async (_input: string | URL | Request, init?: RequestInit) => {
+      requestBodies.push(JSON.parse(String(init?.body || "{}")) as Record<string, unknown>);
+      if (requestBodies.length === 1) {
+        const payload = [
+          `data: ${JSON.stringify({ model: "z-ai/glm-5.3-flash", choices: [{ delta: {} }] })}\n\n`,
+          "data: [DONE]\n\n",
+        ].join("");
+        return new Response(payload, { status: 200, headers: { "Content-Type": "text/event-stream" } });
+      }
+      return Response.json({
+        model: "z-ai/glm-5.3-flash",
+        choices: [{ message: { content: "أكيد، خلنا نبدأ من دورة الطلب." } }],
+        usage: { prompt_tokens: 100, completion_tokens: 20, total_tokens: 120, cost: 0.00003 },
+      });
+    }) as typeof fetch;
+
+    const context: AssistantContext = {
+      intent: "sector",
+      sector: "advertising-production",
+      sectorTitle: "شركات الدعاية والإعلان والإنتاج الإعلاني",
+      sources: [],
+      knowledgeText: "معلومة موثقة عن دورة العمل.",
+      publicKnowledgeText: "معلومة موثقة عن دورة العمل.",
+      suggestions: [],
+    };
+    const result = await streamAssistantReply("عندي استوديو تصوير", [], context, (chunk) => streamed.push(chunk));
+
+    assert.equal(requestBodies.length, 2);
+    assert.equal(requestBodies[0].stream, true);
+    assert.equal(requestBodies[1].stream, false);
+    assert.equal(requestBodies[1].max_tokens, 700);
+    assert.equal(result.usedFallback, false);
+    assert.equal(result.provider, "openrouter");
+    assert.equal(streamed.join(""), "أكيد، خلنا نبدأ من دورة الطلب.");
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalKey === undefined) delete process.env.OPENROUTER_API_KEY;
+    else process.env.OPENROUTER_API_KEY = originalKey;
+  }
+});
