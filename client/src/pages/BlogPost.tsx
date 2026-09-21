@@ -58,6 +58,8 @@ const BlogPost = () => {
   const htmlContent = useMemo(() => {
     if (!article?.content) return "";
     let content = article.content.replace(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, "");
+    // The article title is the page H1; headings inside the body start at H2.
+    content = content.replace(/<h1(\s[^>]*)?>/gi, "<h2$1>").replace(/<\/h1\s*>/gi, "</h2>");
     if (typeof window === "undefined") return content;
     const parser = new DOMParser();
     const doc = parser.parseFromString(content, 'text/html');
@@ -91,13 +93,13 @@ const BlogPost = () => {
   }, [htmlContent]);
 
   const tableOfContents = useMemo(() => {
-    if (!article?.content) return [];
+    if (!htmlContent) return [];
     // Skip DOMParser on server (SSR) - only parse on client
     if (typeof window === "undefined") return [];
     
     const headings: { level: number; text: string; id: string }[] = [];
     const parser = new DOMParser();
-    const doc = parser.parseFromString(article.content, 'text/html');
+    const doc = parser.parseFromString(htmlContent, 'text/html');
     const headingElements = doc.querySelectorAll('h1, h2, h3');
     headingElements.forEach((el) => {
       const tagName = el.tagName.toLowerCase();
@@ -107,7 +109,7 @@ const BlogPost = () => {
       headings.push({ level, text, id });
     });
     return headings;
-  }, [article?.content]);
+  }, [htmlContent]);
 
   const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString("ar-SA", {
@@ -484,7 +486,7 @@ const BlogPost = () => {
                 <div className="mb-8 rounded-lg overflow-hidden shadow-xl">
                   <img
                     src={article.coverImage}
-                    alt={article.title}
+                    alt={article.coverImageAlt || article.title}
                     width={800}
                     height={450}
                     className="w-full h-auto max-h-[450px] object-cover"

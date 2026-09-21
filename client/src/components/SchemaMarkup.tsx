@@ -10,15 +10,18 @@ interface OrganizationSchemaProps {
 export function OrganizationSchema({
   name = "موتفلكس - Mutflex",
   url = "https://mutflex.com",
-  logo = "/logo.webp",
+  logo = "/favicon-192.png",
   description = "نظام إدارة التصنيع والتركيب الشامل - منصة SaaS لتحويل الفوضى إلى نظام رقمي متكامل",
 }: OrganizationSchemaProps) {
+  const logoUrl = /^https?:\/\//i.test(logo)
+    ? logo
+    : `${url}${logo.startsWith("/") ? "" : "/"}${logo}`;
   const schema = {
     "@context": "https://schema.org",
     "@type": "Organization",
     name,
     url,
-    logo: `${url}${logo}`,
+    logo: logoUrl,
     description,
     sameAs: [],
     contactPoint: {
@@ -71,7 +74,7 @@ export function ArticleSchema({
       name: "موتفلكس - Mutflex",
       logo: {
         "@type": "ImageObject",
-        url: "https://mutflex.com/logo.webp",
+        url: "https://mutflex.com/favicon-192.png",
       },
     },
     mainEntityOfPage: {

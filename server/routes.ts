@@ -173,9 +173,17 @@ function getLegacyBrandSlugCandidates(slug: string): string[] {
 }
 
 const legacyBlogRedirects: Record<string, string> = {
-  "article-1783379378839-mr9u1biv": "/blog",
+  "article-1783379378839-mr9u1biv": "/blog/برنامج-إدارة-الفنيين",
   "article-1783380334605-mr9ulszx": "/blog",
-  "article-1783380351380-mr9um5xw": "/blog",
+  "article-1783380351380-mr9um5xw": "/blog/تطبيق-موتفلكس-للفنيين",
+  "article-1784810274694-mrxhydty": "/blog/motflex-aluminum-factory-management-software",
+  "article-1784810443508-mrxi2038": "/blog/motflex-aluminum-technician-tracking-system",
+  "nظام-متابعة-بلاغات-اعطال-المصاعد-وخدمة-الطوارئ": "/blog/نظام-متابعة-بلاغات-اعطال-المصاعد-وخدمة-الطوارئ",
+  "kitchen-companies-management-software-mutflex": "/blog/kitchen-manufacturing-installation-software-mutflex",
+  "saudi-vision-2030-and-digital-transformation": "/blog/التحول-الرقمي-إدارة-الخدمات-الميدانية-خطوات-عملية",
+  "tabsit-al-amaliat-al-malia-barnamaj-motflex-li-shirkat-al-zujaj": "/blog/برنامج-ادارة-شركات-الزجاج-والمرايا-حل-موتفلكس-المتكامل-لتصنيع-وتركيب",
+  "تقارير-تشغيلية-لمصنعك-وشركة-التركيب-motiflix-dee66e39": "/blog/تقارير-تشغيلية-لمصنعك-وشركة-التركيب-motiflix",
+  "article-1783954408526-mrjce79q": "/blog/article-1783841288077-mrhh1mz1",
   "supply-chain-optimization-saudi-arabia": "/blog/production-management-software-saudi-factories-mutflex-mrh7sm93",
   "saudi-market-trends-customer-expectations": "/blog/best-factory-management-software-saudi-arabia-mutflex",
   "mizat-barnamaj-idarat-alfanniyin-your-guide-to-motiflix-for-your-factory-mr9ul7e9": "/blog/mizat-barnamaj-idarat-alfanniyin-your-guide-to-motflex-for-your-factory",
@@ -1146,6 +1154,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Add articles
       for (const article of publishedArticles) {
+        // Exclude noindex articles from the sitemap
+        if (article.robotsDirective && /noindex/i.test(article.robotsDirective)) continue;
+        if (legacyBlogRedirects[article.slug]) continue;
+        const articleUrl = `${siteUrl}/blog/${article.slug}`;
+        if (article.canonicalUrl && article.canonicalUrl.trim() !== articleUrl) continue;
         const lastmod = article.updatedAt ? new Date(article.updatedAt).toISOString().split("T")[0] : now;
         xml += `  <url>
     <loc>${escapeXml(siteUrl)}/blog/${escapeXml(article.slug)}</loc>

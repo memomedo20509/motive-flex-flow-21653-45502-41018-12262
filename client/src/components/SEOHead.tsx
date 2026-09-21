@@ -19,7 +19,8 @@ interface SEOHeadProps {
 }
 
 const SITE_NAME = "موتفلكس - Mutflex";
-const DEFAULT_OG_IMAGE = "/og-image.webp";
+const DEFAULT_OG_IMAGE = "/mutflex-og.webp";
+const SITE_ORIGIN = "https://mutflex.com";
 
 export function SEOHead({
   title,
@@ -33,6 +34,9 @@ export function SEOHead({
   nofollow = false,
 }: SEOHeadProps) {
   const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
+  const absoluteOgImage = /^https?:\/\//i.test(ogImage)
+    ? ogImage
+    : `${SITE_ORIGIN}${ogImage.startsWith("/") ? "" : "/"}${ogImage}`;
   const robotsContent = [
     noindex ? "noindex" : "index",
     nofollow ? "nofollow" : "follow",
@@ -51,14 +55,15 @@ export function SEOHead({
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:type" content={ogType} />
-      <meta property="og:image" content={ogImage} />
+      <meta property="og:image" content={absoluteOgImage} />
+      {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:locale" content="ar_SA" />
       
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
-      <meta name="twitter:image" content={ogImage} />
+      <meta name="twitter:image" content={absoluteOgImage} />
       
       {ogType === "article" && article && (
         <>
