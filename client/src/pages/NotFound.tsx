@@ -1,10 +1,12 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Home } from "lucide-react";
+import SEOHead from "@/components/SEOHead";
 
 const NotFound = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background" dir="rtl">
+      <SEOHead title="الصفحة غير موجودة" description="الصفحة المطلوبة غير موجودة" noindex />
       <div className="text-center px-4">
         <h1 className="text-8xl md:text-9xl font-bold text-primary mb-4">404</h1>
         <h2 className="text-2xl md:text-3xl font-bold mb-4">

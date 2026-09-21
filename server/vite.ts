@@ -27,6 +27,19 @@ function isSSRRoute(url: string): boolean {
   return false;
 }
 
+function isKnownAppRoute(url: string): boolean {
+  const pathname = url.split("?")[0];
+  if (isSSRRoute(url)) return true;
+  if (pathname === "/login" || pathname === "/smart-assistant") return true;
+  if ([
+    "/admin", "/admin/contacts", "/admin/trials", "/admin/users",
+    "/admin/articles", "/admin/articles/new", "/admin/settings",
+    "/admin/assistant", "/admin/assistant-trials",
+  ].includes(pathname)) return true;
+  if (/^\/admin\/articles\/\d+\/edit$/.test(pathname)) return true;
+  return false;
+}
+
 async function prepareSSRData(url: string): Promise<{
   initialData: Record<string, unknown>;
   statusCode: number;
@@ -170,7 +183,13 @@ export async function setupVite(app: Express, server: any) {
           res.status(200).set({ "Content-Type": "text/html" }).end(template);
         }
       } else {
-        res.status(200).set({ "Content-Type": "text/html" }).end(template);
+        // Unknown public route: serve the CSR shell with a real 404 status.
+        // The client router renders the NotFound page.
+        if (isKnownAppRoute(url)) {
+          res.status(200).set({ "Content-Type": "text/html" }).end(template);
+        } else {
+          res.status(404).set({ "Content-Type": "text/html" }).end(template);
+        }
       }
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
@@ -267,6 +286,9 @@ export async function serveStatic(app: Express) {
     }
 
     // Fallback to CSR
+    if (!isKnownAppRoute(url)) {
+      res.status(404);
+    }
     res.sendFile(templatePath);
   });
 }
