@@ -223,6 +223,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
   registerAssistantRoutes(app);
 
+  app.get("/ar/solutions/warehouse-management-saudi", (_req, res) => {
+    return res.redirect(
+      301,
+      "/blog/%D9%85%D9%88%D8%AA%D9%81%D9%84%D9%83%D8%B3-%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D8%AC-%D8%A5%D8%AF%D8%A7%D8%B1%D8%A9-%D8%A7%D9%84%D9%85%D8%AE%D8%B2%D9%88%D9%86-%D8%A7%D9%84%D9%85%D8%AA%D9%82%D8%AF%D9%85-%D9%84%D9%84%D9%85%D8%B3%D8%AA%D9%88%D8%AF%D8%B9%D8%A7%D8%AA-%D8%A7%D9%84%D9%83%D8%A8%D9%8A%D8%B1%D8%A9-%D9%88%D8%B9%D9%85%D9%84%D9%8A%D8%A7%D8%AA-%D8%A7%D9%84%D9%84%D9%88%D8%AC%D8%B3%D8%AA%D9%8A%D8%A7%D8%AA-%D9%81%D9%8A-%D8%A7%D9%84%D8%B3%D8%B9%D9%88%D8%AF%D9%8A%D8%A9",
+    );
+  });
+
   app.get("/blog/:slug", async (req, res, next) => {
     try {
       const slug = decodeURIComponent(req.params.slug);
