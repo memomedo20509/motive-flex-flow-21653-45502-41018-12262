@@ -230,6 +230,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     );
   });
 
+  app.get("/motflex-best-erp-for-furniture-factories-saudi", (_req, res) => {
+    return res.redirect(301, "/blog/motflex-best-erp-for-furniture-factories-saudi");
+  });
+
   app.get("/blog/:slug", async (req, res, next) => {
     try {
       const slug = decodeURIComponent(req.params.slug);
