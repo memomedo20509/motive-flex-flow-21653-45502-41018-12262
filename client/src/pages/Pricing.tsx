@@ -37,6 +37,31 @@ const Pricing = () => {
     ],
   };
 
+  // Mutflex B2B Plan
+  const b2bSetupFee = {
+    price: "230",
+    description: "رسوم تأسيس تدفع مرة واحدة فقط، شاملة ضريبة القيمة المضافة",
+  };
+
+  const b2bPlan = {
+    name: "Mutflex B2B",
+    price: "920",
+    period: "سنوياً",
+    description: "اعرض منتجاتك بالصور والمواصفات، وأتح لعملائك تصفّحها واختيار ما يناسبهم مباشرة من الجوال. باقة سنوية مخصصة لتجار الجملة وصالات العرض لعرض المنتجات والأسعار باحترافية وإدارة العملاء بسهولة.",
+    features: [
+      "لوحة تحكم شاملة",
+      "عدد غير محدود من المستخدمين",
+      "إدارة العملاء",
+      "إنشاء كتالوج إلكتروني للمنتجات بالصور والمواصفات",
+      "إنشاء قوائم أسعار ومواصفات مدعومة بالصور",
+      "عرض الكتالوج وقوائم الأسعار على شاشة مخصصة لصالات العرض",
+      "طباعة تقارير قوائم الأسعار",
+      "رسائل نصية مدعومة بالصور",
+      "بوابة العميل (Client Portal)",
+      "مساحة تخزين غير محدودة",
+    ],
+  };
+
   // Mutflex Catalog Plan
   const catalogPlan = {
     name: "Mutflex Catalog",
@@ -57,8 +82,8 @@ const Pricing = () => {
     <PageScaffold>
       <SEOHead
         title="الأسعار والباقات"
-        description="تعرف على أسعار موتفلكس في السعودية. Mutflex Pro بسعر شهري واضح لإدارة الشركات، و Mutflex Catalog كباقة سنوية شاملة الضريبة."
-        keywords="أسعار موتفلكس, باقة شهرية, اشتراك شهري, تجربة مجانية, نظام إدارة الشركات, Mutflex Pro, Mutflex Catalog, السعودية"
+        description="تعرف على أسعار موتفلكس في السعودية. Mutflex Pro باقة شهرية لإدارة الشركات، و Mutflex B2B باقة سنوية لتجار الجملة وصالات العرض، و Mutflex Catalog للكتالوج وقوائم الأسعار."
+        keywords="أسعار موتفلكس, باقة شهرية, باقة سنوية, تجربة مجانية, نظام إدارة الشركات, كتالوج منتجات, قوائم أسعار, إدارة العملاء, Mutflex Pro, Mutflex B2B, Mutflex Catalog, السعودية"
         canonicalUrl="https://mutflex.com/pricing"
       />
       <BreadcrumbSchema items={[
@@ -80,7 +105,7 @@ const Pricing = () => {
           </AnimateOnScroll>
           <AnimateOnScroll>
             <p className="text-lg md:text-xl max-w-3xl mx-auto opacity-95 leading-relaxed" data-testid="text-pricing-description">
-              باقة شهرية واحدة لإدارة الشركة بالكامل، وباقة سنوية مخصصة للكتالوج وقوائم الأسعار
+              باقة شهرية واحدة لإدارة الشركة بالكامل، وباقتان سنويتان: Mutflex B2B لعرض المنتجات وإدارة العملاء، و Mutflex Catalog للكتالوج وقوائم الأسعار
             </p>
           </AnimateOnScroll>
           <AnimateOnScroll>
@@ -171,6 +196,82 @@ const Pricing = () => {
         </div>
       </section>
 
+      {/* Mutflex B2B Section */}
+      <section className="py-20 px-4 bg-muted/20">
+        <div className="container mx-auto max-w-7xl">
+          <SectionHeader
+            title="Mutflex B2B"
+            description="كتالوج منتجاتك وقوائم أسعارك وإدارة عملائك في مكان واحد"
+            badge="920 ريال سنويًا شامل الضريبة"
+          />
+
+          <div className="max-w-xl mx-auto stagger-children">
+            <AnimateOnScroll>
+              <Card className="relative border-2" data-testid="card-b2b-plan">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-bold">
+                  تجربة مجانية لمدة شهر
+                </div>
+                <CardHeader className="text-center pb-8 pt-8">
+                  <h3 className="text-2xl font-bold mb-2">{b2bPlan.name}</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {b2bPlan.description}
+                  </p>
+                  <div className="flex items-end justify-center gap-2">
+                    <span className="text-4xl md:text-5xl font-bold">
+                      {b2bPlan.price}
+                    </span>
+                    <span className="text-lg text-muted-foreground mb-2">
+                      ريال سعودي
+                    </span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">
+                    {b2bPlan.period} - شامل ضريبة القيمة المضافة
+                  </span>
+                </CardHeader>
+                <CardContent className="space-y-4 pb-8">
+                  {/* Setup Fee */}
+                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-4" data-testid="text-b2b-setup-fee">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <Zap size={18} className="text-primary" />
+                        <span className="font-medium text-sm">رسوم التأسيس</span>
+                      </div>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-lg font-bold text-primary">{b2bSetupFee.price}</span>
+                        <span className="text-xs text-muted-foreground">ريال سعودي</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">{b2bSetupFee.description}</p>
+                  </div>
+                  <ul className="space-y-3 mb-6">
+                    {b2bPlan.features.map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-3">
+                        <Check
+                          size={20}
+                          className="text-primary flex-shrink-0 mt-0.5"
+                        />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    variant="default"
+                    size="lg"
+                    className="w-full text-lg"
+                    asChild
+                    data-testid="button-b2b-plan"
+                  >
+                    <Link href="/free-trial">
+                      ابدأ تجربتك المجانية
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </AnimateOnScroll>
+          </div>
+        </div>
+      </section>
+
       {/* Mutflex Catalog Section */}
       <section className="py-20 px-4 bg-muted/20">
         <div className="container mx-auto max-w-7xl">
@@ -246,8 +347,8 @@ const Pricing = () => {
           <div className="space-y-6 stagger-children">
             {[
               {
-                q: "ما الفرق بين Mutflex Pro و Mutflex Catalog؟",
-                a: "Mutflex Pro هو النظام الشامل لإدارة الشركة والطلبات والعملاء والتصنيع والتركيب. Mutflex Catalog مخصص للكتالوج وقوائم الأسعار.",
+                q: "ما الفرق بين Mutflex Pro و Mutflex B2B و Mutflex Catalog؟",
+                a: "Mutflex Pro هو النظام الشامل لإدارة الشركة والطلبات والعملاء والتصنيع والتركيب. Mutflex B2B باقة سنوية لتجار الجملة وصالات العرض: كتالوج المنتجات وقوائم الأسعار مع إدارة العملاء وبوابة العميل. Mutflex Catalog مخصص للكتالوج وقوائم الأسعار فقط.",
               },
               {
                 q: "هل الأسعار شاملة الضريبة؟",
@@ -255,11 +356,11 @@ const Pricing = () => {
               },
               {
                 q: "هل توجد رسوم تأسيس؟",
-                a: "توجد رسوم تأسيس لمرة واحدة على Mutflex Pro بقيمة 230 ريال سعودي شاملة الضريبة. Mutflex Catalog بدون رسوم تأسيس.",
+                a: "توجد رسوم تأسيس لمرة واحدة بقيمة 230 ريال سعودي شاملة الضريبة على Mutflex Pro و Mutflex B2B. Mutflex Catalog بدون رسوم تأسيس.",
               },
               {
                 q: "ماذا يحدث بعد انتهاء التجربة المجانية؟",
-                a: "بعد انتهاء الشهر المجاني يمكنك الاستمرار على الباقة الشهرية أو التوقف بدون أي التزام.",
+                a: "بعد انتهاء الشهر المجاني يمكنك الاستمرار على اشتراك Mutflex Pro الشهري، أو اشتراك Mutflex B2B أو Mutflex Catalog السنوي، أو التوقف بدون أي التزام.",
               },
               {
                 q: "هل توفرون تدريب على النظام؟",
