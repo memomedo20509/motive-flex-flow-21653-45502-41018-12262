@@ -26,46 +26,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { trackFreeTrialLead } from "@/lib/x-pixel";
-
-interface AssistantSource {
-  slug: string;
-  title: string;
-  type: string;
-  sector?: string | null;
-  sourceUrl?: string | null;
-}
-
-interface ChatMessage {
-  localId: string;
-  serverId?: number;
-  role: "user" | "assistant";
-  content: string;
-  sources?: AssistantSource[];
-  pending?: boolean;
-  feedback?: "positive" | "negative";
-  usedFallback?: boolean;
-}
-
-interface BootstrapData {
-  quickPrompts: string[];
-  roles: string[];
-  sectors: Array<{ slug: string; title: string; aliases: string[] }>;
-  features: Array<{ slug: string; title: string; summary: string }>;
-}
-
-interface StreamEvent {
-  type: "meta" | "chunk" | "done" | "error";
-  text?: string;
-  sessionId?: string;
-  messageId?: number;
-  sector?: string;
-  sources?: AssistantSource[];
-  suggestions?: string[];
-  message?: string;
-  usedFallback?: boolean;
-  showTrialCta?: boolean;
-  openTrialForm?: boolean;
-}
+import { MessageText } from "@/components/assistant/MessageText";
+import { storeSession, useAssistantChat, type ChatMessage } from "@/components/assistant/useAssistantChat";
 
 const WELCOME_MESSAGE: ChatMessage = {
   localId: "welcome",
@@ -73,77 +35,29 @@ const WELCOME_MESSAGE: ChatMessage = {
   content: "حياك الله 👋 قلّي وش طبيعة شغلك أو المشكلة اللي تواجهك، ونفهم سوا هل موتفلكس يناسبكم وكيف يفيدكم.",
 };
 
-const STORAGE_KEY = "mutflex-assistant-session-v1";
 const WHATSAPP_NUMBER = "966507051401";
-
-function makeLocalId(prefix: string) {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function readStoredSession(): string | undefined {
-  if (typeof window === "undefined") return undefined;
-  const value = window.localStorage.getItem(STORAGE_KEY) || "";
-  return /^[a-zA-Z0-9_-]{8,64}$/.test(value) ? value : undefined;
-}
-
-function InlineText({ text }: { text: string }) {
-  return (
-    <>
-      {text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean).map((part, index) => (
-        part.startsWith("**") && part.endsWith("**")
-          ? <strong key={index} className="font-bold text-foreground">{part.slice(2, -2)}</strong>
-          : <span key={index}>{part}</span>
-      ))}
-    </>
-  );
-}
-
-function MessageText({ content }: { content: string }) {
-  const lines = content.split("\n");
-  return (
-    <div className="space-y-2 leading-7">
-      {lines.map((line, index) => {
-        const clean = line.trim();
-        if (!clean) return <div key={index} className="h-1" aria-hidden="true" />;
-        const heading = clean.match(/^#{1,4}\s+(.+)$/);
-        if (heading) return <p key={index} className="pt-1 font-bold text-foreground"><InlineText text={heading[1]} /></p>;
-        const bullet = clean.match(/^[-•*]\s+(.+)$/);
-        if (bullet) return <p key={index} className="flex gap-2 pr-1"><span className="text-secondary">•</span><span><InlineText text={bullet[1]} /></span></p>;
-        const numbered = clean.match(/^(\d+)[.)]\s+(.+)$/);
-        if (numbered) return <p key={index} className="flex gap-2 pr-1"><span className="font-semibold text-secondary">{numbered[1]}.</span><span><InlineText text={numbered[2]} /></span></p>;
-        return <p key={index}><InlineText text={clean} /></p>;
-      })}
-    </div>
-  );
-}
 
 export default function SmartAssistant() {
   const { toast } = useToast();
-  const [bootstrap, setBootstrap] = useState<BootstrapData | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
-  const [sessionId, setSessionId] = useState<string | undefined>(readStoredSession);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [detectedSector, setDetectedSector] = useState<string>("");
-  const [isSending, setIsSending] = useState(false);
   const [showLeadForm, setShowLeadForm] = useState(false);
   const [leadSubmitting, setLeadSubmitting] = useState(false);
   const [leadSent, setLeadSent] = useState(false);
-  const [showTrialCta, setShowTrialCta] = useState(false);
   const [lead, setLead] = useState({ name: "", phone: "", alternatePhone: "", company: "", consent: false });
+  const {
+    bootstrap,
+    messages,
+    setMessages,
+    sessionId,
+    setSessionId,
+    suggestions,
+    detectedSector,
+    isSending,
+    showTrialCta,
+    setShowTrialCta,
+    sendMessage: sendChatMessage,
+  } = useAssistantChat({ welcome: WELCOME_MESSAGE, onOpenTrialForm: () => setShowLeadForm(true) });
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    fetch("/api/assistant/bootstrap")
-      .then((response) => response.ok ? response.json() : Promise.reject(new Error("bootstrap failed")))
-      .then((data: BootstrapData) => {
-        setBootstrap(data);
-        setSuggestions(data.quickPrompts.slice(0, 4));
-      })
-      .catch(() => {
-        setSuggestions(["اشرح لي موتفلكس من البداية", "عندي مصنع رخام", "وش الأسعار؟"]);
-      });
-  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -154,86 +68,11 @@ export default function SmartAssistant() {
     [bootstrap, detectedSector],
   );
 
-  const sendMessage = async (rawMessage?: string) => {
+  const sendMessage = (rawMessage?: string) => {
     const message = (rawMessage ?? input).trim();
     if (!message || isSending) return;
-
     setInput("");
-    setSuggestions([]);
-    setIsSending(true);
-    const userMessage: ChatMessage = { localId: makeLocalId("user"), role: "user", content: message };
-    const assistantLocalId = makeLocalId("assistant");
-    setMessages((current) => [
-      ...current,
-      userMessage,
-      { localId: assistantLocalId, role: "assistant", content: "", pending: true },
-    ]);
-
-    try {
-      const response = await fetch("/api/assistant/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message,
-          sessionId,
-          history: messages
-            .filter((item) => item.localId !== "welcome" && item.content.trim())
-            .slice(-6)
-            .map(({ role, content }) => ({ role, content })),
-        }),
-      });
-      if (!response.ok || !response.body) {
-        const payload = await response.json().catch(() => ({ message: "تعذر بدء المحادثة." }));
-        throw new Error(payload.message || "تعذر بدء المحادثة.");
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
-        const events = buffer.split("\n\n");
-        buffer = events.pop() || "";
-        for (const rawEvent of events) {
-          const dataLine = rawEvent.split("\n").find((line) => line.startsWith("data: "));
-          if (!dataLine) continue;
-          const event = JSON.parse(dataLine.slice(6)) as StreamEvent;
-          if (event.type === "meta") {
-            if (event.sessionId) {
-              setSessionId(event.sessionId);
-              window.localStorage.setItem(STORAGE_KEY, event.sessionId);
-            }
-            if (event.sector) setDetectedSector(event.sector);
-            setMessages((current) => current.map((item) => item.localId === assistantLocalId
-              ? { ...item, sources: event.sources }
-              : item));
-          }
-          if (event.type === "chunk" && event.text) {
-            setMessages((current) => current.map((item) => item.localId === assistantLocalId
-              ? { ...item, content: item.content + event.text, pending: true }
-              : item));
-          }
-          if (event.type === "done") {
-            setMessages((current) => current.map((item) => item.localId === assistantLocalId
-              ? { ...item, serverId: event.messageId, sources: event.sources, pending: false, usedFallback: event.usedFallback }
-              : item));
-            setSuggestions(event.suggestions || []);
-            if (event.showTrialCta) setShowTrialCta(true);
-            if (event.openTrialForm) setShowLeadForm(true);
-          }
-          if (event.type === "error") throw new Error(event.message || "تعذر إكمال الرد.");
-        }
-        if (done) break;
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "صار خلل بسيط. جرّب مرة ثانية.";
-      setMessages((current) => current.map((item) => item.localId === assistantLocalId
-        ? { ...item, content: errorMessage, pending: false }
-        : item));
-    } finally {
-      setIsSending(false);
-    }
+    return sendChatMessage(message);
   };
 
   const submitFeedback = async (message: ChatMessage, rating: "positive" | "negative") => {
@@ -255,7 +94,7 @@ export default function SmartAssistant() {
     const activeSessionId = sessionId || crypto.randomUUID().replace(/-/g, "");
     if (!sessionId) {
       setSessionId(activeSessionId);
-      window.localStorage.setItem(STORAGE_KEY, activeSessionId);
+      storeSession(activeSessionId);
     }
     const painPoint = messages
       .filter((item) => item.role === "user" && item.content.trim())
@@ -417,6 +256,7 @@ export default function SmartAssistant() {
                     rows={2}
                     className="min-h-[54px] resize-none bg-background"
                     aria-label="رسالتك للمستشار"
+                    id="assistant-input"
                   />
                   <Button type="submit" size="icon" disabled={!input.trim() || isSending} className="h-[54px] w-[54px] shrink-0 bg-secondary hover:bg-secondary/90" aria-label="إرسال">
                     {isSending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
