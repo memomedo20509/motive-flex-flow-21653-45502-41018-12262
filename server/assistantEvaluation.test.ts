@@ -232,3 +232,40 @@ test("assistant trial lead accepts an optional normalized Saudi alternate phone"
   assert.equal(parsed.alternatePhone, "+966551234567");
   assert.equal(assistantLeadSchema.safeParse({ ...parsed, alternatePhone: "0123" }).success, false);
 });
+
+test("page intro grounds the reply in the page the visitor is viewing", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalKey = process.env.OPENROUTER_API_KEY;
+  const page = {
+    path: "/pricing",
+    title: "أسعار واضحة تناسب السوق السعودي",
+    headings: ["Mutflex Pro", "الأسئلة الشائعة"],
+    excerpt: "باقة شهرية واحدة لإدارة الشركة بالكامل.",
+  };
+  let requestBody: Record<string, unknown> = {};
+  try {
+    const context = await buildAssistantContext("عرّفني على الصفحة", [], { page, pageIntro: true });
+    assert.equal(context.pageIntro, true);
+    assert.equal(context.page?.path, "/pricing");
+
+    delete process.env.OPENROUTER_API_KEY;
+    const fallback = await streamAssistantReply("عرّفني على الصفحة", [], context, () => {});
+    assert.match(fallback.text, /أسعار واضحة تناسب السوق السعودي/);
+
+    process.env.OPENROUTER_API_KEY = "test-key";
+    globalThis.fetch = (async (_input: string | URL | Request, init?: RequestInit) => {
+      requestBody = JSON.parse(String(init?.body || "{}")) as Record<string, unknown>;
+      const payload = `data: ${JSON.stringify({ choices: [{ delta: { content: "هذي صفحة الأسعار." } }] })}\n\ndata: [DONE]\n\n`;
+      return new Response(payload, { status: 200, headers: { "Content-Type": "text/event-stream" } });
+    }) as typeof fetch;
+    await streamAssistantReply("عرّفني على الصفحة", [], context, () => {});
+    const systemPrompt = (requestBody.messages as Array<{ content: string }>)[0].content;
+    assert.match(systemPrompt, /العميل فتح المحادثة الحين وهو يتصفح الصفحة/);
+    assert.match(systemPrompt, /- الرابط: \/pricing/);
+    assert.match(systemPrompt, /  - Mutflex Pro/);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalKey === undefined) delete process.env.OPENROUTER_API_KEY;
+    else process.env.OPENROUTER_API_KEY = originalKey;
+  }
+});

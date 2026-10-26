@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Loader2, Maximize2, Send, X } from "lucide-react";
+import { FileText, Loader2, Maximize2, RotateCcw, Send, X } from "lucide-react";
 import { MessageText } from "./MessageText";
+import { readPageSnapshot } from "./pageSnapshot";
 import { SaudiAgent, type AgentGesture } from "./SaudiAgent";
-import { useAssistantChat, type ChatMessage } from "./useAssistantChat";
+import { useAgentPlacement } from "./useAgentPlacement";
+import { makeLocalId, useAssistantChat, type ChatMessage } from "./useAssistantChat";
 import "./agent.css";
 
 export const AGENT_NAME = "سعد";
@@ -11,8 +13,11 @@ export const AGENT_NAME = "سعد";
 const WELCOME_MESSAGE: ChatMessage = {
   localId: "agent-welcome",
   role: "assistant",
-  content: `حيّاك الله 👋 أنا ${AGENT_NAME}، مساعد موتفلكس الذكي. قلّي وش طبيعة شغلك أو وش المشكلة اللي تواجهك، وأشرح لك كيف يخدمكم موتفلكس.`,
+  content: `حيّاك الله 👋 أنا ${AGENT_NAME}، مساعد موتفلكس الذكي.`,
 };
+
+/** Sent (hidden) when the chat opens so the agent explains the page the visitor is on. */
+const PAGE_INTRO_PROMPT = "عرّفني على الصفحة اللي أنا فيها الحين، ووش علاقتها ببرنامج موتفلكس؟";
 
 const MUTE_KEY = "mutflex-agent-muted-until";
 const GREETS_KEY = "mutflex-agent-greets-v1";
@@ -104,12 +109,17 @@ export default function FloatingAssistant() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  const introducedPath = useRef<string | null>(null);
+
   const chat = useAssistantChat({
     welcome: WELCOME_MESSAGE,
     onOpenTrialForm: () => chat.setShowTrialCta(true),
   });
+  const chatRef = useRef(chat);
+  chatRef.current = chat;
 
   const hidden = location.startsWith("/admin") || location.startsWith("/login");
+  const placement = useAgentPlacement(!hidden);
   const onAssistantPage = location.startsWith("/smart-assistant");
   const context = getPageContext(location);
 
@@ -163,7 +173,22 @@ export default function FloatingAssistant() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [chat.messages, open]);
 
-  // While the panel is open the agent looks up at it.
+  // On open (and after navigating with the chat open) the agent reads the page and explains it.
+  useEffect(() => {
+    if (!open || onAssistantPage || chat.isSending || introducedPath.current === location) return;
+    const timer = window.setTimeout(() => {
+      introducedPath.current = location;
+      const page = readPageSnapshot(location);
+      chatRef.current.setMessages((current) => [
+        ...current,
+        { localId: makeLocalId("page"), role: "assistant", kind: "page", content: page.title },
+      ]);
+      void chatRef.current.sendMessage(PAGE_INTRO_PROMPT, { page, pageIntro: true });
+    }, 700);
+    return () => window.clearTimeout(timer);
+  }, [open, location, onAssistantPage, chat.isSending]);
+
+  // While the panel is open the agent looks at it.
   useEffect(() => {
     if (!open) {
       setLookAt(null);
@@ -209,22 +234,24 @@ export default function FloatingAssistant() {
     const message = (text ?? input).trim();
     if (!message) return;
     setInput("");
-    void chat.sendMessage(message);
+    void chat.sendMessage(message, { page: readPageSnapshot(location) });
   };
 
   const hasConversation = chat.messages.some((message) => message.role === "user");
   const suggestions = !hasConversation && context.prompt
     ? [context.prompt, ...chat.suggestions.filter((item) => item !== context.prompt)].slice(0, 4)
     : chat.suggestions;
+  const isPhone = placement.isPhone;
 
   return (
-    <>
+    <div data-agent-root="">
       {open ? (
         <div
           ref={panelRef}
           role="dialog"
           aria-label={`محادثة ${AGENT_NAME}، مساعد موتفلكس الذكي`}
-          className="agent-panel-in fixed bottom-[146px] right-4 z-[60] flex h-[min(560px,calc(100vh-180px))] w-[380px] flex-col overflow-hidden rounded-2xl border bg-background shadow-2xl max-sm:inset-x-2 max-sm:bottom-2 max-sm:top-16 max-sm:h-auto max-sm:w-auto"
+          style={isPhone ? undefined : placement.panelStyle}
+          className={`agent-panel-in fixed z-[60] flex flex-col overflow-hidden rounded-2xl border bg-background shadow-2xl ${isPhone ? "inset-x-2 bottom-2 top-16" : ""}`}
         >
           <div className="flex items-center gap-3 bg-secondary px-4 py-3 text-white">
             <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full bg-white">
@@ -235,6 +262,11 @@ export default function FloatingAssistant() {
               <p className="font-bold leading-tight">{AGENT_NAME}</p>
               <p className="text-xs text-white/80">مساعد موتفلكس الذكي · متصل الآن</p>
             </div>
+            {placement.custom ? (
+              <button type="button" onClick={placement.reset} className="rounded-lg p-2 text-white/85 transition-colors hover:bg-white/15 hover:text-white" aria-label={`رجّع ${AGENT_NAME} لمكانه`} title={`رجّع ${AGENT_NAME} لمكانه`}>
+                <RotateCcw className="h-4 w-4" />
+              </button>
+            ) : null}
             <Link href="/smart-assistant" onClick={() => setOpen(false)} className="rounded-lg p-2 text-white/85 transition-colors hover:bg-white/15 hover:text-white" aria-label="افتح المستشار بالكامل" title="افتح المستشار بالكامل">
               <Maximize2 className="h-4 w-4" />
             </Link>
@@ -244,11 +276,18 @@ export default function FloatingAssistant() {
           </div>
 
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto bg-muted/30 p-3" aria-live="polite">
-            {chat.messages.map((message) => (
+            {chat.messages.map((message) => message.kind === "page" ? (
+              <div key={message.localId} className="flex justify-center">
+                <span className="inline-flex max-w-[90%] items-center gap-1.5 rounded-full border border-secondary/20 bg-secondary/10 px-3 py-1 text-[11px] font-semibold text-secondary">
+                  <FileText className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">أنت الحين في: {message.content}</span>
+                </span>
+              </div>
+            ) : (
               <div key={message.localId} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm ${message.role === "assistant" ? "rounded-tr-sm border bg-card shadow-sm" : "rounded-tl-sm bg-primary text-primary-foreground"}`}>
                   {message.pending && !message.content ? (
-                    <span className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> خلّني أفهم سؤالك...</span>
+                    <span className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> لحظة أشوف...</span>
                   ) : <MessageText content={message.content} />}
                   {message.role === "assistant" && message.usedFallback && !message.pending ? (
                     <p className="mt-2 text-[11px] leading-5 text-amber-800">رد مختصر من معلومات موتفلكس المحلية.</p>
@@ -299,9 +338,9 @@ export default function FloatingAssistant() {
         </div>
       ) : null}
 
-      {bubble && !open ? (
-        <div role="status" className="agent-bubble-in fixed bottom-[92px] right-[96px] z-[60] w-[min(280px,calc(100vw-108px))] sm:bottom-[80px] sm:right-[124px]">
-          <div className="relative rounded-2xl rounded-br-sm border bg-background p-4 shadow-xl">
+      {bubble && !open && !placement.dragging && placement.bubbleStyle ? (
+        <div role="status" style={placement.bubbleStyle} className="agent-bubble-in fixed z-[60]">
+          <div className="relative rounded-2xl border bg-background p-4 shadow-xl">
             <button type="button" onClick={dismissBubble} className="absolute left-2 top-2 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" aria-label="إخفاء الرسالة">
               <X className="h-3.5 w-3.5" />
             </button>
@@ -315,28 +354,40 @@ export default function FloatingAssistant() {
                 لاحقاً
               </button>
             </div>
-            <span className="absolute -right-[7px] bottom-4 h-3.5 w-3.5 rotate-45 border-r border-t bg-background" aria-hidden="true" />
+            {placement.bubbleTail ? (
+              <span
+                className={`absolute h-3.5 w-3.5 rotate-45 bg-background ${placement.bubbleTail === "right" ? "-right-[7px] border-r border-t" : "-left-[7px] border-b border-l"} ${placement.bubbleBelow ? "top-4" : "bottom-4"}`}
+                aria-hidden="true"
+              />
+            ) : null}
           </div>
         </div>
       ) : null}
 
-      {/* Static position: disc centre lines up with the WhatsApp button (bottom-6 / left-6) on every screen. */}
+      {/* Default spot lines the disc up with the WhatsApp button; the visitor can drag it anywhere. */}
       <button
+        ref={placement.buttonRef}
         type="button"
-        onClick={() => (open ? setOpen(false) : openChat())}
+        style={placement.buttonStyle}
+        {...placement.dragHandlers}
+        onClick={() => {
+          if (placement.consumeDragClick()) return;
+          if (open) setOpen(false);
+          else openChat();
+        }}
         onPointerEnter={(event) => {
           if (event.pointerType === "mouse" && gesture === "rest" && Date.now() - lastWave.current > 4000) wave();
         }}
-        className={`fixed bottom-[13px] right-[19px] z-[60] w-[76px] rounded-full outline-none focus-visible:ring-4 focus-visible:ring-secondary/40 sm:bottom-0 sm:right-[18px] sm:w-[104px] ${open ? "max-sm:hidden" : ""}`}
-        aria-label={open ? "إغلاق محادثة المساعد" : `تحدث مع ${AGENT_NAME}، مساعد موتفلكس الذكي`}
+        className={`fixed z-[60] w-[76px] touch-none select-none rounded-full outline-none transition-transform duration-150 focus-visible:ring-4 focus-visible:ring-secondary/40 md:w-[84px] xl:w-[104px] ${placement.dragging ? "scale-110 cursor-grabbing" : "cursor-grab"} ${open && isPhone ? "hidden" : ""}`}
+        aria-label={open ? "إغلاق محادثة المساعد" : `تحدث مع ${AGENT_NAME}، مساعد موتفلكس الذكي (تقدر تسحبه لأي مكان)`}
         aria-expanded={open}
       >
-        <SaudiAgent gesture={gesture} talking={talking} lookAt={lookAt} className="block h-auto w-full drop-shadow-xl" />
+        <SaudiAgent gesture={gesture} talking={talking} lookAt={lookAt} className="pointer-events-none block h-auto w-full drop-shadow-xl" />
         {unread ? (
           <span className="absolute left-[14%] top-[22%] flex h-4 min-w-4 items-center justify-center rounded-full bg-[#F04B4B] px-1 text-[10px] font-bold text-white ring-2 ring-background">1</span>
         ) : null}
         <span className="absolute bottom-[12%] left-[16%] h-3 w-3 rounded-full border-2 border-white bg-emerald-400" aria-hidden="true" />
       </button>
-    </>
+    </div>
   );
 }

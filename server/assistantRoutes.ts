@@ -86,7 +86,10 @@ export function registerAssistantRoutes(app: Express) {
         history = parsed.data.history;
         console.warn("Assistant persistence unavailable; continuing without history:", persistenceError);
       }
-      const context = await buildAssistantContext(message, history);
+      const context = await buildAssistantContext(message, history, {
+        page: parsed.data.page,
+        pageIntro: parsed.data.pageIntro,
+      });
       const openTrialForm = shouldOpenTrialForm(message, history);
 
       if (persistenceAvailable) {

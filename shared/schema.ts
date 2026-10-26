@@ -321,9 +321,20 @@ export type AssistantMessage = typeof assistantMessages.$inferSelect;
 export type AssistantFeedback = typeof assistantFeedback.$inferSelect;
 export type AssistantLead = typeof assistantLeads.$inferSelect;
 
+export const assistantPageSchema = z.object({
+  path: z.string().trim().max(300),
+  title: z.string().trim().max(200),
+  headings: z.array(z.string().trim().max(160)).max(12).optional().default([]),
+  excerpt: z.string().trim().max(1500).optional().default(""),
+});
+
+export type AssistantPage = z.infer<typeof assistantPageSchema>;
+
 export const assistantChatSchema = z.object({
   sessionId: z.string().regex(/^[a-zA-Z0-9_-]{8,64}$/).optional(),
   message: z.string().trim().min(1).max(2000),
+  page: assistantPageSchema.optional(),
+  pageIntro: z.boolean().optional().default(false),
   history: z.array(z.object({
     role: z.enum(["user", "assistant"]),
     content: z.string().trim().min(1).max(4000),

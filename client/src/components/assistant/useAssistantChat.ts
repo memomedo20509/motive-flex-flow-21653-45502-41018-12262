@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { AssistantPage } from "@shared/schema";
 
 export interface AssistantSource {
   slug: string;
@@ -17,6 +18,15 @@ export interface ChatMessage {
   pending?: boolean;
   feedback?: "positive" | "negative";
   usedFallback?: boolean;
+  /** UI-only marker (e.g. "you are now on page X"); never sent as history. */
+  kind?: "page";
+}
+
+export interface SendOptions {
+  /** Snapshot of the page the visitor is looking at. */
+  page?: AssistantPage;
+  /** Ask the assistant to introduce the current page; the prompt itself is not shown. */
+  pageIntro?: boolean;
 }
 
 export interface BootstrapData {
@@ -92,7 +102,7 @@ export function useAssistantChat({ welcome, onOpenTrialForm }: UseAssistantChatO
       });
   }, []);
 
-  const sendMessage = async (rawMessage: string) => {
+  const sendMessage = async (rawMessage: string, options: SendOptions = {}) => {
     const message = rawMessage.trim();
     if (!message || isSending) return;
 
@@ -102,7 +112,7 @@ export function useAssistantChat({ welcome, onOpenTrialForm }: UseAssistantChatO
     const assistantLocalId = makeLocalId("assistant");
     setMessages((current) => [
       ...current,
-      userMessage,
+      ...(options.pageIntro ? [] : [userMessage]),
       { localId: assistantLocalId, role: "assistant", content: "", pending: true },
     ]);
 
@@ -113,8 +123,10 @@ export function useAssistantChat({ welcome, onOpenTrialForm }: UseAssistantChatO
         body: JSON.stringify({
           message,
           sessionId,
+          page: options.page,
+          pageIntro: options.pageIntro,
           history: messages
-            .filter((item) => item.localId !== welcome.localId && item.content.trim())
+            .filter((item) => item.localId !== welcome.localId && !item.kind && item.content.trim())
             .slice(-6)
             .map(({ role, content }) => ({ role, content })),
         }),
