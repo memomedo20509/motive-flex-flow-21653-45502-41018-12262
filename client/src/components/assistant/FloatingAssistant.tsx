@@ -300,7 +300,7 @@ export default function FloatingAssistant() {
       ) : null}
 
       {bubble && !open ? (
-        <div role="status" className="agent-bubble-in fixed bottom-[92px] right-[84px] z-[60] w-[min(280px,calc(100vw-100px))] sm:bottom-[80px] sm:right-[120px]">
+        <div role="status" className="agent-bubble-in fixed bottom-[92px] right-[96px] z-[60] w-[min(280px,calc(100vw-108px))] sm:bottom-[80px] sm:right-[124px]">
           <div className="relative rounded-2xl rounded-br-sm border bg-background p-4 shadow-xl">
             <button type="button" onClick={dismissBubble} className="absolute left-2 top-2 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground" aria-label="إخفاء الرسالة">
               <X className="h-3.5 w-3.5" />
@@ -320,13 +320,14 @@ export default function FloatingAssistant() {
         </div>
       ) : null}
 
+      {/* Static position: disc centre lines up with the WhatsApp button (bottom-6 / left-6) on every screen. */}
       <button
         type="button"
         onClick={() => (open ? setOpen(false) : openChat())}
         onPointerEnter={(event) => {
           if (event.pointerType === "mouse" && gesture === "rest" && Date.now() - lastWave.current > 4000) wave();
         }}
-        className={`agent-rise fixed bottom-2 right-2 z-[60] w-[76px] rounded-full outline-none focus-visible:ring-4 focus-visible:ring-secondary/40 sm:bottom-3 sm:right-3 sm:w-[104px] ${open ? "max-sm:hidden" : ""}`}
+        className={`fixed bottom-[13px] right-[19px] z-[60] w-[76px] rounded-full outline-none focus-visible:ring-4 focus-visible:ring-secondary/40 sm:bottom-0 sm:right-[18px] sm:w-[104px] ${open ? "max-sm:hidden" : ""}`}
         aria-label={open ? "إغلاق محادثة المساعد" : `تحدث مع ${AGENT_NAME}، مساعد موتفلكس الذكي`}
         aria-expanded={open}
       >
