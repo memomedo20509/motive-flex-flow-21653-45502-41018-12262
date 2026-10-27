@@ -148,7 +148,8 @@ test("assistant streams GLM 5.3 Flash through OpenRouter with privacy and cost c
     assert.deepEqual(requestBody.provider, { data_collection: "deny", allow_fallbacks: true, sort: "price" });
     assert.equal(requestBody.max_tokens, 1200);
     const sentMessages = requestBody.messages as Array<{ role: string; content: string }>;
-    assert.match(sentMessages[0].content, /ولا تستخدم التعبيرات المصرية/);
+    assert.match(sentMessages[0].content, /بلهجة سعودية بيضاء/);
+    assert.match(sentMessages[0].content, /المصرية \(عاوز/);
     assert.match(sentMessages[0].content, /معلومة واحدة فقط/);
     assert.match(sentMessages[0].content, /هدفك التجاري النهائي.*تجربة مجانية/);
     assert.equal(sentMessages.at(-1)?.role, "user");
@@ -218,6 +219,9 @@ test("assistant opens the free-trial form only after an explicit request or agre
   ];
   assert.equal(shouldOpenTrialForm("تمام موافق", offeredHistory), true);
   assert.equal(shouldOpenTrialForm("أبغى أجرب التجربة المجانية", []), true);
+  assert.equal(shouldOpenTrialForm("أبغى أجرب النظام", []), true);
+  assert.equal(shouldOpenTrialForm("ودي أسجل عندكم", []), true);
+  assert.equal(shouldOpenTrialForm("أبغى أعرف الأسعار", []), false);
   assert.equal(shouldOpenTrialForm("تمام", [{ role: "assistant", content: "تمام، أشرح لك دورة العمل." }]), false);
   assert.equal(shouldShowTrialCta("وش الخطوة التالية؟", [], "إذا يناسبك، أقدر أسجل لك تجربة مجانية."), true);
 });
@@ -362,7 +366,12 @@ test("assistant answers with Claude Haiku 5.5 at low effort when an Anthropic ke
   assert.equal(claudeBody.model, "claude-haiku-5-5");
   assert.deepEqual(claudeBody.output_config, { effort: "low" });
   assert.equal("temperature" in claudeBody, false);
-  assert.match(String(claudeBody.system), /ولا تستخدم التعبيرات المصرية/);
+  const system = String(claudeBody.system);
+  assert.match(system, /بلهجة سعودية بيضاء/);
+  assert.match(system, /اسمك سعد/);
+  assert.match(system, /مساعد ذكي مو إنسان/);
+  assert.match(system, /تجربة مجانية شهر بدون بطاقة/);
+  assert.match(system, /ثابتة طول المحادثة/);
   const messages = claudeBody.messages as Array<{ role: string; content: string }>;
   assert.equal(messages[0].role, "user");
   assert.equal(messages.at(-1)?.content, "مصنع مطابخ");
@@ -384,4 +393,42 @@ test("assistant falls back to OpenRouter when Claude refuses or the key is rejec
     });
     assert.deepEqual(calls, ["claude", "openrouter"]);
   }
+});
+
+test("assistant tells Claude to confirm the trial form when the visitor asks to try, and to ask one question at most", async () => {
+  const systems: string[] = [];
+  await withProviders({ anthropic: "test-anthropic" }, async (_url, init) => {
+    systems.push(String((JSON.parse(String(init?.body || "{}")) as { system?: string }).system));
+    return claudeStream(claudeEvents("أكيد."));
+  }, async () => {
+    await streamAssistantReply("أبغى أجرب النظام", [], claudeTestContext, () => {});
+    await streamAssistantReply("عندي مصنع مطابخ", [], claudeTestContext, () => {});
+  });
+  assert.match(systems[0], /العميل طلب التجربة الحين/);
+  assert.match(systems[0], /لا تسأله أي سؤال/);
+  assert.doesNotMatch(systems[0], /علامة استفهام وحدة بالكثير/);
+  assert.doesNotMatch(systems[1], /العميل طلب التجربة الحين/);
+  assert.match(systems[1], /علامة استفهام وحدة بالكثير/);
+});
+
+test("assistant asks Claude for the trial offer after two useful replies, once", async () => {
+  const systems: string[] = [];
+  const twoReplies = [
+    { role: "user" as const, content: "عندي شركة ألمنيوم" },
+    { role: "assistant" as const, content: "تمام، وش أكثر شي يتعبكم؟" },
+    { role: "user" as const, content: "المواعيد تتلخبط" },
+    { role: "assistant" as const, content: "التقويم الموحد يخفف هذا." },
+  ];
+  const offered = [...twoReplies, { role: "user" as const, content: "طيب" }, { role: "assistant" as const, content: "إذا يناسبك، أقدر أسجل لك تجربة مجانية." }];
+  await withProviders({ anthropic: "test-anthropic" }, async (_url, init) => {
+    systems.push(String((JSON.parse(String(init?.body || "{}")) as { system?: string }).system));
+    return claudeStream(claudeEvents("أكيد."));
+  }, async () => {
+    await streamAssistantReply("كيف العميل يتابع؟", twoReplies.slice(0, 2), claudeTestContext, () => {});
+    await streamAssistantReply("كيف العميل يتابع؟", twoReplies, claudeTestContext, () => {});
+    await streamAssistantReply("كيف العميل يتابع؟", offered, claudeTestContext, () => {});
+  });
+  assert.doesNotMatch(systems[0], /ما عرضت التجربة للحين/);
+  assert.match(systems[1], /ما عرضت التجربة للحين/);
+  assert.doesNotMatch(systems[2], /ما عرضت التجربة للحين/);
 });

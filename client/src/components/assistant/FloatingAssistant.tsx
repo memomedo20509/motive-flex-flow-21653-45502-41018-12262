@@ -6,9 +6,10 @@ import { readPageSnapshot } from "./pageSnapshot";
 import { SaudiAgent, type AgentGesture } from "./SaudiAgent";
 import { useAgentPlacement } from "./useAgentPlacement";
 import { makeLocalId, useAssistantChat, type ChatMessage } from "./useAssistantChat";
+import { ASSISTANT_NAME } from "@shared/assistantIdentity";
 import "./agent.css";
 
-export const AGENT_NAME = "سعد";
+export const AGENT_NAME = ASSISTANT_NAME;
 
 const WELCOME_MESSAGE: ChatMessage = {
   localId: "agent-welcome",
