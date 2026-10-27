@@ -1,3 +1,4 @@
+import Anthropic from "@anthropic-ai/sdk";
 import { ASSISTANT_KNOWLEDGE_SEED, PRODUCT_FEATURES, SECTOR_PLAYBOOKS } from "../shared/assistantKnowledge";
 import { normalizeArabicSearch } from "../shared/blogTaxonomy";
 import type { AssistantKnowledge, AssistantPage } from "../shared/schema";
@@ -27,7 +28,7 @@ export interface AssistantGenerationUsage {
 export interface AssistantGenerationResult {
   text: string;
   usedFallback: boolean;
-  provider: "openrouter" | "local";
+  provider: "anthropic" | "openrouter" | "local";
   model: string;
   usage?: AssistantGenerationUsage;
   latencyMs: number;
@@ -66,6 +67,15 @@ const OPENROUTER_MODEL = "z-ai/glm-5.3-flash";
 const OPENROUTER_SITE_URL = "https://mutflex.com";
 const OPENROUTER_APP_NAME = "Mutflex Smart Assistant";
 const OPENROUTER_TIMEOUT_MS = 55_000;
+
+// Claude Haiku 5.5 is the primary model when ANTHROPIC_API_KEY is set; OpenRouter stays as the fallback.
+const ANTHROPIC_MODEL = "claude-haiku-5-5";
+const ANTHROPIC_TIMEOUT_MS = 45_000;
+// Haiku 5.5 rate card for prompts up to 100K tokens: $0.10 input / $0.50 output per million tokens.
+const ANTHROPIC_INPUT_MICROS_PER_TOKEN = 0.1;
+const ANTHROPIC_OUTPUT_MICROS_PER_TOKEN = 0.5;
+// Adaptive thinking is on by default and counts toward max_tokens, so leave it room.
+const ANTHROPIC_THINKING_ROOM = 2_000;
 
 function completionTokenLimit(message: string, retry = false): number {
   const detailed = responseLengthInstruction(message).includes("180 كلمة");
@@ -342,6 +352,85 @@ function openRouterMessages(message: string, history: AssistantHistoryMessage[],
   ];
 }
 
+function claudeMessages(message: string, history: AssistantHistoryMessage[]): Anthropic.MessageParam[] {
+  const turns: Anthropic.MessageParam[] = history
+    .slice(-8)
+    .filter((item) => item.content.trim())
+    .map((item) => ({ role: item.role, content: item.content.slice(0, 1600) }));
+  // The conversation must open with a user turn.
+  while (turns.length && turns[0].role !== "user") turns.shift();
+  return [...turns, { role: "user", content: message }];
+}
+
+function claudeUsage(usage: Anthropic.Usage): AssistantGenerationUsage {
+  const promptTokens = usage.input_tokens + (usage.cache_creation_input_tokens || 0) + (usage.cache_read_input_tokens || 0);
+  const completionTokens = usage.output_tokens;
+  return {
+    promptTokens,
+    completionTokens,
+    totalTokens: promptTokens + completionTokens,
+    costUsdMicros: Math.round(promptTokens * ANTHROPIC_INPUT_MICROS_PER_TOKEN + completionTokens * ANTHROPIC_OUTPUT_MICROS_PER_TOKEN),
+  };
+}
+
+/**
+ * Streams the reply from Claude Haiku 5.5. Returns null when Claude is not configured, refuses,
+ * or fails before any text reached the visitor, so the caller can fall back to OpenRouter.
+ */
+async function streamClaudeReply(
+  message: string,
+  history: AssistantHistoryMessage[],
+  context: AssistantContext,
+  onChunk: (text: string) => void,
+  startedAt: number,
+  signal?: AbortSignal,
+): Promise<AssistantGenerationResult | null> {
+  const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
+  if (!apiKey) return null;
+
+  const client = new Anthropic({ apiKey, timeout: ANTHROPIC_TIMEOUT_MS, maxRetries: 1 });
+  let streamedText = "";
+  try {
+    const stream = client.messages.stream(
+      {
+        model: ANTHROPIC_MODEL,
+        max_tokens: completionTokenLimit(message) + ANTHROPIC_THINKING_ROOM,
+        system: createGroundedSystemPrompt(message, context),
+        messages: claudeMessages(message, history),
+        output_config: { effort: "low" },
+      },
+      { signal },
+    );
+    stream.on("text", (delta) => {
+      streamedText += delta;
+      onChunk(delta);
+    });
+    const final = await stream.finalMessage();
+    const text = streamedText.trim();
+    if (!text) {
+      console.warn(`Claude returned no text (stop_reason: ${final.stop_reason}); falling back to OpenRouter`);
+      return null;
+    }
+    return {
+      text,
+      usedFallback: false,
+      provider: "anthropic",
+      model: final.model,
+      usage: claudeUsage(final.usage),
+      latencyMs: Date.now() - startedAt,
+    };
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    const reason = error instanceof Anthropic.APIError ? `${error.status} ${error.constructor.name}` : error;
+    if (streamedText.trim()) {
+      console.error("Claude stream ended after a partial response:", reason);
+      return { text: streamedText.trim(), usedFallback: false, provider: "anthropic", model: ANTHROPIC_MODEL, latencyMs: Date.now() - startedAt };
+    }
+    console.error("Claude generation failed; falling back to OpenRouter:", reason);
+    return null;
+  }
+}
+
 function summarizeUserMessage(message: string): string {
   const clean = message.replace(/\s+/g, " ").trim();
   return clean.length > 220 ? `${clean.slice(0, 217)}...` : clean;
@@ -428,6 +517,9 @@ export async function streamAssistantReply(
     splitForStreaming(text).forEach(onChunk);
     return { text, usedFallback: true, provider: "local", model: "grounded-fallback", latencyMs: Date.now() - startedAt };
   }
+
+  const claudeReply = await streamClaudeReply(message, history, context, onChunk, startedAt, signal);
+  if (claudeReply) return claudeReply;
 
   const apiKey = process.env.OPENROUTER_API_KEY?.trim();
   if (!apiKey) {

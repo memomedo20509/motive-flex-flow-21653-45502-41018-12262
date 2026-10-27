@@ -13,6 +13,9 @@ import {
 } from "./assistantService";
 import { assistantLeadSchema } from "../shared/schema";
 
+// Tests use OpenRouter unless they set an Anthropic key themselves.
+delete process.env.ANTHROPIC_API_KEY;
+
 const sectorPrompts = [
   ["marble", "مصنع رخام"],
   ["construction", "شركة مقاولات"],
@@ -267,5 +270,118 @@ test("page intro grounds the reply in the page the visitor is viewing", async ()
     globalThis.fetch = originalFetch;
     if (originalKey === undefined) delete process.env.OPENROUTER_API_KEY;
     else process.env.OPENROUTER_API_KEY = originalKey;
+  }
+});
+
+function claudeStream(events: Array<Record<string, unknown>>): Response {
+  const body = events.map((event) => `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`).join("");
+  return new Response(body, { status: 200, headers: { "Content-Type": "text/event-stream" } });
+}
+
+function claudeEvents(text: string, stopReason = "end_turn"): Array<Record<string, unknown>> {
+  const start = {
+    type: "message_start",
+    message: {
+      id: "msg_test", type: "message", role: "assistant", model: "claude-haiku-5-5", content: [],
+      stop_reason: null, stop_sequence: null, usage: { input_tokens: 3000, output_tokens: 1 },
+    },
+  };
+  const textBlocks = text ? [
+    { type: "content_block_start", index: 0, content_block: { type: "text", text: "" } },
+    { type: "content_block_delta", index: 0, delta: { type: "text_delta", text } },
+    { type: "content_block_stop", index: 0 },
+  ] : [];
+  return [
+    start,
+    ...textBlocks,
+    { type: "message_delta", delta: { stop_reason: stopReason, stop_sequence: null }, usage: { output_tokens: 200 } },
+    { type: "message_stop" },
+  ];
+}
+
+const openRouterReply = (text: string) => new Response(
+  `data: ${JSON.stringify({ model: "z-ai/glm-5.3-flash", choices: [{ delta: { content: text } }] })}\n\ndata: [DONE]\n\n`,
+  { status: 200, headers: { "Content-Type": "text/event-stream" } },
+);
+
+const claudeTestContext: AssistantContext = {
+  intent: "sector",
+  sector: "kitchen",
+  sectorTitle: "مصانع المطابخ والأثاث",
+  sources: [],
+  knowledgeText: "معلومة موثقة عن دورة العمل.",
+  publicKnowledgeText: "معلومة موثقة عن دورة العمل.",
+  suggestions: [],
+};
+
+async function withProviders(
+  keys: { anthropic?: string; openrouter?: string },
+  fetchImpl: (url: string, init?: RequestInit) => Promise<Response>,
+  run: () => Promise<void>,
+) {
+  const originalFetch = globalThis.fetch;
+  const original = { anthropic: process.env.ANTHROPIC_API_KEY, openrouter: process.env.OPENROUTER_API_KEY };
+  try {
+    if (keys.anthropic) process.env.ANTHROPIC_API_KEY = keys.anthropic;
+    else delete process.env.ANTHROPIC_API_KEY;
+    if (keys.openrouter) process.env.OPENROUTER_API_KEY = keys.openrouter;
+    else delete process.env.OPENROUTER_API_KEY;
+    globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => fetchImpl(String(input instanceof Request ? input.url : input), init)) as typeof fetch;
+    await run();
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (original.anthropic === undefined) delete process.env.ANTHROPIC_API_KEY;
+    else process.env.ANTHROPIC_API_KEY = original.anthropic;
+    if (original.openrouter === undefined) delete process.env.OPENROUTER_API_KEY;
+    else process.env.OPENROUTER_API_KEY = original.openrouter;
+  }
+}
+
+test("assistant answers with Claude Haiku 5.5 at low effort when an Anthropic key is set", async () => {
+  let claudeBody: Record<string, unknown> = {};
+  const streamed: string[] = [];
+  await withProviders({ anthropic: "test-anthropic", openrouter: "test-openrouter" }, async (url, init) => {
+    assert.match(url, /api\.anthropic\.com\/v1\/messages/);
+    claudeBody = JSON.parse(String(init?.body || "{}")) as Record<string, unknown>;
+    return claudeStream(claudeEvents("حياك الله، خلني أوضح لك."));
+  }, async () => {
+    const history = [
+      { role: "assistant" as const, content: "رد سابق بدون سؤال قبله" },
+      { role: "user" as const, content: "عندي مصنع" },
+      { role: "assistant" as const, content: "وش نوع المصنع؟" },
+    ];
+    const result = await streamAssistantReply("مصنع مطابخ", history, claudeTestContext, (chunk) => streamed.push(chunk));
+    assert.equal(result.provider, "anthropic");
+    assert.equal(result.model, "claude-haiku-5-5");
+    assert.equal(result.text, "حياك الله، خلني أوضح لك.");
+    assert.equal(streamed.join(""), "حياك الله، خلني أوضح لك.");
+    assert.equal(result.usage?.promptTokens, 3000);
+    assert.equal(result.usage?.completionTokens, 200);
+    assert.equal(result.usage?.costUsdMicros, 400);
+  });
+  assert.equal(claudeBody.model, "claude-haiku-5-5");
+  assert.deepEqual(claudeBody.output_config, { effort: "low" });
+  assert.equal("temperature" in claudeBody, false);
+  assert.match(String(claudeBody.system), /ولا تستخدم التعبيرات المصرية/);
+  const messages = claudeBody.messages as Array<{ role: string; content: string }>;
+  assert.equal(messages[0].role, "user");
+  assert.equal(messages.at(-1)?.content, "مصنع مطابخ");
+});
+
+test("assistant falls back to OpenRouter when Claude refuses or the key is rejected", async () => {
+  for (const claudeResponse of [
+    () => claudeStream(claudeEvents("", "refusal")),
+    () => new Response(JSON.stringify({ type: "error", error: { type: "authentication_error", message: "invalid x-api-key" } }), { status: 401, headers: { "Content-Type": "application/json" } }),
+  ]) {
+    const calls: string[] = [];
+    await withProviders({ anthropic: "test-anthropic", openrouter: "test-openrouter" }, async (url) => {
+      calls.push(url.includes("anthropic") ? "claude" : "openrouter");
+      return url.includes("anthropic") ? claudeResponse() : openRouterReply("رد من GLM.");
+    }, async () => {
+      const result = await streamAssistantReply("عندي مصنع مطابخ", [], claudeTestContext, () => {});
+      assert.equal(result.provider, "openrouter");
+      assert.equal(result.text, "رد من GLM.");
+    });
+    assert.deepEqual(calls, ["claude", "openrouter"]);
   }
 });
