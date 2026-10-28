@@ -1,0 +1,73 @@
+/* Floating Saudi agent — motion only on purpose (greeting, wave, talking). Resting pose holds still. */
+
+.agent-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 70ms ease-in;
+}
+.agent-eyes.agent-blink {
+  transform: scaleY(0.08);
+}
+
+.agent-mouth-open {
+  opacity: 0;
+}
+svg[data-talking="true"] .agent-mouth-open {
+  animation: agent-talk-open 0.3s steps(1) infinite;
+}
+svg[data-talking="true"] .agent-mouth-smile {
+  animation: agent-talk-closed 0.3s steps(1) infinite;
+}
+@keyframes agent-talk-open {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+}
+@keyframes agent-talk-closed {
+  0% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+.agent-arm {
+  opacity: 0;
+  transform: rotate(150deg);
+  transition: transform 0.38s cubic-bezier(0.3, 1.35, 0.5, 1), opacity 0.18s ease;
+}
+svg[data-gesture="wave"] .agent-arm {
+  opacity: 1;
+  transform: rotate(-16deg);
+  animation: agent-wave 0.36s ease-in-out 0.38s 6 alternate;
+}
+@keyframes agent-wave {
+  from { transform: rotate(-30deg); }
+  to { transform: rotate(-2deg); }
+}
+
+.agent-bubble-in {
+  transform-origin: bottom right;
+  animation: agent-bubble-in 0.28s cubic-bezier(0.2, 1.3, 0.4, 1) both;
+}
+@keyframes agent-bubble-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.92); }
+  to { opacity: 1; transform: none; }
+}
+
+.agent-panel-in {
+  transform-origin: bottom right;
+  animation: agent-panel-in 0.24s cubic-bezier(0.2, 1, 0.4, 1) both;
+}
+@keyframes agent-panel-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .agent-arm,
+  svg[data-gesture="wave"] .agent-arm,
+  svg[data-talking="true"] .agent-mouth-open,
+  svg[data-talking="true"] .agent-mouth-smile,
+  .agent-bubble-in,
+  .agent-panel-in {
+    animation: none !important;
+    transition: none !important;
+  }
+}

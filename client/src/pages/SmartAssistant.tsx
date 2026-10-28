@@ -24,46 +24,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-
-interface AssistantSource {
-  slug: string;
-  title: string;
-  type: string;
-  sector?: string | null;
-  sourceUrl?: string | null;
-}
-
-interface ChatMessage {
-  localId: string;
-  serverId?: number;
-  role: "user" | "assistant";
-  content: string;
-  sources?: AssistantSource[];
-  pending?: boolean;
-  feedback?: "positive" | "negative";
-  usedFallback?: boolean;
-}
-
-interface BootstrapData {
-  quickPrompts: string[];
-  roles: string[];
-  sectors: Array<{ slug: string; title: string; aliases: string[] }>;
-  features: Array<{ slug: string; title: string; summary: string }>;
-}
-
-interface StreamEvent {
-  type: "meta" | "chunk" | "done" | "error";
-  text?: string;
-  sessionId?: string;
-  messageId?: number;
-  sector?: string;
-  sources?: AssistantSource[];
-  suggestions?: string[];
-  message?: string;
-  usedFallback?: boolean;
-}
+import { trackFreeTrialLead } from "@/lib/x-pixel";
+import { MessageText } from "@/components/assistant/MessageText";
+import { storeSession, useAssistantChat, type ChatMessage } from "@/components/assistant/useAssistantChat";
 
 const WELCOME_MESSAGE: ChatMessage = {
   localId: "welcome",
@@ -71,76 +35,29 @@ const WELCOME_MESSAGE: ChatMessage = {
   content: "حياك الله 👋 قلّي وش طبيعة شغلك أو المشكلة اللي تواجهك، ونفهم سوا هل موتفلكس يناسبكم وكيف يفيدكم.",
 };
 
-const STORAGE_KEY = "mutflex-assistant-session-v1";
 const WHATSAPP_NUMBER = "966507051401";
-
-function makeLocalId(prefix: string) {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function readStoredSession(): string | undefined {
-  if (typeof window === "undefined") return undefined;
-  const value = window.localStorage.getItem(STORAGE_KEY) || "";
-  return /^[a-zA-Z0-9_-]{8,64}$/.test(value) ? value : undefined;
-}
-
-function InlineText({ text }: { text: string }) {
-  return (
-    <>
-      {text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean).map((part, index) => (
-        part.startsWith("**") && part.endsWith("**")
-          ? <strong key={index} className="font-bold text-foreground">{part.slice(2, -2)}</strong>
-          : <span key={index}>{part}</span>
-      ))}
-    </>
-  );
-}
-
-function MessageText({ content }: { content: string }) {
-  const lines = content.split("\n");
-  return (
-    <div className="space-y-2 leading-7">
-      {lines.map((line, index) => {
-        const clean = line.trim();
-        if (!clean) return <div key={index} className="h-1" aria-hidden="true" />;
-        const heading = clean.match(/^#{1,4}\s+(.+)$/);
-        if (heading) return <p key={index} className="pt-1 font-bold text-foreground"><InlineText text={heading[1]} /></p>;
-        const bullet = clean.match(/^[-•*]\s+(.+)$/);
-        if (bullet) return <p key={index} className="flex gap-2 pr-1"><span className="text-secondary">•</span><span><InlineText text={bullet[1]} /></span></p>;
-        const numbered = clean.match(/^(\d+)[.)]\s+(.+)$/);
-        if (numbered) return <p key={index} className="flex gap-2 pr-1"><span className="font-semibold text-secondary">{numbered[1]}.</span><span><InlineText text={numbered[2]} /></span></p>;
-        return <p key={index}><InlineText text={clean} /></p>;
-      })}
-    </div>
-  );
-}
 
 export default function SmartAssistant() {
   const { toast } = useToast();
-  const [bootstrap, setBootstrap] = useState<BootstrapData | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
-  const [sessionId, setSessionId] = useState<string | undefined>(readStoredSession);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [detectedSector, setDetectedSector] = useState<string>("");
-  const [isSending, setIsSending] = useState(false);
   const [showLeadForm, setShowLeadForm] = useState(false);
   const [leadSubmitting, setLeadSubmitting] = useState(false);
   const [leadSent, setLeadSent] = useState(false);
-  const [lead, setLead] = useState({ name: "", phone: "", company: "", sector: "", customerRole: "", painPoint: "", consent: false });
+  const [lead, setLead] = useState({ name: "", phone: "", alternatePhone: "", company: "", consent: false });
+  const {
+    bootstrap,
+    messages,
+    setMessages,
+    sessionId,
+    setSessionId,
+    suggestions,
+    detectedSector,
+    isSending,
+    showTrialCta,
+    setShowTrialCta,
+    sendMessage: sendChatMessage,
+  } = useAssistantChat({ welcome: WELCOME_MESSAGE, onOpenTrialForm: () => setShowLeadForm(true) });
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    fetch("/api/assistant/bootstrap")
-      .then((response) => response.ok ? response.json() : Promise.reject(new Error("bootstrap failed")))
-      .then((data: BootstrapData) => {
-        setBootstrap(data);
-        setSuggestions(data.quickPrompts.slice(0, 4));
-      })
-      .catch(() => {
-        setSuggestions(["اشرح لي موتفلكس من البداية", "عندي مصنع رخام", "وش الأسعار؟"]);
-      });
-  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -151,84 +68,11 @@ export default function SmartAssistant() {
     [bootstrap, detectedSector],
   );
 
-  const sendMessage = async (rawMessage?: string) => {
+  const sendMessage = (rawMessage?: string) => {
     const message = (rawMessage ?? input).trim();
     if (!message || isSending) return;
-
     setInput("");
-    setSuggestions([]);
-    setIsSending(true);
-    const userMessage: ChatMessage = { localId: makeLocalId("user"), role: "user", content: message };
-    const assistantLocalId = makeLocalId("assistant");
-    setMessages((current) => [
-      ...current,
-      userMessage,
-      { localId: assistantLocalId, role: "assistant", content: "", pending: true },
-    ]);
-
-    try {
-      const response = await fetch("/api/assistant/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message,
-          sessionId,
-          history: messages
-            .filter((item) => item.localId !== "welcome" && item.content.trim())
-            .slice(-6)
-            .map(({ role, content }) => ({ role, content })),
-        }),
-      });
-      if (!response.ok || !response.body) {
-        const payload = await response.json().catch(() => ({ message: "تعذر بدء المحادثة." }));
-        throw new Error(payload.message || "تعذر بدء المحادثة.");
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
-        const events = buffer.split("\n\n");
-        buffer = events.pop() || "";
-        for (const rawEvent of events) {
-          const dataLine = rawEvent.split("\n").find((line) => line.startsWith("data: "));
-          if (!dataLine) continue;
-          const event = JSON.parse(dataLine.slice(6)) as StreamEvent;
-          if (event.type === "meta") {
-            if (event.sessionId) {
-              setSessionId(event.sessionId);
-              window.localStorage.setItem(STORAGE_KEY, event.sessionId);
-            }
-            if (event.sector) setDetectedSector(event.sector);
-            setMessages((current) => current.map((item) => item.localId === assistantLocalId
-              ? { ...item, sources: event.sources }
-              : item));
-          }
-          if (event.type === "chunk" && event.text) {
-            setMessages((current) => current.map((item) => item.localId === assistantLocalId
-              ? { ...item, content: item.content + event.text, pending: true }
-              : item));
-          }
-          if (event.type === "done") {
-            setMessages((current) => current.map((item) => item.localId === assistantLocalId
-              ? { ...item, serverId: event.messageId, sources: event.sources, pending: false, usedFallback: event.usedFallback }
-              : item));
-            setSuggestions(event.suggestions || []);
-          }
-          if (event.type === "error") throw new Error(event.message || "تعذر إكمال الرد.");
-        }
-        if (done) break;
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "صار خلل بسيط. جرّب مرة ثانية.";
-      setMessages((current) => current.map((item) => item.localId === assistantLocalId
-        ? { ...item, content: errorMessage, pending: false }
-        : item));
-    } finally {
-      setIsSending(false);
-    }
+    return sendChatMessage(message);
   };
 
   const submitFeedback = async (message: ChatMessage, rating: "positive" | "negative") => {
@@ -247,20 +91,28 @@ export default function SmartAssistant() {
 
   const submitLead = async (event: FormEvent) => {
     event.preventDefault();
+    const activeSessionId = sessionId || crypto.randomUUID().replace(/-/g, "");
     if (!sessionId) {
-      toast({ title: "ابدأ المحادثة أولًا عشان نربط طلبك باحتياجك.", variant: "destructive" });
-      return;
+      setSessionId(activeSessionId);
+      storeSession(activeSessionId);
     }
+    const painPoint = messages
+      .filter((item) => item.role === "user" && item.content.trim())
+      .slice(-3)
+      .map((item) => item.content.trim())
+      .join(" | ")
+      .slice(0, 2000);
     setLeadSubmitting(true);
     try {
       const response = await fetch("/api/assistant/lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...lead, sessionId, sector: lead.sector || detectedSector }),
+        body: JSON.stringify({ ...lead, sessionId: activeSessionId, sector: detectedSector, painPoint }),
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.message || "تعذر تسجيل الطلب.");
       setLeadSent(true);
+      trackFreeTrialLead(payload.leadId);
       toast({ title: payload.message });
     } catch (error) {
       toast({ title: error instanceof Error ? error.message : "تعذر تسجيل الطلب.", variant: "destructive" });
@@ -384,6 +236,11 @@ export default function SmartAssistant() {
                     ))}
                   </div>
                 ) : null}
+                {showTrialCta && !showLeadForm && !leadSent ? (
+                  <Button type="button" className="mb-3 w-full bg-secondary hover:bg-secondary/90" onClick={() => setShowLeadForm(true)}>
+                    ابدأ تجربتك المجانية
+                  </Button>
+                ) : null}
                 <form onSubmit={(event) => { event.preventDefault(); void sendMessage(); }} className="flex items-end gap-2">
                   <Textarea
                     value={input}
@@ -399,6 +256,7 @@ export default function SmartAssistant() {
                     rows={2}
                     className="min-h-[54px] resize-none bg-background"
                     aria-label="رسالتك للمستشار"
+                    id="assistant-input"
                   />
                   <Button type="submit" size="icon" disabled={!input.trim() || isSending} className="h-[54px] w-[54px] shrink-0 bg-secondary hover:bg-secondary/90" aria-label="إرسال">
                     {isSending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
@@ -425,51 +283,36 @@ export default function SmartAssistant() {
             </Card>
 
             <Card className="overflow-hidden border-2">
-              <CardHeader className="bg-gradient-to-l from-secondary/10 to-primary/10"><CardTitle className="flex items-center gap-2 text-lg"><Building2 className="h-5 w-5 text-secondary" /> كمل مع الفريق</CardTitle></CardHeader>
+              <CardHeader className="bg-gradient-to-l from-secondary/10 to-primary/10"><CardTitle className="flex items-center gap-2 text-lg"><Building2 className="h-5 w-5 text-secondary" /> جرّب موتفلكس على شغلك</CardTitle></CardHeader>
               <CardContent className="space-y-3 pt-5">
-                <p className="text-sm leading-6 text-muted-foreground">إذا وضحت الصورة، سجل بياناتك وبيوصل للفريق ملخص احتياجك من المحادثة.</p>
-                <Button className="w-full bg-secondary hover:bg-secondary/90" onClick={() => setShowLeadForm((current) => !current)}>{leadSent ? "تم تسجيل طلبك" : "اطلب تواصل من الفريق"}</Button>
+                <p className="text-sm leading-6 text-muted-foreground">إذا وضحت لك الفكرة، سجل طلب تجربة قصيرة وبيوصل للفريق ملخص احتياجك من المحادثة.</p>
+                <Button className="w-full bg-secondary hover:bg-secondary/90" onClick={() => setShowLeadForm((current) => !current)}>{leadSent ? "تم تسجيل طلب التجربة" : "اطلب تجربة مجانية"}</Button>
                 <Button variant="outline" className="w-full border-[#25D366] text-[#128C4A] hover:bg-[#25D366]/10" asChild>
                   <a href={`https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappText}`} target="_blank" rel="noreferrer"><MessageCircle className="ml-2 h-4 w-4" /> كمل على واتساب</a>
                 </Button>
-                <Button variant="ghost" className="w-full" asChild><Link href="/free-trial">ابدأ تجربة مجانية <ArrowLeft className="mr-2 h-4 w-4" /></Link></Button>
               </CardContent>
             </Card>
 
             {showLeadForm && !leadSent ? (
               <Card className="border-2 border-secondary/30">
-                <CardHeader><CardTitle className="text-lg">بيانات التواصل</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-lg">بيانات التجربة المجانية</CardTitle></CardHeader>
                 <CardContent>
                   <form onSubmit={submitLead} className="space-y-4">
-                    <div className="space-y-2"><Label htmlFor="lead-name">الاسم</Label><Input id="lead-name" required minLength={2} value={lead.name} onChange={(event) => setLead((current) => ({ ...current, name: event.target.value }))} /></div>
-                    <div className="space-y-2"><Label htmlFor="lead-phone">رقم الجوال السعودي</Label><Input id="lead-phone" required dir="ltr" placeholder="05XXXXXXXX" value={lead.phone} onChange={(event) => setLead((current) => ({ ...current, phone: event.target.value }))} /></div>
-                    <div className="space-y-2"><Label htmlFor="lead-company">اسم المنشأة</Label><Input id="lead-company" value={lead.company} onChange={(event) => setLead((current) => ({ ...current, company: event.target.value }))} /></div>
-                    <div className="space-y-2">
-                      <Label>القطاع</Label>
-                      <Select value={lead.sector || detectedSector} onValueChange={(value) => setLead((current) => ({ ...current, sector: value }))}>
-                        <SelectTrigger><SelectValue placeholder="اختر القطاع" /></SelectTrigger>
-                        <SelectContent>{bootstrap?.sectors.map((sector) => <SelectItem key={sector.slug} value={sector.slug}>{sector.title}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>دورك</Label>
-                      <Select value={lead.customerRole} onValueChange={(value) => setLead((current) => ({ ...current, customerRole: value }))}>
-                        <SelectTrigger><SelectValue placeholder="اختر دورك" /></SelectTrigger>
-                        <SelectContent>{bootstrap?.roles.map((role) => <SelectItem key={role} value={role}>{role}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2"><Label htmlFor="lead-pain">أكبر مشكلة عندكم</Label><Textarea id="lead-pain" rows={3} value={lead.painPoint} onChange={(event) => setLead((current) => ({ ...current, painPoint: event.target.value }))} /></div>
+                    <div className="space-y-2"><Label htmlFor="lead-name">الاسم *</Label><Input id="lead-name" required minLength={2} autoComplete="name" value={lead.name} onChange={(event) => setLead((current) => ({ ...current, name: event.target.value }))} /></div>
+                    <div className="space-y-2"><Label htmlFor="lead-phone">رقم الجوال السعودي *</Label><Input id="lead-phone" required type="tel" inputMode="tel" autoComplete="tel" dir="ltr" placeholder="05XXXXXXXX" value={lead.phone} onChange={(event) => setLead((current) => ({ ...current, phone: event.target.value }))} /></div>
+                    <div className="space-y-2"><Label htmlFor="lead-company">اسم النشاط أو المنشأة *</Label><Input id="lead-company" required minLength={2} autoComplete="organization" value={lead.company} onChange={(event) => setLead((current) => ({ ...current, company: event.target.value }))} /></div>
+                    <div className="space-y-2"><Label htmlFor="lead-alternate-phone">رقم بديل (اختياري)</Label><Input id="lead-alternate-phone" type="tel" inputMode="tel" dir="ltr" placeholder="05XXXXXXXX" value={lead.alternatePhone} onChange={(event) => setLead((current) => ({ ...current, alternatePhone: event.target.value }))} /></div>
                     <label className="flex cursor-pointer items-start gap-2 text-xs leading-5 text-muted-foreground">
                       <input type="checkbox" required checked={lead.consent} onChange={(event) => setLead((current) => ({ ...current, consent: event.target.checked }))} className="mt-1" />
-                      أوافق على استخدام هذه البيانات للتواصل معي بخصوص موتفلكس.
+                      أوافق على استخدام هذه البيانات للتواصل معي وبدء التجربة المجانية.
                     </label>
-                    <Button type="submit" className="w-full" disabled={leadSubmitting}>{leadSubmitting ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : null} إرسال الطلب</Button>
+                    <Button type="submit" className="w-full" disabled={leadSubmitting}>{leadSubmitting ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : null} إرسال طلب التجربة</Button>
                   </form>
                 </CardContent>
               </Card>
             ) : null}
 
-            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 text-emerald-600" /> بياناتك لا تُطلب إلا عند رغبتك بالتواصل</div>
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 text-emerald-600" /> بياناتك لا تُطلب إلا بعد موافقتك على التجربة</div>
           </div>
         </div>
       </section>
@@ -489,7 +332,7 @@ export default function SmartAssistant() {
               ["فهم الاحتياج", "يبدأ بسؤالك عن القطاع وحجم التشغيل ونقطة التعطيل، حتى يكون الشرح مرتبطًا بواقع منشأتك بدل الكلام العام."],
               ["تصور دورة العمل", "يرسم لك سيناريو عملي من دخول العميل وحتى إغلاق المشروع، ويوضح أين تنتقل البيانات ومن المسؤول عن كل مرحلة."],
               ["شرح حسب القطاع", "يتعامل مع اختلاف احتياج مصانع الرخام والمطابخ والألمنيوم وشركات التشطيبات والمقاولات والقطاعات التي تعتمد على القياس والتركيب."],
-              ["خطوة تالية واضحة", "بعد ما تتضح الصورة، يساعدك تحدد المميزات والباقات التي تحتاجها، أو يسجل طلب تواصل ليكمل معك فريق موتفلكس."],
+              ["خطوة تالية واضحة", "بعد ما تتضح الصورة، يساعدك تحدد المميزات التي تحتاجها، ثم يسجل لك طلب تجربة مجانية ليكمل معك فريق موتفلكس."],
             ].map(([title, description]) => (
               <Card key={title} className="border-secondary/15 bg-background/80">
                 <CardContent className="p-6">
@@ -542,7 +385,7 @@ export default function SmartAssistant() {
             <div className="mt-8 border-t pt-7">
               <h3 className="flex items-center gap-2 font-bold text-foreground"><ShieldCheck className="h-5 w-5 text-emerald-600" /> الدقة والخصوصية</h3>
               <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                يعتمد المستشار على معلومات موتفلكس المعتمدة، ويصرّح بوضوح عندما تحتاج المعلومة إلى تأكيد من الفريق. لا تشارك كلمات مرور أو بيانات مالية أو أسرار عمل داخل المحادثة. لن نطلب رقم جوالك إلا إذا قررت تسجيل طلب تواصل، وتُستخدم البيانات التي ترسلها لخدمتك ومتابعة احتياجك وفق سياسة الخصوصية.
+                يعتمد المستشار على معلومات موتفلكس المعتمدة، ويصرّح بوضوح عندما تحتاج المعلومة إلى تأكيد من الفريق. لا تشارك كلمات مرور أو بيانات مالية أو أسرار عمل داخل المحادثة. لن نطلب رقم جوالك إلا بعد موافقتك على طلب التجربة، وتُستخدم البيانات التي ترسلها لخدمتك ومتابعة احتياجك وفق سياسة الخصوصية.
               </p>
               <Link href="/privacy-policy" className="mt-4 inline-flex items-center font-semibold text-secondary hover:underline">اقرأ سياسة الخصوصية <ArrowLeft className="mr-2 h-4 w-4" /></Link>
             </div>

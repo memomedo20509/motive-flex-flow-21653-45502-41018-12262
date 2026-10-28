@@ -13,7 +13,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { saudiPhoneSchema } from "./saudiPhone";
+import { isSaudiMobile, normalizeSaudiPhone, saudiPhoneSchema } from "./saudiPhone";
 
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
@@ -288,11 +288,13 @@ export const assistantLeads = pgTable("assistant_leads", {
     .references(() => assistantSessions.id, { onDelete: "cascade" }),
   name: varchar("name", { length: 255 }).notNull(),
   phone: varchar("phone", { length: 50 }).notNull(),
+  alternatePhone: varchar("alternate_phone", { length: 50 }),
   company: varchar("company", { length: 255 }),
   sector: varchar("sector", { length: 100 }),
   customerRole: varchar("customer_role", { length: 100 }),
   painPoint: text("pain_point"),
   consent: boolean("consent").default(false).notNull(),
+  isRead: varchar("is_read", { length: 10 }).default("false").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -319,9 +321,20 @@ export type AssistantMessage = typeof assistantMessages.$inferSelect;
 export type AssistantFeedback = typeof assistantFeedback.$inferSelect;
 export type AssistantLead = typeof assistantLeads.$inferSelect;
 
+export const assistantPageSchema = z.object({
+  path: z.string().trim().max(300),
+  title: z.string().trim().max(200),
+  headings: z.array(z.string().trim().max(160)).max(12).optional().default([]),
+  excerpt: z.string().trim().max(1500).optional().default(""),
+});
+
+export type AssistantPage = z.infer<typeof assistantPageSchema>;
+
 export const assistantChatSchema = z.object({
   sessionId: z.string().regex(/^[a-zA-Z0-9_-]{8,64}$/).optional(),
   message: z.string().trim().min(1).max(2000),
+  page: assistantPageSchema.optional(),
+  pageIntro: z.boolean().optional().default(false),
   history: z.array(z.object({
     role: z.enum(["user", "assistant"]),
     content: z.string().trim().min(1).max(4000),
@@ -332,7 +345,12 @@ export const assistantLeadSchema = z.object({
   sessionId: z.string().regex(/^[a-zA-Z0-9_-]{8,64}$/),
   name: z.string().trim().min(2).max(255),
   phone: saudiPhoneSchema,
-  company: z.string().trim().max(255).optional().default(""),
+  alternatePhone: z.string().trim().max(50)
+    .refine((value) => !value || isSaudiMobile(value), "أدخل رقم جوال سعودي بديل صحيح")
+    .transform((value) => value ? normalizeSaudiPhone(value) : "")
+    .optional()
+    .default(""),
+  company: z.string().trim().min(2).max(255),
   sector: z.string().trim().max(100).optional().default(""),
   customerRole: z.string().trim().max(100).optional().default(""),
   painPoint: z.string().trim().max(2000).optional().default(""),

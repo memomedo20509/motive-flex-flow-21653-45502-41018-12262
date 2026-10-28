@@ -133,7 +133,8 @@ export class AssistantStorage {
     sessionId: string;
     name: string;
     phone: string;
-    company?: string;
+    alternatePhone?: string;
+    company: string;
     sector?: string;
     customerRole?: string;
     painPoint?: string;
@@ -155,6 +156,33 @@ export class AssistantStorage {
       .from(assistantLeads)
       .orderBy(desc(assistantLeads.createdAt))
       .limit(Math.min(Math.max(limit, 1), 100));
+  }
+
+  async getLeadSubmissions(): Promise<{ trials: AssistantLead[]; total: number; unreadCount: number }> {
+    const [trials, totalResult, unreadResult] = await Promise.all([
+      this.getRecentLeads(100),
+      db.select({ count: sql<number>`count(*)` }).from(assistantLeads),
+      db.select({ count: sql<number>`count(*)` }).from(assistantLeads).where(eq(assistantLeads.isRead, "false")),
+    ]);
+    return {
+      trials,
+      total: Number(totalResult[0]?.count || 0),
+      unreadCount: Number(unreadResult[0]?.count || 0),
+    };
+  }
+
+  async markLeadAsRead(id: number): Promise<AssistantLead | undefined> {
+    const [updated] = await db
+      .update(assistantLeads)
+      .set({ isRead: "true" })
+      .where(eq(assistantLeads.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteLead(id: number): Promise<boolean> {
+    const deleted = await db.delete(assistantLeads).where(eq(assistantLeads.id, id)).returning({ id: assistantLeads.id });
+    return deleted.length > 0;
   }
 
   async getAnalytics(): Promise<AssistantAnalytics> {

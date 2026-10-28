@@ -1,5 +1,5 @@
 import { Switch, Route, useLocation } from "wouter";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider, HydrationBoundary } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
@@ -33,6 +33,7 @@ const BlogTopic = lazy(() => import("./pages/BlogTopic"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Login = lazy(() => import("./pages/Login"));
 const SmartAssistant = lazy(() => import("./pages/SmartAssistant"));
+const FloatingAssistant = lazy(() => import("./components/assistant/FloatingAssistant"));
 
 // Admin pages - lazy loaded
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
@@ -43,6 +44,7 @@ const AdminTrialsList = lazy(() => import("./pages/admin/TrialsList"));
 const AdminUsersList = lazy(() => import("./pages/admin/UsersList"));
 const AdminSettings = lazy(() => import("./pages/admin/Settings"));
 const AdminAssistant = lazy(() => import("./pages/admin/AssistantManagement"));
+const AdminAssistantTrials = lazy(() => import("./pages/admin/AssistantTrialsList"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -114,6 +116,7 @@ function Router() {
       <Route path="/admin/articles/:id/edit" component={AdminArticleForm} />
       <Route path="/admin/settings" component={AdminSettings} />
       <Route path="/admin/assistant" component={AdminAssistant} />
+      <Route path="/admin/assistant-trials" component={AdminAssistantTrials} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -124,6 +127,23 @@ function Router() {
         {routeElement}
       </PageTransition>
     </AnimatePresence>
+  );
+}
+
+// Client-only and deferred so the agent never delays first paint or SSR.
+function DeferredAssistant() {
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setReady(true), 1200);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  if (!ready) return null;
+  return (
+    <Suspense fallback={null}>
+      <FloatingAssistant />
+    </Suspense>
   );
 }
 
@@ -138,6 +158,7 @@ function AppContent() {
         <Router />
       </Suspense>
       <WhatsAppButton />
+      <DeferredAssistant />
     </>
   );
 }

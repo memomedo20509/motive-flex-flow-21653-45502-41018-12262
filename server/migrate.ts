@@ -229,13 +229,20 @@ export async function runMigrations() {
         session_id VARCHAR(64) NOT NULL REFERENCES assistant_sessions(id) ON DELETE CASCADE,
         name VARCHAR(255) NOT NULL,
         phone VARCHAR(50) NOT NULL,
+        alternate_phone VARCHAR(50),
         company VARCHAR(255),
         sector VARCHAR(100),
         customer_role VARCHAR(100),
         pain_point TEXT,
         consent BOOLEAN NOT NULL DEFAULT FALSE,
+        is_read VARCHAR(10) NOT NULL DEFAULT 'false',
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
+    `);
+    await db.execute(sql`
+      ALTER TABLE assistant_leads
+        ADD COLUMN IF NOT EXISTS alternate_phone VARCHAR(50),
+        ADD COLUMN IF NOT EXISTS is_read VARCHAR(10) NOT NULL DEFAULT 'false'
     `);
     await db.execute(sql`
       CREATE INDEX IF NOT EXISTS assistant_leads_created_idx
