@@ -61,7 +61,7 @@ test("assistant understands an advertising production workflow instead of return
     assert.equal(context.sector, "advertising-production");
     assert.match(result.text, /قريت سؤالك/);
     assert.match(result.text, /تصوير.*مصنع|مصنع.*تصوير/);
-    assert.doesNotMatch(result.text, /345|575/);
+    assert.doesNotMatch(result.text, /300 ريال|500 ريال|800 ريال/);
     assert.doesNotMatch(result.text, /###|\n-/);
     assert.ok(result.text.length < 600);
     assert.equal(streamed, result.text);

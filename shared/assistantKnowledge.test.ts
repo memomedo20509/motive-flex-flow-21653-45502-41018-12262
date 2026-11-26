@@ -28,7 +28,8 @@ test("seed slugs are unique and include pricing plus truth policy", () => {
   assert.equal(new Set(slugs).size, slugs.length);
   assert.ok(slugs.includes("pricing-current"));
   assert.ok(slugs.includes("assistant-truth-policy"));
-  assert.match(PRICING_KNOWLEDGE.pro.price, /345/);
-  assert.match(PRICING_KNOWLEDGE.catalog.price, /575/);
+  assert.match(PRICING_KNOWLEDGE.pro.price, /300/);
+  assert.match(PRICING_KNOWLEDGE.b2b.price, /800/);
+  assert.match(PRICING_KNOWLEDGE.catalog.price, /500/);
   assert.match(PRICING_KNOWLEDGE.trial, /شهر/);
 });

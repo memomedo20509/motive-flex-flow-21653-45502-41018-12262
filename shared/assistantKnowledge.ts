@@ -244,13 +244,19 @@ export const SECTOR_PLAYBOOKS: SectorPlaybook[] = [
 export const PRICING_KNOWLEDGE = {
   pro: {
     name: "Mutflex Pro",
-    setupFee: "230 ريال سعودي مرة واحدة شاملة ضريبة القيمة المضافة",
-    price: "345 ريال سعودي شهريًا",
+    setupFee: "200 ريال سعودي مرة واحدة",
+    price: "300 ريال سعودي شهريًا",
     summary: "باقة إدارة الشركة بالكامل وتشمل المميزات المعلنة وعدد مستخدمين وتخزين غير محدودين.",
+  },
+  b2b: {
+    name: "Mutflex B2B",
+    setupFee: "200 ريال سعودي مرة واحدة",
+    price: "800 ريال سعودي سنويًا",
+    summary: "باقة سنوية لتجار الجملة وصالات العرض: كتالوج المنتجات وقوائم الأسعار وإدارة العملاء وبوابة العميل.",
   },
   catalog: {
     name: "Mutflex Catalog",
-    price: "575 ريال سعودي سنويًا شامل الضريبة وبدون رسوم تأسيس",
+    price: "500 ريال سعودي سنويًا وبدون رسوم تأسيس",
     summary: "باقة للكاتالوج وقوائم الأسعار وشاشة العرض والطباعة.",
   },
   trial: "تجربة مجانية لمدة شهر وبدون بطاقة ائتمانية، مع دعم وتدريب حسب العرض الحالي.",
@@ -322,8 +328,8 @@ export const ASSISTANT_KNOWLEDGE_SEED: AssistantKnowledgeSeed[] = [
     slug: "pricing-current",
     type: "pricing",
     title: "باقات وأسعار موتفلكس",
-    content: `${PRICING_KNOWLEDGE.pro.name}: ${PRICING_KNOWLEDGE.pro.price}، ورسوم تأسيس ${PRICING_KNOWLEDGE.pro.setupFee}. ${PRICING_KNOWLEDGE.pro.summary}\n${PRICING_KNOWLEDGE.catalog.name}: ${PRICING_KNOWLEDGE.catalog.price}. ${PRICING_KNOWLEDGE.catalog.summary}\n${PRICING_KNOWLEDGE.trial}\nهذه هي الأسعار المعلنة حاليًا، وأي عرض خاص يحتاج تأكيد فريق موتفلكس.`,
-    tags: ["سعر", "أسعار", "باقة", "اشتراك", "تجربة", "ضريبة", "تأسيس"],
+    content: `${PRICING_KNOWLEDGE.pro.name}: ${PRICING_KNOWLEDGE.pro.price}، ورسوم تأسيس ${PRICING_KNOWLEDGE.pro.setupFee}. ${PRICING_KNOWLEDGE.pro.summary}\n${PRICING_KNOWLEDGE.b2b.name}: ${PRICING_KNOWLEDGE.b2b.price}، ورسوم تأسيس ${PRICING_KNOWLEDGE.b2b.setupFee}. ${PRICING_KNOWLEDGE.b2b.summary}\n${PRICING_KNOWLEDGE.catalog.name}: ${PRICING_KNOWLEDGE.catalog.price}. ${PRICING_KNOWLEDGE.catalog.summary}\n${PRICING_KNOWLEDGE.trial}\nهذه هي الأسعار المعلنة حاليًا، وأي عرض خاص يحتاج تأكيد فريق موتفلكس.`,
+    tags: ["سعر", "أسعار", "باقة", "اشتراك", "تجربة", "تأسيس"],
     sourceUrl: "/pricing",
     priority: 100,
   },
