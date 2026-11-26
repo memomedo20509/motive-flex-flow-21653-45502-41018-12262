@@ -12,13 +12,13 @@ import { Check, Zap } from "lucide-react";
 const Pricing = () => {
   // Mutflex Pro Plan
   const proSetupFee = {
-    price: "230",
-    description: "رسوم تأسيس تدفع مرة واحدة فقط، شاملة ضريبة القيمة المضافة",
+    price: "200",
+    description: "رسوم تأسيس تدفع مرة واحدة فقط",
   };
 
   const proPlan = {
     name: "Mutflex Pro",
-    price: "345",
+    price: "300",
     period: "شهريًا",
     description: "باقة واحدة واضحة لإدارة الشركة بالكامل، تشمل جميع المميزات بدون تعقيد",
     features: [
@@ -39,13 +39,13 @@ const Pricing = () => {
 
   // Mutflex B2B Plan
   const b2bSetupFee = {
-    price: "230",
-    description: "رسوم تأسيس تدفع مرة واحدة فقط، شاملة ضريبة القيمة المضافة",
+    price: "200",
+    description: "رسوم تأسيس تدفع مرة واحدة فقط",
   };
 
   const b2bPlan = {
     name: "Mutflex B2B",
-    price: "920",
+    price: "800",
     period: "سنوياً",
     description: "اعرض منتجاتك بالصور والمواصفات، وأتح لعملائك تصفّحها واختيار ما يناسبهم مباشرة من الجوال. باقة سنوية مخصصة لتجار الجملة وصالات العرض لعرض المنتجات والأسعار باحترافية وإدارة العملاء بسهولة.",
     features: [
@@ -65,7 +65,7 @@ const Pricing = () => {
   // Mutflex Catalog Plan
   const catalogPlan = {
     name: "Mutflex Catalog",
-    price: "575",
+    price: "500",
     period: "سنوياً",
     description: "باقة سنوية للكتالوج وقوائم الأسعار، مناسبة لصالات العرض التي تحتاج عرض منتجاتها باحتراف",
     features: [
@@ -149,7 +149,7 @@ const Pricing = () => {
                     </span>
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    {proPlan.period} - شامل ضريبة القيمة المضافة
+                    {proPlan.period}
                   </span>
                 </CardHeader>
                 <CardContent className="space-y-4 pb-8">
@@ -202,7 +202,7 @@ const Pricing = () => {
           <SectionHeader
             title="Mutflex B2B"
             description="كتالوج منتجاتك وقوائم أسعارك وإدارة عملائك في مكان واحد"
-            badge="920 ريال سنويًا شامل الضريبة"
+            badge="800 ريال سنويًا"
           />
 
           <div className="max-w-xl mx-auto stagger-children">
@@ -225,7 +225,7 @@ const Pricing = () => {
                     </span>
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    {b2bPlan.period} - شامل ضريبة القيمة المضافة
+                    {b2bPlan.period}
                   </span>
                 </CardHeader>
                 <CardContent className="space-y-4 pb-8">
@@ -278,7 +278,7 @@ const Pricing = () => {
           <SectionHeader
             title="Mutflex Catalog"
             description="باقة سنوية للكتالوج وقوائم الأسعار بدون رسوم تأسيس"
-            badge="575 ريال سنويًا شامل الضريبة"
+            badge="500 ريال سنويًا"
           />
           
           <div className="max-w-xl mx-auto">
@@ -298,7 +298,7 @@ const Pricing = () => {
                     </span>
                   </div>
                   <span className="text-sm text-muted-foreground">
-                    {catalogPlan.period} - شامل ضريبة القيمة المضافة
+                    {catalogPlan.period}
                   </span>
                 </CardHeader>
                 <CardContent className="space-y-4 pb-8">
@@ -351,12 +351,8 @@ const Pricing = () => {
                 a: "Mutflex Pro هو النظام الشامل لإدارة الشركة والطلبات والعملاء والتصنيع والتركيب. Mutflex B2B باقة سنوية لتجار الجملة وصالات العرض: كتالوج المنتجات وقوائم الأسعار مع إدارة العملاء وبوابة العميل. Mutflex Catalog مخصص للكتالوج وقوائم الأسعار فقط.",
               },
               {
-                q: "هل الأسعار شاملة الضريبة؟",
-                a: "نعم، أسعار الباقات ورسوم التأسيس الموضحة شاملة ضريبة القيمة المضافة.",
-              },
-              {
                 q: "هل توجد رسوم تأسيس؟",
-                a: "توجد رسوم تأسيس لمرة واحدة بقيمة 230 ريال سعودي شاملة الضريبة على Mutflex Pro و Mutflex B2B. Mutflex Catalog بدون رسوم تأسيس.",
+                a: "توجد رسوم تأسيس لمرة واحدة بقيمة 200 ريال سعودي على Mutflex Pro و Mutflex B2B. Mutflex Catalog بدون رسوم تأسيس.",
               },
               {
                 q: "ماذا يحدث بعد انتهاء التجربة المجانية؟",
